@@ -6,45 +6,75 @@ name        = "sukr"
 version     = "0.1.0"
 
 [dependencies]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Core Pipeline
+# Markdown parsing is the heart of sukr. pulldown-cmark is fast, correct, and
+# widely used. No lighter alternative exists.
+# ─────────────────────────────────────────────────────────────────────────────
 pulldown-cmark = "0.12"
 
-# Syntax highlighting
-ropey = "1.6"
+# ─────────────────────────────────────────────────────────────────────────────
+# Syntax Highlighting (sukr's differentiator)
+# Tree-sitter provides proper parsing, not regex. This enables language
+# injection (Nix→Bash, HTML→JS/CSS) and accurate tokenization. The grammar
+# crates are heavy, but this is the core feature that distinguishes sukr from
+# regex-based highlighters. tree-house provides Helix-style scope queries.
+# ─────────────────────────────────────────────────────────────────────────────
+ropey = "1.6" # Rope data structure for efficient text handling
 tree-house = { git = "https://github.com/helix-editor/tree-house", package = "tree-house", default-features = false }
 tree-house-bindings = { git = "https://github.com/helix-editor/tree-house", package = "tree-house-bindings", features = [
   "tree-sitter-language",
 ] }
 tree-sitter = "0.26"
-tree-sitter-bash = "0.23"
-tree-sitter-c = "0.24"
-tree-sitter-css = "0.25"
-tree-sitter-go = "0.25"
-tree-sitter-html = "0.23"
-tree-sitter-javascript = "0.25"
-tree-sitter-json = "0.24"
-tree-sitter-nix = "0.3"
-tree-sitter-python = "0.25"
-tree-sitter-rust = "0.23"
-tree-sitter-typescript = "0.23"
-tree-sitter-yaml = "0.7"
 
-# CSS processing
+# Grammar crates — one per supported language. All actively used.
+tree-sitter-bash       = "0.23"
+tree-sitter-c          = "0.24"
+tree-sitter-css        = "0.25"
+tree-sitter-go         = "0.25"
+tree-sitter-html       = "0.23"
+tree-sitter-javascript = "0.25"
+tree-sitter-json       = "0.24"
+tree-sitter-md         = "0.5.2" # Markdown (for injections)
+tree-sitter-nix        = "0.3"
+tree-sitter-python     = "0.25"
+tree-sitter-rust       = "0.23"
+tree-sitter-toml-ng    = "0.7.0" # TOML (for config examples)
+tree-sitter-typescript = "0.23"
+tree-sitter-yaml       = "0.7"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Build-Time Rendering (zero-JS output)
+# These crates compile rich content to static HTML/SVG at build time, avoiding
+# the 300KB+ JavaScript bundles typical of client-side rendering.
+# ─────────────────────────────────────────────────────────────────────────────
+katex-rs            = "0.2.3"                                       # LaTeX math → static HTML
+mermaid-rs-renderer = { version = "0.1", default-features = false } # Diagrams → SVG
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CSS Processing
+# lightningcss handles @import resolution and minification. Alpha version used
+# for latest features; the API is stable enough for our use case.
+# ─────────────────────────────────────────────────────────────────────────────
 lightningcss = "1.0.0-alpha.70"
 
-# Config parsing
-katex-rs = "0.2.3"
-serde    = { version = "1", features = ["derive"] }
-tera     = "1"
-toml     = "0.8"
+# ─────────────────────────────────────────────────────────────────────────────
+# Templating & Configuration
+# tera: Jinja2-style templates, runtime-loaded (no recompilation needed).
+# serde/toml: Configuration parsing. Standard choices, no lighter alternatives.
+# ─────────────────────────────────────────────────────────────────────────────
+serde = { version = "1", features = ["derive"] }
+tera  = "1"
+toml  = "0.8"
 
-# Diagram rendering
-mermaid-rs-renderer = { version = "0.1", default-features = false }
-tree-sitter-md      = "0.5.2"
-tree-sitter-toml-ng = "0.7.0"
-
-# Patch dagre_rust to fix unwrap on None bug
+# ─────────────────────────────────────────────────────────────────────────────
+# Patches
+# dagre_rust (transitive via mermaid-rs-renderer) has an unwrap-on-None bug.
+# Patched locally until upstream fixes.
+# ─────────────────────────────────────────────────────────────────────────────
 [patch.crates-io]
 dagre_rust = { path = "patches/dagre_rust" }
 
 [dev-dependencies]
-tempfile = "3.24.0"
+tempfile = "3.24.0" # Test fixtures only
