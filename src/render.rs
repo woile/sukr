@@ -1,7 +1,7 @@
 //! Markdown to HTML rendering via pulldown-cmark with syntax highlighting.
 
 use crate::escape::{code_escape, html_escape};
-use crate::highlight::{highlight_code, Language};
+use crate::highlight::{Language, highlight_code};
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use serde::Serialize;
 
@@ -52,22 +52,22 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
                         } else {
                             Some(lang_str.to_string())
                         }
-                    }
+                    },
                     CodeBlockKind::Indented => None,
                 };
                 in_code_block = true;
                 code_block_content.clear();
-            }
+            },
             Event::Text(text) if in_code_block => {
                 // Accumulate code block content
                 code_block_content.push_str(&text);
-            }
+            },
             Event::Text(text) if image_alt_content.is_some() => {
                 // Accumulate image alt text
                 if let Some(ref mut alt) = image_alt_content {
                     alt.push_str(&text);
                 }
-            }
+            },
             Event::End(TagEnd::CodeBlock) => {
                 // Render the code block with highlighting
                 let lang_str = code_block_lang.as_deref().unwrap_or("");
@@ -79,13 +79,13 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
                             html_output.push_str("<div class=\"mermaid-diagram\">\n");
                             html_output.push_str(&svg);
                             html_output.push_str("\n</div>\n");
-                        }
+                        },
                         Err(e) => {
                             eprintln!("mermaid render error: {e}");
                             html_output.push_str("<pre class=\"mermaid-error\"><code>");
                             html_output.push_str(&html_escape(&code_block_content));
                             html_output.push_str("</code></pre>\n");
-                        }
+                        },
                     }
                 } else {
                     // Code blocks: syntax highlighting
@@ -111,29 +111,29 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
                 code_block_lang = None;
                 in_code_block = false;
                 code_block_content.clear();
-            }
+            },
             Event::Text(text) if heading_level.is_some() => {
                 // Accumulate heading text
                 heading_text.push_str(&text);
                 html_output.push_str(&html_escape(&text));
-            }
+            },
             Event::Text(text) => {
                 // Regular text outside code blocks
                 html_output.push_str(&html_escape(&text));
-            }
+            },
             Event::Code(text) => {
                 // Inline code
                 html_output.push_str("<code>");
                 html_output.push_str(&html_escape(&text));
                 html_output.push_str("</code>");
-            }
+            },
             Event::Start(Tag::Image {
                 dest_url, title, ..
             }) => {
                 // Begin accumulating alt text; defer rendering to End event
                 image_alt_content = Some(String::new());
                 image_attrs = Some((dest_url.to_string(), title.to_string()));
-            }
+            },
             Event::Start(Tag::Heading { level, .. }) => {
                 // Begin accumulating heading text
                 heading_level = Some(level);
@@ -141,10 +141,10 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
                 let level_num = level as u8;
                 html_output.push_str(&format!("<h{}", level_num));
                 // ID will be added at End event after we have the text
-            }
+            },
             Event::Start(tag) => {
                 html_output.push_str(&start_tag_to_html(&tag));
-            }
+            },
             Event::End(TagEnd::Image) => {
                 // Render image with accumulated alt text
                 let alt = image_alt_content.take().unwrap_or_default();
@@ -164,7 +164,7 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
                         ));
                     }
                 }
-            }
+            },
             Event::End(TagEnd::Heading(level)) => {
                 // Generate slug ID from heading text
                 let id = slugify(&heading_text);
@@ -193,28 +193,28 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
 
                 heading_level = None;
                 heading_text.clear();
-            }
+            },
             Event::End(tag) => {
                 html_output.push_str(&end_tag_to_html(&tag));
-            }
+            },
             Event::SoftBreak => {
                 html_output.push('\n');
-            }
+            },
             Event::HardBreak => {
                 html_output.push_str("<br />\n");
-            }
+            },
             Event::Rule => {
                 html_output.push_str("<hr />\n");
-            }
+            },
             Event::Html(html) | Event::InlineHtml(html) => {
                 html_output.push_str(&html);
-            }
+            },
             Event::FootnoteReference(name) => {
                 html_output.push_str(&format!(
                     "<sup class=\"footnote-ref\"><a href=\"#fn-{}\">{}</a></sup>",
                     name, name
                 ));
-            }
+            },
             Event::TaskListMarker(checked) => {
                 let checkbox = if checked {
                     "<input type=\"checkbox\" checked disabled />"
@@ -222,7 +222,7 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
                     "<input type=\"checkbox\" disabled />"
                 };
                 html_output.push_str(checkbox);
-            }
+            },
             Event::InlineMath(latex) => match crate::math::render_math(&latex, false) {
                 Ok(rendered) => html_output.push_str(&rendered),
                 Err(e) => {
@@ -230,20 +230,20 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
                     html_output.push_str("<code class=\"math-error\">");
                     html_output.push_str(&html_escape(&latex));
                     html_output.push_str("</code>");
-                }
+                },
             },
             Event::DisplayMath(latex) => match crate::math::render_math(&latex, true) {
                 Ok(rendered) => {
                     html_output.push_str("<div class=\"math-display\">\n");
                     html_output.push_str(&rendered);
                     html_output.push_str("\n</div>\n");
-                }
+                },
                 Err(e) => {
                     eprintln!("math render error: {e}");
                     html_output.push_str("<pre class=\"math-error\">");
                     html_output.push_str(&html_escape(&latex));
                     html_output.push_str("</pre>\n");
-                }
+                },
             },
         }
     }
@@ -274,7 +274,7 @@ fn start_tag_to_html(tag: &Tag) -> String {
         Tag::Item => "<li>".to_string(),
         Tag::FootnoteDefinition(name) => {
             format!("<div class=\"footnote\" id=\"fn-{}\">", name)
-        }
+        },
         Tag::Table(_) => "<table>\n".to_string(),
         Tag::TableHead => "<thead>\n<tr>\n".to_string(),
         Tag::TableRow => "<tr>\n".to_string(),
@@ -294,7 +294,7 @@ fn start_tag_to_html(tag: &Tag) -> String {
                     html_escape(title)
                 )
             }
-        }
+        },
         Tag::Image { .. } => String::new(), // Handled separately in main loop
         Tag::HtmlBlock => String::new(),
         Tag::MetadataBlock(_) => String::new(),
@@ -316,7 +316,7 @@ fn end_tag_to_html(tag: &TagEnd) -> String {
             } else {
                 "</ul>\n".to_string()
             }
-        }
+        },
         TagEnd::Item => "</li>\n".to_string(),
         TagEnd::FootnoteDefinition => "</div>\n".to_string(),
         TagEnd::Table => "</table>\n".to_string(),

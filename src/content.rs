@@ -1,7 +1,7 @@
 //! Content discovery and frontmatter parsing.
 
 use crate::error::{Error, Result};
-use gray_matter::{engine::YAML, Matter};
+use gray_matter::{Matter, engine::YAML};
 use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -116,12 +116,12 @@ impl Content {
                 // _index.md → parent/index.html (listing pages stay as index.html)
                 let parent = relative.parent().unwrap_or(Path::new(""));
                 parent.join("index.html")
-            }
+            },
             _ => {
                 // Regular content → parent/slug.html (flat structure)
                 let parent = relative.parent().unwrap_or(Path::new(""));
                 parent.join(format!("{}.html", self.slug))
-            }
+            },
         }
     }
 }

@@ -215,7 +215,7 @@ fn strip_parens_filter(value: &Value, _args: &HashMap<String, Value>) -> tera::R
                 s.clone()
             };
             Ok(Value::String(result))
-        }
+        },
         _ => Ok(value.clone()),
     }
 }

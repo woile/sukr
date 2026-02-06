@@ -2,7 +2,7 @@
 //!
 //! Converts LaTeX math expressions to HTML at build-time.
 
-use katex::{render_to_string, KatexContext, Settings};
+use katex::{KatexContext, Settings, render_to_string};
 
 /// Render a LaTeX math expression to HTML.
 ///

@@ -52,13 +52,13 @@ impl fmt::Display for Error {
         match self {
             Error::ReadFile { path, source } => {
                 write!(f, "failed to read {}: {}", path.display(), source)
-            }
+            },
             Error::Frontmatter { path, message } => {
                 write!(f, "invalid frontmatter in {}: {}", path.display(), message)
-            }
+            },
             Error::WriteFile { path, source } => {
                 write!(f, "failed to write {}: {}", path.display(), source)
-            }
+            },
             Error::CreateDir { path, source } => {
                 write!(
                     f,
@@ -66,17 +66,17 @@ impl fmt::Display for Error {
                     path.display(),
                     source
                 )
-            }
+            },
             Error::ContentDirNotFound(path) => {
                 write!(f, "content directory not found: {}", path.display())
-            }
+            },
             Error::Config { path, message } => {
                 write!(f, "invalid config in {}: {}", path.display(), message)
-            }
+            },
             Error::TemplateLoad(e) => write!(f, "failed to load templates: {}", e),
             Error::TemplateRender { template, .. } => {
                 write!(f, "failed to render template '{}'", template)
-            }
+            },
             Error::CssBundle(msg) => write!(f, "CSS bundle error: {}", msg),
         }
     }

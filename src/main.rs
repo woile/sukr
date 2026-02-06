@@ -45,12 +45,12 @@ fn main() {
                 }
                 std::process::exit(1);
             }
-        }
-        Ok(None) => {} // --help was printed
+        },
+        Ok(None) => {}, // --help was printed
         Err(e) => {
             eprintln!("error: {e}");
             std::process::exit(1);
-        }
+        },
     }
 }
 
@@ -65,17 +65,17 @@ fn parse_args() -> std::result::Result<Option<PathBuf>, String> {
             "-h" | "--help" => {
                 print!("{USAGE}");
                 return Ok(None);
-            }
+            },
             "-c" | "--config" => {
                 if i + 1 >= args.len() {
                     return Err("--config requires an argument".to_string());
                 }
                 config_path = PathBuf::from(&args[i + 1]);
                 i += 2;
-            }
+            },
             arg => {
                 return Err(format!("unknown argument: {arg}"));
-            }
+            },
         }
     }
 
@@ -118,7 +118,7 @@ fn run(config_path: &Path) -> Result<()> {
             "blog" => {
                 // Blog: sort by date, newest first
                 items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
-            }
+            },
             "projects" => {
                 // Projects: sort by weight
                 items.sort_by(|a, b| {
@@ -127,7 +127,7 @@ fn run(config_path: &Path) -> Result<()> {
                         .unwrap_or(DEFAULT_WEIGHT_HIGH)
                         .cmp(&b.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT_HIGH))
                 });
-            }
+            },
             _ => {
                 // Default: sort by weight then title
                 items.sort_by(|a, b| {
@@ -137,7 +137,7 @@ fn run(config_path: &Path) -> Result<()> {
                         .cmp(&b.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT))
                         .then_with(|| a.frontmatter.title.cmp(&b.frontmatter.title))
                 });
-            }
+            },
         }
 
         // Render individual content pages for all sections

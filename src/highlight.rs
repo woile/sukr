@@ -541,7 +541,7 @@ impl LanguageLoader for SukrLoader {
             InjectionLanguageMarker::Match(text) => text.into(),
             InjectionLanguageMarker::Filename(_) | InjectionLanguageMarker::Shebang(_) => {
                 return None;
-            }
+            },
         };
         self.name_to_lang
             .get(name.to_lowercase().as_str())
@@ -618,7 +618,7 @@ fn render_html<'a>(source: &str, mut highlighter: Highlighter<'a, 'a, SukrLoader
                     html.push_str(class);
                     html.push_str("\">");
                 }
-            }
+            },
         }
     }
 
