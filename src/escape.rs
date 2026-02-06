@@ -12,7 +12,7 @@ pub fn html_escape(s: &str) -> String {
 /// Escape HTML characters into an existing string.
 ///
 /// This is more efficient when building output incrementally.
-pub fn html_escape_into(out: &mut String, s: &str) {
+fn html_escape_into(out: &mut String, s: &str) {
     for c in s.chars() {
         match c {
             '&' => out.push_str("&amp;"),

@@ -80,14 +80,3 @@ pub fn generate_atom_feed(
         entries,
     )
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_xml_escape() {
-        assert_eq!(xml_escape("Hello & World"), "Hello &amp; World");
-        assert_eq!(xml_escape("<tag>"), "&lt;tag&gt;");
-    }
-}

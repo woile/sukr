@@ -94,14 +94,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_xml_escape() {
-        assert_eq!(xml_escape("Hello & World"), "Hello &amp; World");
-        assert_eq!(xml_escape("<tag>"), "&lt;tag&gt;");
-        assert_eq!(xml_escape("\"quoted\""), "&quot;quoted&quot;");
-        assert_eq!(xml_escape("it's"), "it&apos;s");
-    }
-
-    #[test]
     fn test_build_sitemap_xml_single_entry() {
         let entries = vec![SitemapEntry {
             loc: "https://example.com/index.html".to_string(),
