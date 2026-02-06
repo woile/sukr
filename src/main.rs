@@ -350,12 +350,7 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
         source: e,
     })?;
 
-    for entry in walkdir::WalkDir::new(static_dir)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file())
-    {
-        let src = entry.path();
+    for src in walk_dir(static_dir)? {
         let relative = src.strip_prefix(static_dir).unwrap();
         let dest = output_dir.join(relative);
 
@@ -368,8 +363,8 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
 
         // Bundle CSS files (resolves @imports), copy others directly
         if src.extension().is_some_and(|ext| ext == "css") {
-            let original_size = fs::metadata(src).map(|m| m.len()).unwrap_or(0);
-            let bundled = bundle_css(src).map_err(Error::CssBundle)?;
+            let original_size = fs::metadata(&src).map(|m| m.len()).unwrap_or(0);
+            let bundled = bundle_css(&src).map_err(Error::CssBundle)?;
             fs::write(&dest, &bundled).map_err(|e| Error::WriteFile {
                 path: dest.clone(),
                 source: e,
@@ -382,11 +377,36 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
                 bundled.len()
             );
         } else {
-            fs::copy(src, &dest).map_err(|e| Error::WriteFile {
+            fs::copy(&src, &dest).map_err(|e| Error::WriteFile {
                 path: dest.clone(),
                 source: e,
             })?;
             eprintln!("copying: {} → {}", src.display(), dest.display());
+        }
+    }
+
+    Ok(())
+}
+
+/// Recursively walk a directory, returning all file paths.
+fn walk_dir(dir: &Path) -> Result<Vec<PathBuf>> {
+    let mut files = Vec::new();
+    walk_dir_inner(dir, &mut files)?;
+    Ok(files)
+}
+
+fn walk_dir_inner(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
+    let entries = fs::read_dir(dir).map_err(|e| Error::ReadFile {
+        path: dir.to_path_buf(),
+        source: e,
+    })?;
+
+    for entry in entries.filter_map(|e| e.ok()) {
+        let path = entry.path();
+        if path.is_dir() {
+            walk_dir_inner(&path, files)?;
+        } else if path.is_file() {
+            files.push(path);
         }
     }
 
