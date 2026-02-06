@@ -8,7 +8,6 @@ version     = "0.1.0"
 [dependencies]
 gray_matter    = "0.2"
 pulldown-cmark = "0.12"
-thiserror      = "2"
 walkdir        = "2"
 
 # Syntax highlighting

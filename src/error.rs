@@ -1,61 +1,98 @@
 //! Custom error types for the sukr compiler.
 
+use std::error::Error as StdError;
+use std::fmt;
 use std::path::PathBuf;
 
 /// All errors that can occur during site compilation.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
     /// Failed to read a content file.
-    #[error("failed to read {path}: {source}")]
     ReadFile {
         path: PathBuf,
-        #[source]
         source: std::io::Error,
     },
 
     /// Failed to parse frontmatter.
-    #[error("invalid frontmatter in {path}: {message}")]
     Frontmatter { path: PathBuf, message: String },
 
     /// Failed to write output file.
-    #[error("failed to write {path}: {source}")]
     WriteFile {
         path: PathBuf,
-        #[source]
         source: std::io::Error,
     },
 
     /// Failed to create output directory.
-    #[error("failed to create directory {path}: {source}")]
     CreateDir {
         path: PathBuf,
-        #[source]
         source: std::io::Error,
     },
 
     /// Content directory not found.
-    #[error("content directory not found: {0}")]
     ContentDirNotFound(PathBuf),
 
     /// Failed to parse configuration file.
-    #[error("invalid config in {path}: {message}")]
     Config { path: PathBuf, message: String },
 
     /// Failed to load templates.
-    #[error("failed to load templates: {0}")]
-    TemplateLoad(#[source] tera::Error),
+    TemplateLoad(tera::Error),
 
     /// Failed to render template.
-    #[error("failed to render template '{template}'")]
     TemplateRender {
         template: String,
-        #[source]
         source: tera::Error,
     },
 
     /// Failed to bundle CSS.
-    #[error("CSS bundle error: {0}")]
     CssBundle(String),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::ReadFile { path, source } => {
+                write!(f, "failed to read {}: {}", path.display(), source)
+            }
+            Error::Frontmatter { path, message } => {
+                write!(f, "invalid frontmatter in {}: {}", path.display(), message)
+            }
+            Error::WriteFile { path, source } => {
+                write!(f, "failed to write {}: {}", path.display(), source)
+            }
+            Error::CreateDir { path, source } => {
+                write!(
+                    f,
+                    "failed to create directory {}: {}",
+                    path.display(),
+                    source
+                )
+            }
+            Error::ContentDirNotFound(path) => {
+                write!(f, "content directory not found: {}", path.display())
+            }
+            Error::Config { path, message } => {
+                write!(f, "invalid config in {}: {}", path.display(), message)
+            }
+            Error::TemplateLoad(e) => write!(f, "failed to load templates: {}", e),
+            Error::TemplateRender { template, .. } => {
+                write!(f, "failed to render template '{}'", template)
+            }
+            Error::CssBundle(msg) => write!(f, "CSS bundle error: {}", msg),
+        }
+    }
+}
+
+impl StdError for Error {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        match self {
+            Error::ReadFile { source, .. } => Some(source),
+            Error::WriteFile { source, .. } => Some(source),
+            Error::CreateDir { source, .. } => Some(source),
+            Error::TemplateLoad(e) => Some(e),
+            Error::TemplateRender { source, .. } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 /// Result type alias for compiler operations.
