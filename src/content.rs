@@ -1,8 +1,8 @@
 //! Content discovery and frontmatter parsing.
 
 use crate::error::{Error, Result};
-use gray_matter::{Matter, engine::YAML};
 use serde::Serialize;
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -82,10 +82,8 @@ impl Content {
             source: e,
         })?;
 
-        let matter = Matter::<YAML>::new();
-        let parsed = matter.parse(&raw);
-
-        let frontmatter = parse_frontmatter(path, &parsed)?;
+        let (yaml_block, body) = extract_frontmatter(&raw, path)?;
+        let frontmatter = parse_frontmatter(path, &yaml_block)?;
 
         // Derive slug from filename (without extension)
         let slug = path
@@ -97,7 +95,7 @@ impl Content {
         Ok(Content {
             kind,
             frontmatter,
-            body: parsed.content,
+            body,
             source_path: path.to_path_buf(),
             slug,
         })
@@ -126,64 +124,102 @@ impl Content {
     }
 }
 
-fn parse_frontmatter(path: &Path, parsed: &gray_matter::ParsedEntity) -> Result<Frontmatter> {
-    let data = parsed.data.as_ref().ok_or_else(|| Error::Frontmatter {
-        path: path.to_path_buf(),
-        message: "missing frontmatter".to_string(),
-    })?;
+/// Extract YAML frontmatter block and body from raw content.
+/// Frontmatter must be delimited by `---` at start and end.
+fn extract_frontmatter(raw: &str, path: &Path) -> Result<(String, String)> {
+    let trimmed = raw.trim_start();
 
-    let pod = data.as_hashmap().map_err(|_| Error::Frontmatter {
-        path: path.to_path_buf(),
-        message: "frontmatter is not a valid map".to_string(),
-    })?;
+    if !trimmed.starts_with("---") {
+        return Err(Error::Frontmatter {
+            path: path.to_path_buf(),
+            message: "missing frontmatter delimiter".to_string(),
+        });
+    }
 
-    let title = pod
+    // Find the closing ---
+    let after_first = &trimmed[3..].trim_start_matches(['\r', '\n']);
+    let end_idx = after_first
+        .find("\n---")
+        .ok_or_else(|| Error::Frontmatter {
+            path: path.to_path_buf(),
+            message: "missing closing frontmatter delimiter".to_string(),
+        })?;
+
+    let yaml_block = after_first[..end_idx].to_string();
+    let body = after_first[end_idx + 4..].trim_start().to_string();
+
+    Ok((yaml_block, body))
+}
+
+/// Parse simple YAML frontmatter into structured fields.
+/// Supports: key: value, key: "quoted value", and nested taxonomies.tags
+fn parse_frontmatter(path: &Path, yaml: &str) -> Result<Frontmatter> {
+    let mut map: HashMap<String, String> = HashMap::new();
+    let mut tags: Vec<String> = Vec::new();
+    let mut in_taxonomies = false;
+    let mut in_tags = false;
+
+    for line in yaml.lines() {
+        let trimmed = line.trim();
+
+        // Skip empty lines and comments
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+
+        // Handle nested structure for taxonomies.tags
+        if trimmed == "taxonomies:" {
+            in_taxonomies = true;
+            continue;
+        }
+
+        if in_taxonomies && trimmed == "tags:" {
+            in_tags = true;
+            continue;
+        }
+
+        // Collect tag list items
+        if in_tags && trimmed.starts_with("- ") {
+            let tag = trimmed[2..].trim().trim_matches('"').to_string();
+            tags.push(tag);
+            continue;
+        }
+
+        // Exit nested context on non-indented line
+        if !line.starts_with(' ') && !line.starts_with('\t') {
+            in_taxonomies = false;
+            in_tags = false;
+        }
+
+        // Parse key: value
+        if let Some((key, value)) = trimmed.split_once(':') {
+            let key = key.trim().to_string();
+            let value = value.trim().trim_matches('"').to_string();
+            if !value.is_empty() {
+                map.insert(key, value);
+            }
+        }
+    }
+
+    let title = map
         .get("title")
-        .and_then(|v| v.as_string().ok())
+        .cloned()
         .ok_or_else(|| Error::Frontmatter {
             path: path.to_path_buf(),
             message: "missing required 'title' field".to_string(),
         })?;
 
-    let description = pod.get("description").and_then(|v| v.as_string().ok());
-    let date = pod.get("date").and_then(|v| v.as_string().ok());
-    let weight = pod.get("weight").and_then(|v| v.as_i64().ok());
-    let link_to = pod.get("link_to").and_then(|v| v.as_string().ok());
-    let nav_label = pod.get("nav_label").and_then(|v| v.as_string().ok());
-    let section_type = pod.get("section_type").and_then(|v| v.as_string().ok());
-    let template = pod.get("template").and_then(|v| v.as_string().ok());
-    let toc = pod.get("toc").and_then(|v| v.as_bool().ok());
-
-    // Handle nested taxonomies.tags structure
-    let tags = if let Some(taxonomies) = pod.get("taxonomies") {
-        if let Ok(tax_map) = taxonomies.as_hashmap() {
-            if let Some(tags_pod) = tax_map.get("tags") {
-                if let Ok(tags_vec) = tags_pod.as_vec() {
-                    tags_vec.iter().filter_map(|v| v.as_string().ok()).collect()
-                } else {
-                    Vec::new()
-                }
-            } else {
-                Vec::new()
-            }
-        } else {
-            Vec::new()
-        }
-    } else {
-        Vec::new()
-    };
-
     Ok(Frontmatter {
         title,
-        description,
-        date,
+        description: map.get("description").cloned(),
+        date: map.get("date").cloned(),
         tags,
-        weight,
-        link_to,
-        nav_label,
-        section_type,
-        template,
-        toc,
+        weight: map.get("weight").and_then(|v| v.parse().ok()),
+        link_to: map.get("link_to").cloned(),
+        nav_label: map.get("nav_label").cloned(),
+        section_type: map.get("section_type").cloned(),
+        template: map.get("template").cloned(),
+        toc: map.get("toc").and_then(|v| v.parse().ok()),
     })
 }
 
