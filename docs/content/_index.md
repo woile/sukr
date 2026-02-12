@@ -3,7 +3,7 @@ title: sukr
 description: Minimal static site compiler — suckless, Rust, zero JS
 ---
 
-# Welcome to sukr
+# sukr
 
 **sukr** transforms Markdown into high-performance static HTML. No bloated runtimes, no client-side JavaScript, just clean output.
 
@@ -17,24 +17,13 @@ Most static site generators punt rich content to the browser. sukr doesn't.
 - **Flexible templates** — Runtime Tera templates, no recompilation needed.
 - **Monorepo-ready** — Multiple sites via `-c` config flag.
 
-## Quick Start
+Ready to try it? Start with the [Getting Started](getting-started.html) guide.
 
-```bash
-# Install
-git clone https://github.com/nrdxp/sukr
-cd sukr
-cargo install --path .
+## Learn More
 
-# Create site structure
-mkdir -p content templates static
-echo 'title = "My Site"' > site.toml
-echo 'author = "Me"' >> site.toml
-echo 'base_url = "https://example.com"' >> site.toml
+- [Getting Started](getting-started.html) — install sukr and build your first site
+- [Configuration](configuration.html) — `site.toml` reference and CLI options
+- [Content Organization](content-organization.html) — how directories map to site structure
+- [Architecture](architecture.html) — how sukr works under the hood
 
-# Build
-sukr
-```
-
-## Documentation
-
-Browse the sidebar for detailed documentation on all features.
+Browse the **Features** section in the sidebar for syntax highlighting, math, diagrams, and more.

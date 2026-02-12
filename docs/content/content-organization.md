@@ -42,6 +42,22 @@ A section is any directory containing `_index.md`. This file:
 
 Directories without `_index.md` are ignored.
 
+## Section Discovery
+
+sukr automatically discovers sections during the build:
+
+1. Scans `content/` for directories containing `_index.md`
+2. Collects all `.md` files in that directory (excluding `_index.md`)
+3. Renders the section index template with the collected items
+4. Renders individual content pages (for blog-type sections)
+
+The **section type** determines which template renders the index. It resolves in order:
+
+1. **Frontmatter override** — `section_type: blog` in the section's `_index.md`
+2. **Directory name** — `content/blog/` becomes type `blog`
+
+For the full section type reference (built-in types, frontmatter fields, and template dispatch), see [Sections](features/sections.html).
+
 ## Navigation Generation
 
 Navigation builds automatically from:

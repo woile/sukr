@@ -1,39 +1,14 @@
 ---
 title: Sections
-description: Automatic section discovery and processing
+description: Section types, frontmatter, and template dispatch reference
 weight: 2
 ---
 
-sukr automatically discovers sections from your content directory structure.
-
-## What is a Section?
-
-A section is any directory under `content/` that contains an `_index.md` file:
-
-```text
-content/
-├── _index.md           # Homepage (not a section)
-├── about.md            # Standalone page
-├── blog/               # ← This is a section
-│   ├── _index.md       # Section index
-│   └── my-post.md      # Section content
-└── projects/           # ← This is also a section
-    ├── _index.md
-    └── project-a.md
-```
-
-## Section Discovery
-
-sukr automatically:
-
-1. Scans `content/` for directories with `_index.md`
-2. Collects all `.md` files in that directory (excluding `_index.md`)
-3. Renders the section index template with the items
-4. Renders individual content pages (for blog-type sections)
+sukr discovers sections from your content directory structure. For an explanation of how sections work and how directories map to site structure, see [Content Organization](../content-organization.html).
 
 ## Section Types
 
-The section type determines which template is used. It's resolved in order:
+The section type determines which template is used. It resolves in order:
 
 1. **Frontmatter override**: `section_type: blog` in `_index.md`
 2. **Directory name**: `content/blog/` → type `blog`

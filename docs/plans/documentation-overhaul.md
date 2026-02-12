@@ -70,9 +70,9 @@ None. All CHALLENGE questions resolved.
    - [x] Add "view your site" final step to `getting-started.md` with expected output
 
 2. **Phase 2: Structural Rework** — every page declares one quadrant, serves one audience
-   - [ ] Rewrite `_index.md` as explanation quadrant (what sukr is, why it exists, link to tutorial)
-   - [ ] Slim `features/sections.md` to reference-only (section_type field, template dispatch)
-   - [ ] Move explanation content from `sections.md` into `content-organization.md`
+   - [x] Rewrite `_index.md` as explanation quadrant (what sukr is, why it exists, link to tutorial)
+   - [x] Slim `features/sections.md` to reference-only (section_type field, template dispatch)
+   - [x] Move explanation content from `sections.md` into `content-organization.md`
    - [ ] Add link to upstream Tera docs in `features/templates.md`
    - [ ] Add defaults column to frontmatter table in `configuration.md`
    - [ ] Add "Theming" section to `syntax-highlighting.md` (choosing/customizing themes)
