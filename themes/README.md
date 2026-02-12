@@ -23,78 +23,12 @@ Helix is licensed under the Mozilla Public License 2.0 (MPL-2.0). We are gratefu
 | `rose_pine.css`        | Elegant soho-inspired theme  |
 | `onedark.css`          | Classic Atom editor theme    |
 
-## Usage
+## Theme Structure
 
-1. **Copy a theme** to your project's static directory
-2. **Import it** in your main CSS file:
+Each theme defines CSS custom properties in `:root` and maps them to hierarchical `.hl-*` classes. Copy a theme to your project's static directory and import it in your CSS.
 
-```css
-@import "themes/dracula.css";
-```
-
-sukr uses [lightningcss](https://lightningcss.dev/) which bundles `@import` rules at build time—your final CSS will be a single minified file.
-
-## Customization
-
-Themes use CSS custom properties for easy customization. Override any variable in your own CSS:
-
-```css
-@import "themes/dracula.css";
-
-/* Override just the keyword color */
-:root {
-  --hl-keyword: #e879f9;
-}
-```
-
-### Core Variables
-
-All themes define these variables in `:root`:
-
-| Variable        | Description            |
-| --------------- | ---------------------- |
-| `--hl-keyword`  | Keywords, control flow |
-| `--hl-string`   | String literals        |
-| `--hl-function` | Function names         |
-| `--hl-comment`  | Comments               |
-| `--hl-type`     | Type names             |
-| `--hl-number`   | Numeric literals       |
-| `--hl-variable` | Variables              |
-| `--hl-operator` | Operators              |
-
-## Hierarchical Scopes
-
-sukr generates **hierarchical CSS classes** for fine-grained styling:
-
-```html
-<span class="hl-keyword-control-return">return</span>
-```
-
-Themes can style at any level of specificity:
-
-```css
-/* All keywords */
-.hl-keyword {
-  color: var(--hl-keyword);
-}
-
-/* Just control-flow keywords */
-.hl-keyword-control {
-  color: #ff79c6;
-}
-
-/* Just return/break/continue */
-.hl-keyword-control-return {
-  font-weight: bold;
-}
-```
-
-If a specific class isn't styled, highlighting falls back up the hierarchy.
-
-## Creating Custom Themes
-
-Start with any theme (e.g., `dracula.css`) and modify the `:root` variables to create your own color scheme. The class rules reference these variables, so changing values updates the entire theme.
+For usage, customization, and the full list of CSS variables, see the [Syntax Highlighting docs](https://sukr.io/features/syntax-highlighting.html).
 
 ## Note
 
-These themes are **not bundled into the sukr binary**—they're provided as starting points. Copy what you need to your project and customize to match your site's design.
+These themes are **not bundled into the sukr binary** — they're provided as starting points. Copy what you need to your project and customize to match your site's design.

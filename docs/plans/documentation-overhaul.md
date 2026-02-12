@@ -83,11 +83,11 @@ None. All CHALLENGE questions resolved.
    - [x] Update `getting-started.md` "Next Steps" to include deployment
 
 4. **Phase 4: README + Cross-references** — README serves as focused explanation, cross-links established
-   - [ ] Restructure `README.md` to explanation quadrant (what, why, how it compares)
-   - [ ] Remove duplicated comparison table (link to docs site `comparison.md`)
-   - [ ] Remove inline config reference (link to docs site `configuration.md`)
-   - [ ] Keep security overview (short, relevant for trust evaluation)
-   - [ ] Trim `themes/README.md` to attribution + structure + link to docs site (targeted exception)
+   - [x] Restructure `README.md` to explanation quadrant (what, why, how it compares)
+   - [x] Remove duplicated comparison table (link to docs site `comparison.md`)
+   - [x] Remove inline config reference (link to docs site `configuration.md`)
+   - [x] Keep security overview (short, relevant for trust evaluation)
+   - [x] Trim `themes/README.md` to attribution + structure + link to docs site (targeted exception)
    - [ ] Add cross-references between docs pages where missing
 
 ## Verification

@@ -15,97 +15,35 @@ Most static site generators punt rich content to the browser. sukr doesn't.
 - **Tree-sitter syntax highlighting** — Proper parsing, not regex. Supports language injection (Nix shells, HTML scripts).
 - **Build-time math** — KaTeX renders LaTeX to static HTML. No 300KB JavaScript bundle.
 - **Build-time diagrams** — Mermaid compiles to inline SVG. Diagrams load instantly.
+- **Tera templates** — Customize layouts without recompiling.
+- **Monorepo support** — Multiple sites via `-c` flag.
 
-## Features
-
-- **Syntax highlighting** — Tree-sitter with language injection (Nix→Bash, HTML→JS/CSS)
-- **Math rendering** — LaTeX to HTML via KaTeX at build time
-- **Mermaid diagrams** — Rendered to inline SVG, no client JS
-- **Tera templates** — Customize without recompiling
-- **Hierarchical navigation** — Nested sections with table of contents
-- **Atom feeds** — Auto-generated for blog sections
-- **Sitemap** — SEO-ready XML sitemap
-- **CSS minification** — LightningCSS optimization
-- **Monorepo support** — Multiple sites via `-c` flag
-
-## Comparison
-
-| Feature             |    sukr     |  Zola   |  Hugo  | Eleventy |
-| :------------------ | :---------: | :-----: | :----: | :------: |
-| Syntax Highlighting | Tree-sitter | syntect | Chroma | Plugins  |
-| Build-time Math     |     ✅      |   ❌    |   ❌   |  Plugin  |
-| Build-time Diagrams |     ✅      |   ❌    |   ❌   |  Plugin  |
-| Zero JS Output      |     ✅      |   ❌    |   ❌   | Optional |
-| Single Binary       |     ✅      |   ✅    |   ✅   |    ❌    |
-
-See the [full comparison](https://sukr.io/comparison.html) for details.
+See the [full feature comparison](https://sukr.io/comparison.html) with Zola, Hugo, and Eleventy.
 
 ## Quick Start
 
 ```bash
-# Build
 cargo build --release
-
-# Run (uses ./site.toml)
-sukr
-
-# Custom config (monorepo)
-sukr -c docs/site.toml
+sukr                         # Build with ./site.toml
+sukr -c docs/site.toml       # Custom config (monorepo)
 ```
 
-## Configuration
-
-Create `site.toml`:
-
-```toml
-title    = "My Site"
-author   = "Your Name"
-base_url = "https://example.com"
-
-[paths]  # All optional, defaults shown
-content   = "content"
-output    = "public"
-static    = "static"
-templates = "templates"
-
-[nav]  # Optional
-nested = false  # Show section children in nav
-toc    = false  # Enable table of contents
-```
-
-## Content Structure
-
-```
-content/
-├── _index.md              # Homepage
-├── getting-started.md     # Page → /getting-started.html
-├── configuration.md       # Page → /configuration.html
-└── features/
-    ├── _index.md          # Section index → /features/index.html
-    └── templates.md       # Page → /features/templates.html
-...
-```
-
-## Documentation
-
-Full documentation at [sukr.io](https://sukr.io) (built with sukr).
+See the [Getting Started guide](https://sukr.io/getting-started.html) for installation and first-site setup, [Configuration](https://sukr.io/configuration.html) for `site.toml` options, and [Content Organization](https://sukr.io/content-organization.html) for directory layout.
 
 ## Security
 
 sukr processes content at **build time only** — there is no runtime attack surface.
 
-**Trust Model:**
-
 - **Untrusted:** Markdown content, frontmatter, third-party templates
 - **Trusted:** The compiled sukr binary, Tree-sitter grammars
 
-**Security Implications:**
+Raw HTML in Markdown is passed through per CommonMark spec — review content from untrusted sources before building. Templates use Tera's auto-escaping by default.
 
-- Raw HTML in Markdown is passed through (CommonMark spec). If your content comes from untrusted sources, review it before building.
-- URLs in links and images are escaped to prevent attribute injection.
-- Templates use Tera's auto-escaping for variables; `{{ content | safe }}` is used intentionally for pre-rendered HTML.
+For deployment security (CSP headers, platform configs), see the [Security docs](https://sukr.io/security.html).
 
-For deployment-time security (CSP headers, etc.), see the [Security docs](https://sukr.io/security.html).
+## Documentation
+
+Full documentation at [sukr.io](https://sukr.io) (built with sukr).
 
 ## License
 
