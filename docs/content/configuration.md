@@ -88,18 +88,18 @@ link_to: https://... # External link (for project cards)
 
 ### Frontmatter Fields
 
-| Field          | Type    | Description                                    |
-| -------------- | ------- | ---------------------------------------------- |
-| `title`        | string  | Page title (required)                          |
-| `description`  | string  | Meta description                               |
-| `date`         | string  | Publication date (YYYY-MM-DD)                  |
-| `weight`       | integer | Sort order (lower = first, default 50)         |
-| `nav_label`    | string  | Override navigation label (defaults to title)  |
-| `section_type` | string  | Template dispatch (e.g., "blog", "projects")   |
-| `template`     | string  | Custom template path                           |
-| `toc`          | boolean | Enable/disable table of contents for this page |
-| `link_to`      | string  | External URL (renders as link instead of page) |
-| `tags`         | list    | Tags for categorization                        |
+| Field          | Type    | Default        | Description                                    |
+| -------------- | ------- | -------------- | ---------------------------------------------- |
+| `title`        | string  | _(required)_   | Page title                                     |
+| `description`  | string  | _(none)_       | Meta description                               |
+| `date`         | string  | _(none)_       | Publication date (YYYY-MM-DD)                  |
+| `weight`       | integer | `50`           | Sort order (lower = first)                     |
+| `nav_label`    | string  | title          | Override navigation label                      |
+| `section_type` | string  | directory name | Template dispatch (e.g., "blog", "projects")   |
+| `template`     | string  | _(none)_       | Custom template name                           |
+| `toc`          | boolean | global setting | Enable/disable table of contents for this page |
+| `link_to`      | string  | _(none)_       | External URL (renders as link instead of page) |
+| `tags`         | list    | `[]`           | Tags for categorization                        |
 
 ### Section Types
 

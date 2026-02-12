@@ -4,7 +4,7 @@ description: Customizable templates without recompilation
 weight: 1
 ---
 
-sukr uses [Tera](https://tera.netlify.app/), a Jinja2-like templating engine. Templates are loaded at runtime, so you can modify them without recompiling sukr.
+sukr uses [Tera](https://keats.github.io/tera/), a Jinja2-like templating engine. Templates are loaded at runtime, so you can modify them without recompiling sukr. See the [Tera documentation](https://keats.github.io/tera/docs/) for template authoring syntax (filters, blocks, inheritance).
 
 ## Template Directory Structure
 

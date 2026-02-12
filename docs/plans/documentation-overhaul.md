@@ -73,9 +73,9 @@ None. All CHALLENGE questions resolved.
    - [x] Rewrite `_index.md` as explanation quadrant (what sukr is, why it exists, link to tutorial)
    - [x] Slim `features/sections.md` to reference-only (section_type field, template dispatch)
    - [x] Move explanation content from `sections.md` into `content-organization.md`
-   - [ ] Add link to upstream Tera docs in `features/templates.md`
-   - [ ] Add defaults column to frontmatter table in `configuration.md`
-   - [ ] Add "Theming" section to `syntax-highlighting.md` (choosing/customizing themes)
+   - [x] Add link to upstream Tera docs in `features/templates.md`
+   - [x] Add defaults column to frontmatter table in `configuration.md`
+   - [x] Add "Theming" section to `syntax-highlighting.md` (choosing/customizing themes)
 
 3. **Phase 3: Fill Content Gaps** — cover Deploy and Customize stages of user journey
    - [ ] Create `docs/content/deployment.md` (how-to: generic static host deployment + platform links)

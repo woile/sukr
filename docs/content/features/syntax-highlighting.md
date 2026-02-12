@@ -205,6 +205,36 @@ sukr includes several themes in the `themes/` directory:
 
 Copy the theme files to your project and import as shown above.
 
+### Core Variables
+
+All themes define these CSS custom properties in `:root`:
+
+| Variable        | Description            |
+| --------------- | ---------------------- |
+| `--hl-keyword`  | Keywords, control flow |
+| `--hl-string`   | String literals        |
+| `--hl-function` | Function names         |
+| `--hl-comment`  | Comments               |
+| `--hl-type`     | Type names             |
+| `--hl-number`   | Numeric literals       |
+| `--hl-variable` | Variables              |
+| `--hl-operator` | Operators              |
+
+### Customizing a Theme
+
+Import a theme, then override specific variables in your own CSS:
+
+```css
+@import "themes/dracula.css";
+
+/* Override just the keyword color */
+:root {
+  --hl-keyword: #e879f9;
+}
+```
+
+Changing a variable updates every scope that references it.
+
 ### Theme Structure
 
 Themes use CSS custom properties for easy customization:
