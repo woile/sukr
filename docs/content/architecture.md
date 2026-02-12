@@ -68,12 +68,12 @@ This pattern avoids buffering the entire document. Each code block is processed 
 
 Traditional SSGs ship JavaScript for:
 
-| Feature             | Typical Approach       | sukr Approach                                     |
-| :------------------ | :--------------------- | :------------------------------------------------ |
-| Syntax highlighting | Prism.js, Highlight.js | Tree-sitter at build-time → `<span class="hl-*">` |
-| Math rendering      | MathJax, KaTeX.js      | KaTeX at build-time → MathML (browser-native)     |
-| Diagrams            | Mermaid.js             | mermaid-rs at build-time → inline SVG             |
-| Mobile nav          | JavaScript toggle      | CSS `:has()` + checkbox hack                      |
+| Feature                                                  | Typical Approach       | sukr Approach                                     |
+| :------------------------------------------------------- | :--------------------- | :------------------------------------------------ |
+| [Syntax highlighting](features/syntax-highlighting.html) | Prism.js, Highlight.js | Tree-sitter at build-time → `<span class="hl-*">` |
+| [Math rendering](features/math.html)                     | MathJax, KaTeX.js      | KaTeX at build-time → MathML (browser-native)     |
+| [Diagrams](features/mermaid.html)                        | Mermaid.js             | mermaid-rs at build-time → inline SVG             |
+| Mobile nav                                               | JavaScript toggle      | CSS `:has()` + checkbox hack                      |
 
 The result: **zero bytes of JavaScript** in the output. Pages load instantly, work without JS enabled, and avoid the complexity of client-side hydration.
 

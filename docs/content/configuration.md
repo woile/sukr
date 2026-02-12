@@ -1,7 +1,7 @@
 ---
 title: Configuration
 description: Complete reference for site.toml configuration
-weight: 2
+weight: 3
 ---
 
 sukr is configured via `site.toml`. All settings have sensible defaults.
@@ -110,3 +110,9 @@ The `section_type` field determines which template is used for section indexes:
 - _(any other)_ → `templates/section/default.html`
 
 If not specified, sukr uses the directory name as the section type.
+
+## See Also
+
+- [Getting Started](getting-started.html) — install sukr and build your first site
+- [Content Organization](content-organization.html) — how directories map to site structure
+- [Templates](features/templates.html) — template directory structure and customization

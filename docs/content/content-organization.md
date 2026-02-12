@@ -1,7 +1,7 @@
 ---
 title: Content Organization
 description: How the filesystem maps to your site structure
-weight: 1
+weight: 2
 ---
 
 sukr builds your site structure from your `content/` directory. No routing config needed — the filesystem _is_ the config.

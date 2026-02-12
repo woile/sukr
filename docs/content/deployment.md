@@ -4,7 +4,7 @@ description: Deploy your sukr site to any static hosting platform
 weight: 1
 ---
 
-sukr builds your site to `public/`. This directory contains self-contained static HTML, CSS, and assets — no server-side runtime needed. Upload it anywhere that serves static files.
+sukr builds your site to `public/`. This directory contains self-contained static HTML, CSS, and assets — no server-side runtime needed. Upload it anywhere that serves static files. If you haven't built a site yet, start with the [Getting Started](getting-started.html) guide.
 
 ## Local Preview
 

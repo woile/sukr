@@ -88,7 +88,7 @@ None. All CHALLENGE questions resolved.
    - [x] Remove inline config reference (link to docs site `configuration.md`)
    - [x] Keep security overview (short, relevant for trust evaluation)
    - [x] Trim `themes/README.md` to attribution + structure + link to docs site (targeted exception)
-   - [ ] Add cross-references between docs pages where missing
+   - [x] Add cross-references between docs pages where missing
 
 ## Verification
 
@@ -104,7 +104,7 @@ None. All CHALLENGE questions resolved.
 
 | Item                                                                                                                                                            | Severity | Why Introduced                                          | Follow-Up                                                        | Resolved |
 | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------ | :--------------------------------------------------------------- | :------: |
-| `deployment.md` and `content-organization.md` both have weight 1 — alphabetical sort puts Content Org before Deployment in sidebar, suboptimal for user journey | Low      | Changing other page weights was scope creep for Phase 3 | Adjust weights to match Install → Deploy → Organize user journey |    ☐     |
+| `deployment.md` and `content-organization.md` both have weight 1 — alphabetical sort puts Content Org before Deployment in sidebar, suboptimal for user journey | Low      | Changing other page weights was scope creep for Phase 3 | Adjust weights to match Install → Deploy → Organize user journey |    ☑    |
 
 ## Retrospective
 
