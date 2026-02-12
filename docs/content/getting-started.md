@@ -120,6 +120,7 @@ Open `public/index.html` in your browser. You should see your "Hello, World!" pa
 
 ## Next Steps
 
+- [Deployment](deployment.html) — put your site on the web
 - [Configuration](configuration.html) — customize `site.toml` options (paths, navigation, base URL)
 - [Content Organization](content-organization.html) — learn how directories map to site sections
 - [Features](features/index.html) — syntax highlighting, math, diagrams, and more

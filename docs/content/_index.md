@@ -22,6 +22,7 @@ Ready to try it? Start with the [Getting Started](getting-started.html) guide.
 ## Learn More
 
 - [Getting Started](getting-started.html) — install sukr and build your first site
+- [Deployment](deployment.html) — deploy your site to GitHub Pages, Netlify, or any static host
 - [Configuration](configuration.html) — `site.toml` reference and CLI options
 - [Content Organization](content-organization.html) — how directories map to site structure
 - [Architecture](architecture.html) — how sukr works under the hood

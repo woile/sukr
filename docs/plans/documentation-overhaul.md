@@ -78,9 +78,9 @@ None. All CHALLENGE questions resolved.
    - [x] Add "Theming" section to `syntax-highlighting.md` (choosing/customizing themes)
 
 3. **Phase 3: Fill Content Gaps** — cover Deploy and Customize stages of user journey
-   - [ ] Create `docs/content/deployment.md` (how-to: generic static host deployment + platform links)
-   - [ ] Update `_index.md` to cross-link to new deployment page
-   - [ ] Update `getting-started.md` "Next Steps" to include deployment
+   - [x] Create `docs/content/deployment.md` (how-to: generic static host deployment + platform links)
+   - [x] Update `_index.md` to cross-link to new deployment page
+   - [x] Update `getting-started.md` "Next Steps" to include deployment
 
 4. **Phase 4: README + Cross-references** — README serves as focused explanation, cross-links established
    - [ ] Restructure `README.md` to explanation quadrant (what, why, how it compares)
@@ -102,8 +102,9 @@ None. All CHALLENGE questions resolved.
 
 ## Technical Debt
 
-| Item | Severity | Why Introduced | Follow-Up | Resolved |
-| :--- | :------- | :------------- | :-------- | :------: |
+| Item                                                                                                                                                            | Severity | Why Introduced                                          | Follow-Up                                                        | Resolved |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------ | :--------------------------------------------------------------- | :------: |
+| `deployment.md` and `content-organization.md` both have weight 1 — alphabetical sort puts Content Org before Deployment in sidebar, suboptimal for user journey | Low      | Changing other page weights was scope creep for Phase 3 | Adjust weights to match Install → Deploy → Organize user journey |    ☐     |
 
 ## Retrospective
 
