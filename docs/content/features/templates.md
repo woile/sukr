@@ -102,4 +102,4 @@ template: special
 ---
 ```
 
-This uses `templates/page/special.html` instead of the default.
+This uses `templates/content/special.html` instead of the default.

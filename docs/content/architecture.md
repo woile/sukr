@@ -5,7 +5,7 @@ weight: 5
 toc: true
 ---
 
-Sukr is a 13-module static site compiler. Every feature that would typically require client-side JavaScript is moved to build-time.
+sukr is a 13-module static site compiler. Every feature that would typically require client-side JavaScript is moved to build-time.
 
 ## Pipeline Overview
 
@@ -68,7 +68,7 @@ This pattern avoids buffering the entire document. Each code block is processed 
 
 Traditional SSGs ship JavaScript for:
 
-| Feature             | Typical Approach       | Sukr Approach                                     |
+| Feature             | Typical Approach       | sukr Approach                                     |
 | :------------------ | :--------------------- | :------------------------------------------------ |
 | Syntax highlighting | Prism.js, Highlight.js | Tree-sitter at build-time → `<span class="hl-*">` |
 | Math rendering      | MathJax, KaTeX.js      | KaTeX at build-time → MathML (browser-native)     |
@@ -79,7 +79,7 @@ The result: **zero bytes of JavaScript** in the output. Pages load instantly, wo
 
 ## Static Configuration Pattern
 
-Tree-sitter grammars are expensive to initialize. Sukr uses [tree-house](https://github.com/helix-editor/tree-house) (Helix editor's Tree-sitter integration) with `LazyLock` to create language configurations exactly once:
+Tree-sitter grammars are expensive to initialize. sukr uses [tree-house](https://github.com/helix-editor/tree-house) (Helix editor's Tree-sitter integration) with `LazyLock` to create language configurations exactly once:
 
 ```rust
 /// Create a LanguageConfig for a language with embedded queries.
@@ -121,7 +121,7 @@ This avoids repeated directory scans during template rendering.
 
 ## Implementation Notes
 
-Sukr prioritizes **output quality** over minimal build-time footprint. Current dependency choices reflect this:
+sukr prioritizes **output quality** over minimal build-time footprint. Current dependency choices reflect this:
 
 | Feature  | Library    | Trade-off                                                                |
 | :------- | :--------- | :----------------------------------------------------------------------- |

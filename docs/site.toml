@@ -1,6 +1,6 @@
 author   = "Sukr Contributors"
 base_url = "https://sukr.io"
-title    = "Sukr Documentation"
+title    = "sukr documentation"
 
 [paths]
 content   = "content"
