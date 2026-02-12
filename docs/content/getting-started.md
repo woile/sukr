@@ -59,7 +59,54 @@ This is my site built with sukr.
 
 ### 4. Create templates
 
-Copy the default templates from the sukr repository, or create your own Tera templates.
+Create `templates/base.html`:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }} | {{ config.title }}</title>
+    <link rel="stylesheet" href="{{ prefix }}/style.css" />
+  </head>
+  <body>
+    <main>{% block content %}{% endblock content %}</main>
+  </body>
+</html>
+```
+
+Create `templates/page.html`:
+
+```html
+{% extends "base.html" %} {% block content %}
+<article>
+  <h1>{{ page.title }}</h1>
+  {{ content | safe }}
+</article>
+{% endblock content %}
+```
+
+Create `templates/content/default.html`:
+
+```html
+{% extends "base.html" %} {% block content %}
+<article>
+  <h1>{{ page.title }}</h1>
+  {{ content | safe }}
+</article>
+{% endblock content %}
+```
+
+Your templates directory should look like this:
+
+```text
+templates/
+├── base.html
+├── page.html
+└── content/
+    └── default.html
+```
 
 ### 5. Build
 
@@ -67,9 +114,12 @@ Copy the default templates from the sukr repository, or create your own Tera tem
 sukr
 ```
 
-Your site is now in `public/`.
+### 6. View your site
+
+Open `public/index.html` in your browser. You should see your "Hello, World!" page rendered with the template you created.
 
 ## Next Steps
 
-- Learn about [Configuration](configuration.html)
-- Explore [Features](features/index.html)
+- [Configuration](configuration.html) — customize `site.toml` options (paths, navigation, base URL)
+- [Content Organization](content-organization.html) — learn how directories map to site sections
+- [Features](features/index.html) — syntax highlighting, math, diagrams, and more

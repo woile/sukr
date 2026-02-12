@@ -21,7 +21,9 @@ Most static site generators punt rich content to the browser. sukr doesn't.
 
 ```bash
 # Install
-cargo install sukr
+git clone https://github.com/nrdxp/sukr
+cd sukr
+cargo install --path .
 
 # Create site structure
 mkdir -p content templates static

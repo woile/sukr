@@ -61,13 +61,13 @@ None. All CHALLENGE questions resolved.
 ## Phases
 
 1. **Phase 1: Fix Stale Content** — every factual claim matches reality
-   - [ ] S1: Replace `cargo install sukr` in `_index.md` with `cargo install --path .` after clone
-   - [ ] S4: Replace Step 4 dead-end in `getting-started.md` with inline minimal templates (base.html, page.html, content/default.html)
+   - [x] S1: Replace `cargo install sukr` in `_index.md` with `cargo install --path .` after clone
+   - [x] S4: Replace Step 4 dead-end in `getting-started.md` with inline minimal templates (base.html, page.html, content/default.html)
    - [ ] S5: Normalize "Sukr" → "sukr" in `architecture.md`
    - [ ] S6: Normalize `title` in `docs/site.toml`
    - [ ] S7: Fix template override path in `templates.md` (`page/special.html` → `content/special.html`)
    - [ ] S9: Update copyright in `docs/templates/base.html` (2024 → 2026, or remove if unnecessary for OSS)
-   - [ ] Add "view your site" final step to `getting-started.md` with expected output
+   - [x] Add "view your site" final step to `getting-started.md` with expected output
 
 2. **Phase 2: Structural Rework** — every page declares one quadrant, serves one audience
    - [ ] Rewrite `_index.md` as explanation quadrant (what sukr is, why it exists, link to tutorial)
