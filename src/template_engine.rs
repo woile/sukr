@@ -86,6 +86,9 @@ impl TemplateEngine {
     }
 
     /// Render a section index page (blog index, projects index).
+    ///
+    /// Tries `section/<type>.html` first, falls back to `section/default.html`
+    /// if no type-specific template exists.
     pub fn render_section(
         &self,
         section: &Content,
@@ -95,7 +98,12 @@ impl TemplateEngine {
         config: &SiteConfig,
         nav: &[NavItem],
     ) -> Result<String> {
-        let template = format!("section/{}.html", section_type);
+        let preferred = format!("section/{}.html", section_type);
+        let template = if self.tera.get_template_names().any(|n| n == preferred) {
+            preferred
+        } else {
+            "section/default.html".to_string()
+        };
 
         let mut ctx = self.base_context(page_path, config, nav);
         ctx.insert("title", &section.frontmatter.title);
@@ -114,8 +122,6 @@ impl TemplateEngine {
         ctx.insert("nav", nav);
         ctx.insert("page_path", page_path);
         ctx.insert("prefix", &relative_prefix(page_path));
-        // Trimmed base_url for canonical links
-        ctx.insert("base_url", config.base_url.trim_end_matches('/'));
         ctx
     }
 }
@@ -140,8 +146,17 @@ pub struct ConfigContext {
     pub title: String,
     pub author: String,
     pub base_url: String,
-    /// Whether to display nested navigation
-    pub nested_nav: bool,
+    /// Navigation settings for templates.
+    pub nav: NavContext,
+}
+
+/// Navigation context for templates.
+#[derive(Serialize)]
+pub struct NavContext {
+    /// Whether to display nested navigation.
+    pub nested: bool,
+    /// Whether table of contents is globally enabled.
+    pub toc: bool,
 }
 
 impl From<&SiteConfig> for ConfigContext {
@@ -149,8 +164,11 @@ impl From<&SiteConfig> for ConfigContext {
         Self {
             title: config.title.clone(),
             author: config.author.clone(),
-            base_url: config.base_url.clone(),
-            nested_nav: config.nav.nested,
+            base_url: config.base_url.trim_end_matches('/').to_string(),
+            nav: NavContext {
+                nested: config.nav.nested,
+                toc: config.nav.toc,
+            },
         }
     }
 }
@@ -259,6 +277,8 @@ mod tests {
                 nested: false,
                 toc: true,
             },
+            feed: crate::config::FeedConfig::default(),
+            sitemap: crate::config::SitemapConfig::default(),
         };
 
         let config_toc_false = SiteConfig {
@@ -270,6 +290,8 @@ mod tests {
                 nested: false,
                 toc: false,
             },
+            feed: crate::config::FeedConfig::default(),
+            sitemap: crate::config::SitemapConfig::default(),
         };
 
         // Frontmatter with explicit toc: true

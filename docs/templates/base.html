@@ -7,7 +7,7 @@
   {% if page.description %}
   <meta name="description" content="{{ page.description }}" />{% endif %}
   <title>{{ title }} | {{ config.title }}</title>
-  <link rel="canonical" href="{{ base_url }}{{ page_path }}" />
+  <link rel="canonical" href="{{ config.base_url }}{{ page_path }}" />
   <link rel="stylesheet" href="{{ prefix }}/style.css" />
   <link rel="icon" type="image/png" href="{{ prefix }}/logo.png" />
 </head>
@@ -39,7 +39,7 @@
         {% endfor %}
       </div>
       {% endif %}
-      {% if config.nested_nav and item.children %}
+      {% if config.nav.nested and item.children %}
       <div class="nav-children{% if is_current_section %} expanded{% endif %}">
         {% for child in item.children %}
         <a href="{{ prefix }}{{ child.path }}" {% if page_path==child.path %}class="active" {% endif %}>{{ child.label

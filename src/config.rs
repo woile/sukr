@@ -20,6 +20,40 @@ pub struct SiteConfig {
     /// Navigation configuration.
     #[serde(default)]
     pub nav: NavConfig,
+    /// Feed (Atom) configuration.
+    #[serde(default)]
+    pub feed: FeedConfig,
+    /// Sitemap configuration.
+    #[serde(default)]
+    pub sitemap: SitemapConfig,
+}
+
+/// Feed (Atom) generation configuration.
+#[derive(Debug, Deserialize)]
+#[serde(default)]
+pub struct FeedConfig {
+    /// Whether to generate an Atom feed (default: true).
+    pub enabled: bool,
+}
+
+impl Default for FeedConfig {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
+/// Sitemap generation configuration.
+#[derive(Debug, Deserialize)]
+#[serde(default)]
+pub struct SitemapConfig {
+    /// Whether to generate a sitemap.xml (default: true).
+    pub enabled: bool,
+}
+
+impl Default for SitemapConfig {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
 }
 
 /// Navigation configuration.
