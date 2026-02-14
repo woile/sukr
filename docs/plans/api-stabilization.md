@@ -25,7 +25,7 @@ Implement the pre-1.0 API changes required to stabilize sukr's public contract: 
 | Frontmatter format     | **TOML** (replacing hand-rolled YAML)                                                              | `toml` crate + serde already in deps. Eliminates the fragile hand-rolled parser. Every future field is just a struct field with `#[derive(Deserialize)]`. |
 | Frontmatter delimiter  | `+++`                                                                                              | Hugo convention for TOML frontmatter. Unambiguous — no risk of confusion with YAML `---` or Markdown horizontal rules.                                    |
 | Template naming        | Mirror site.toml structure (`config.nav.nested` not `config.nested_nav`)                           | Consistency between config and templates; pre-1.0 is only window for this break                                                                           |
-| Date type              | Validate as YYYY-MM-DD string via `chrono::NaiveDate`, keep as `String` in template context        | Validate at parse time; reject invalid formats. Feed generation already assumes this format.                                                              |
+| Date type              | `Option<chrono::NaiveDate>` with custom `deserialize_date` fn for TOML native dates                | Parse, don't validate. Custom serde deserializer accepts `toml::Datetime`, extracts date, constructs `NaiveDate`. Invalid dates fail at deser.            |
 | Draft filtering        | `draft: bool` (`#[serde(default)]`) in `Frontmatter`, filter in `collect_items()` and `discover()` | Filter early so drafts don't appear in nav, listings, sitemap, or feed.                                                                                   |
 | Feed/sitemap config    | `[feed]` and `[sitemap]` tables with `enabled` boolean in `SiteConfig`                             | Users need opt-out. Default `true` preserves backward compat.                                                                                             |
 | Tag listing pages      | Generate `/tags/<tag>.html` using a new `tags/default.html` template                               | Minimal approach — one template, one generation loop. No pagination.                                                                                      |
@@ -94,12 +94,12 @@ Items validated by codebase investigation:
 ## Phases
 
 1. **Phase 1: TOML Frontmatter & Config Normalization** — replace the parser, migrate content, fix naming
-   - [ ] Replace `Frontmatter` struct with `#[derive(Deserialize)]`
-   - [ ] Add new fields: `draft: bool` (`#[serde(default)]`), `aliases: Vec<String>` (`#[serde(default)]`), keep all existing fields
-   - [ ] Replace `parse_frontmatter()` with `toml::from_str::<Frontmatter>()`
-   - [ ] Update `extract_frontmatter()` to detect `+++` delimiters instead of `---`
-   - [ ] Add date validation: custom deserializer or post-parse check for YYYY-MM-DD via `chrono::NaiveDate`
-   - [ ] Change `tags` from `taxonomies.tags` nesting to flat `tags = ["..."]` (direct TOML array)
+   - [x] Replace `Frontmatter` struct with `#[derive(Deserialize)]`
+   - [x] Add new fields: `draft: bool` (`#[serde(default)]`), `aliases: Vec<String>` (`#[serde(default)]`), keep all existing fields
+   - [x] Replace `parse_frontmatter()` with `toml::from_str::<Frontmatter>()`
+   - [x] Update `extract_frontmatter()` to detect `+++` delimiters instead of `---`
+   - [x] Add date validation: custom `deserialize_date` fn for TOML native dates → `chrono::NaiveDate`
+   - [x] Change `tags` from `taxonomies.tags` nesting to flat `tags = ["..."]` (direct TOML array)
    - [ ] Migrate all 17 content files from YAML (`---`) to TOML (`+++`) frontmatter
    - [ ] Update embedded frontmatter examples in documentation pages (7 files)
    - [ ] Add `FeedConfig` and `SitemapConfig` structs to `config.rs` with `enabled: bool` (default `true`)

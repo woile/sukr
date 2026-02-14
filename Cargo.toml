@@ -64,9 +64,10 @@ lightningcss = "1.0.0-alpha.70"
 # tera: Jinja2-style templates, runtime-loaded (no recompilation needed).
 # serde/toml: Configuration parsing. Standard choices, no lighter alternatives.
 # ─────────────────────────────────────────────────────────────────────────────
-serde = { version = "1", features = ["derive"] }
-tera  = "1"
-toml  = "0.8"
+chrono = { version = "0.4", default-features = false, features = ["serde"] }
+serde  = { version = "1", features = ["derive"] }
+tera   = "1"
+toml   = "0.8"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Patches

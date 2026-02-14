@@ -1,8 +1,8 @@
 //! Content discovery and frontmatter parsing.
 
 use crate::error::{Error, Result};
-use serde::Serialize;
-use std::collections::HashMap;
+use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -40,24 +40,39 @@ pub struct NavItem {
 }
 
 /// Parsed frontmatter from a content file.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Frontmatter {
     pub title: String,
+    #[serde(default)]
     pub description: Option<String>,
-    pub date: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_date")]
+    pub date: Option<NaiveDate>,
+    #[serde(default)]
     pub tags: Vec<String>,
     /// Sort order for nav and listings
+    #[serde(default)]
     pub weight: Option<i64>,
     /// For project cards: external link
+    #[serde(default)]
     pub link_to: Option<String>,
     /// Custom navigation label (defaults to title)
+    #[serde(default)]
     pub nav_label: Option<String>,
     /// Section type for template dispatch (e.g., "blog", "projects")
+    #[serde(default)]
     pub section_type: Option<String>,
     /// Override template for this content item
+    #[serde(default)]
     pub template: Option<String>,
     /// Enable table of contents (anchor nav in sidebar)
+    #[serde(default)]
     pub toc: Option<bool>,
+    /// Whether this content is a draft (excluded from output)
+    #[serde(default)]
+    pub draft: bool,
+    /// Alternative URL paths that redirect to this content
+    #[serde(default)]
+    pub aliases: Vec<String>,
 }
 
 /// A content item ready for rendering.
@@ -71,7 +86,7 @@ pub struct Content {
 }
 
 impl Content {
-    /// Load and parse a markdown file with YAML frontmatter.
+    /// Load and parse a markdown file with TOML frontmatter.
     pub fn from_path(path: impl AsRef<Path>, kind: ContentKind) -> Result<Self> {
         Self::from_path_inner(path.as_ref(), kind)
     }
@@ -82,8 +97,8 @@ impl Content {
             source: e,
         })?;
 
-        let (yaml_block, body) = extract_frontmatter(&raw, path)?;
-        let frontmatter = parse_frontmatter(path, &yaml_block)?;
+        let (toml_block, body) = extract_frontmatter(&raw, path)?;
+        let frontmatter = parse_frontmatter(path, &toml_block)?;
 
         // Derive slug from filename (without extension)
         let slug = path
@@ -124,103 +139,57 @@ impl Content {
     }
 }
 
-/// Extract YAML frontmatter block and body from raw content.
-/// Frontmatter must be delimited by `---` at start and end.
+/// Extract TOML frontmatter block and body from raw content.
+/// Frontmatter must be delimited by `+++` at start and end.
 fn extract_frontmatter(raw: &str, path: &Path) -> Result<(String, String)> {
     let trimmed = raw.trim_start();
 
-    if !trimmed.starts_with("---") {
+    if !trimmed.starts_with("+++") {
         return Err(Error::Frontmatter {
             path: path.to_path_buf(),
             message: "missing frontmatter delimiter".to_string(),
         });
     }
 
-    // Find the closing ---
+    // Find the closing +++
     let after_first = &trimmed[3..].trim_start_matches(['\r', '\n']);
     let end_idx = after_first
-        .find("\n---")
+        .find("\n+++")
         .ok_or_else(|| Error::Frontmatter {
             path: path.to_path_buf(),
             message: "missing closing frontmatter delimiter".to_string(),
         })?;
 
-    let yaml_block = after_first[..end_idx].to_string();
+    let toml_block = after_first[..end_idx].to_string();
     let body = after_first[end_idx + 4..].trim_start().to_string();
 
-    Ok((yaml_block, body))
+    Ok((toml_block, body))
 }
 
-/// Parse simple YAML frontmatter into structured fields.
-/// Supports: key: value, key: "quoted value", and nested taxonomies.tags
-fn parse_frontmatter(path: &Path, yaml: &str) -> Result<Frontmatter> {
-    let mut map: HashMap<String, String> = HashMap::new();
-    let mut tags: Vec<String> = Vec::new();
-    let mut in_taxonomies = false;
-    let mut in_tags = false;
-
-    for line in yaml.lines() {
-        let trimmed = line.trim();
-
-        // Skip empty lines and comments
-        if trimmed.is_empty() || trimmed.starts_with('#') {
-            continue;
-        }
-
-        // Handle nested structure for taxonomies.tags
-        if trimmed == "taxonomies:" {
-            in_taxonomies = true;
-            continue;
-        }
-
-        if in_taxonomies && trimmed == "tags:" {
-            in_tags = true;
-            continue;
-        }
-
-        // Collect tag list items
-        if in_tags && trimmed.starts_with("- ") {
-            let tag = trimmed[2..].trim().trim_matches('"').to_string();
-            tags.push(tag);
-            continue;
-        }
-
-        // Exit nested context on non-indented line
-        if !line.starts_with(' ') && !line.starts_with('\t') {
-            in_taxonomies = false;
-            in_tags = false;
-        }
-
-        // Parse key: value
-        if let Some((key, value)) = trimmed.split_once(':') {
-            let key = key.trim().to_string();
-            let value = value.trim().trim_matches('"').to_string();
-            if !value.is_empty() {
-                map.insert(key, value);
-            }
-        }
-    }
-
-    let title = map
-        .get("title")
-        .cloned()
-        .ok_or_else(|| Error::Frontmatter {
-            path: path.to_path_buf(),
-            message: "missing required 'title' field".to_string(),
-        })?;
-
-    Ok(Frontmatter {
-        title,
-        description: map.get("description").cloned(),
-        date: map.get("date").cloned(),
-        tags,
-        weight: map.get("weight").and_then(|v| v.parse().ok()),
-        link_to: map.get("link_to").cloned(),
-        nav_label: map.get("nav_label").cloned(),
-        section_type: map.get("section_type").cloned(),
-        template: map.get("template").cloned(),
-        toc: map.get("toc").and_then(|v| v.parse().ok()),
+/// Parse TOML frontmatter into structured fields.
+fn parse_frontmatter(path: &Path, toml_str: &str) -> Result<Frontmatter> {
+    toml::from_str(toml_str).map_err(|e| Error::Frontmatter {
+        path: path.to_path_buf(),
+        message: e.to_string(),
     })
+}
+
+/// Deserialize a TOML native date into `Option<NaiveDate>`.
+///
+/// TOML native dates (`date = 2026-01-15`) are parsed by the `toml` crate as
+/// `toml::value::Datetime`. This deserializer accepts that type, extracts the
+/// date component, and constructs a validated `chrono::NaiveDate`.
+fn deserialize_date<'de, D>(deserializer: D) -> std::result::Result<Option<NaiveDate>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let dt = toml::value::Datetime::deserialize(deserializer)?;
+    let date = dt
+        .date
+        .ok_or_else(|| serde::de::Error::custom("datetime must include a date component"))?;
+    NaiveDate::from_ymd_opt(date.year.into(), date.month.into(), date.day.into())
+        .ok_or_else(|| serde::de::Error::custom("invalid calendar date"))
+        .map(Some)
 }
 
 /// Discover navigation items from the content directory structure.
@@ -498,14 +467,14 @@ mod tests {
     }
 
     fn write_frontmatter(path: &Path, title: &str, weight: Option<i64>, nav_label: Option<&str>) {
-        let mut content = format!("---\ntitle: \"{}\"\n", title);
+        let mut content = format!("+++\ntitle = \"{}\"\n", title);
         if let Some(w) = weight {
-            content.push_str(&format!("weight: {}\n", w));
+            content.push_str(&format!("weight = {}\n", w));
         }
         if let Some(label) = nav_label {
-            content.push_str(&format!("nav_label: \"{}\"\n", label));
+            content.push_str(&format!("nav_label = \"{}\"\n", label));
         }
-        content.push_str("---\n\nBody content.");
+        content.push_str("+++\n\nBody content.");
         fs::write(path, content).expect("failed to write test file");
     }
 
@@ -629,14 +598,14 @@ mod tests {
         section_type: Option<&str>,
         weight: Option<i64>,
     ) {
-        let mut content = format!("---\ntitle: \"{}\"\n", title);
+        let mut content = format!("+++\ntitle = \"{}\"\n", title);
         if let Some(st) = section_type {
-            content.push_str(&format!("section_type: \"{}\"\n", st));
+            content.push_str(&format!("section_type = \"{}\"\n", st));
         }
         if let Some(w) = weight {
-            content.push_str(&format!("weight: {}\n", w));
+            content.push_str(&format!("weight = {}\n", w));
         }
-        content.push_str("---\nSection content.\n");
+        content.push_str("+++\nSection content.\n");
         fs::write(path, content).expect("failed to write section index");
     }
 
@@ -820,8 +789,8 @@ mod tests {
         );
 
         // Create blog posts with dates
-        let post1 = "---\ntitle: \"Post 1\"\ndate: \"2026-01-15\"\n---\nContent.".to_string();
-        let post2 = "---\ntitle: \"Post 2\"\ndate: \"2026-01-20\"\n---\nContent.".to_string();
+        let post1 = "+++\ntitle = \"Post 1\"\ndate = 2026-01-15\n+++\nContent.".to_string();
+        let post2 = "+++\ntitle = \"Post 2\"\ndate = 2026-01-20\n+++\nContent.".to_string();
         fs::write(content_dir.join("blog/post1.md"), &post1).unwrap();
         fs::write(content_dir.join("blog/post2.md"), &post2).unwrap();
 

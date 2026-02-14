@@ -39,7 +39,7 @@ pub fn generate_sitemap(
         // Section index
         entries.push(SitemapEntry {
             loc: format!("{}/{}/index.html", base_url, section.name),
-            lastmod: section.index.frontmatter.date.clone(),
+            lastmod: section.index.frontmatter.date.map(|d| d.to_string()),
         });
 
         // Section items
@@ -48,7 +48,7 @@ pub fn generate_sitemap(
                 let relative_path = item.output_path(content_root);
                 entries.push(SitemapEntry {
                     loc: format!("{}/{}", base_url, relative_path.display()),
-                    lastmod: item.frontmatter.date.clone(),
+                    lastmod: item.frontmatter.date.map(|d| d.to_string()),
                 });
             }
         }
@@ -59,7 +59,7 @@ pub fn generate_sitemap(
         let relative_path = page.output_path(content_root);
         entries.push(SitemapEntry {
             loc: format!("{}/{}", base_url, relative_path.display()),
-            lastmod: page.frontmatter.date.clone(),
+            lastmod: page.frontmatter.date.map(|d| d.to_string()),
         });
     }
 

@@ -166,6 +166,10 @@ pub struct FrontmatterContext {
     pub link_to: Option<String>,
     /// Enable table of contents (anchor nav in sidebar)
     pub toc: bool,
+    /// Whether this content is a draft
+    pub draft: bool,
+    /// Alternative URL paths
+    pub aliases: Vec<String>,
 }
 
 impl FrontmatterContext {
@@ -174,11 +178,13 @@ impl FrontmatterContext {
         Self {
             title: fm.title.clone(),
             description: fm.description.clone(),
-            date: fm.date.clone(),
+            date: fm.date.map(|d| d.to_string()),
             tags: fm.tags.clone(),
             weight: fm.weight,
             link_to: fm.link_to.clone(),
             toc: fm.toc.unwrap_or(config.nav.toc),
+            draft: fm.draft,
+            aliases: fm.aliases.clone(),
         }
     }
 }
@@ -278,6 +284,8 @@ mod tests {
             section_type: None,
             template: None,
             toc: Some(true),
+            draft: false,
+            aliases: vec![],
         };
 
         // Frontmatter with explicit toc: false
@@ -292,6 +300,8 @@ mod tests {
             section_type: None,
             template: None,
             toc: Some(false),
+            draft: false,
+            aliases: vec![],
         };
 
         // Frontmatter with no toc specified (None)
@@ -306,6 +316,8 @@ mod tests {
             section_type: None,
             template: None,
             toc: None,
+            draft: false,
+            aliases: vec![],
         };
 
         // Explicit true overrides config false
