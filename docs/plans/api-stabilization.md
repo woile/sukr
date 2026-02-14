@@ -104,16 +104,16 @@ Items validated by codebase investigation:
    - [x] Update embedded frontmatter examples in documentation pages (7 files)
    - [x] Add `FeedConfig` and `SitemapConfig` structs to `config.rs` with `enabled: bool` (default `true`)
    - [x] Wire feed/sitemap config into `SiteConfig` deserialization
-   - [ ] Gate feed generation in `main.rs` on `config.feed.enabled`
-   - [ ] Gate sitemap generation in `main.rs` on `config.sitemap.enabled`
+   - [x] Gate feed generation in `main.rs` on `config.feed.enabled`
+   - [x] Gate sitemap generation in `main.rs` on `config.sitemap.enabled`
    - [x] Refactor `ConfigContext`: flat `nested_nav: bool` → nested `nav: NavContext { nested, toc }`
    - [x] Remove duplicate `base_url` top-level template variable injection
    - [x] Update `docs/templates/base.html`: `config.nested_nav` → `config.nav.nested`, `base_url` → `config.base_url`
    - [x] Delete `docs/templates/section/features.html` and `docs/templates/homepage.html`
    - [x] Add template section fallback in `render_section`: try `section/<type>.html`, fall back to `section/default.html`
    - [x] Update/fix all existing tests to use TOML frontmatter
-   - [ ] Add new tests: TOML parsing, date validation (valid + invalid), feed/sitemap config gating
-   - [ ] Verify all 69 existing tests pass (updated for TOML)
+   - [x] Add new tests: TOML parsing, date validation (valid + invalid), feed/sitemap config gating
+   - [x] Verify all 69 existing tests pass (updated for TOML)
 
 2. **Phase 2: Draft & Alias Features** — implement filtering and redirect generation
    - [ ] Filter items where `draft == true` from `collect_items()` results

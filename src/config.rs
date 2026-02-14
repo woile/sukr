@@ -161,4 +161,52 @@ mod tests {
         assert_eq!(config.paths.static_dir, PathBuf::from("assets"));
         assert_eq!(config.paths.templates, PathBuf::from("theme"));
     }
+
+    #[test]
+    fn test_feed_sitemap_defaults() {
+        let toml = r#"
+            title = "Test"
+            author = "Author"
+            base_url = "https://example.com"
+        "#;
+
+        let config: SiteConfig = toml::from_str(toml).unwrap();
+        assert!(config.feed.enabled, "feed should be enabled by default");
+        assert!(
+            config.sitemap.enabled,
+            "sitemap should be enabled by default"
+        );
+    }
+
+    #[test]
+    fn test_feed_disabled() {
+        let toml = r#"
+            title = "Test"
+            author = "Author"
+            base_url = "https://example.com"
+
+            [feed]
+            enabled = false
+        "#;
+
+        let config: SiteConfig = toml::from_str(toml).unwrap();
+        assert!(!config.feed.enabled);
+        assert!(config.sitemap.enabled, "sitemap unaffected");
+    }
+
+    #[test]
+    fn test_sitemap_disabled() {
+        let toml = r#"
+            title = "Test"
+            author = "Author"
+            base_url = "https://example.com"
+
+            [sitemap]
+            enabled = false
+        "#;
+
+        let config: SiteConfig = toml::from_str(toml).unwrap();
+        assert!(config.feed.enabled, "feed unaffected");
+        assert!(!config.sitemap.enabled);
+    }
 }

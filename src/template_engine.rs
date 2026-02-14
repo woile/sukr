@@ -264,6 +264,32 @@ mod tests {
     }
 
     #[test]
+    fn test_config_context_nav_structure() {
+        let config = SiteConfig {
+            title: "Test".to_string(),
+            author: "Author".to_string(),
+            base_url: "https://example.com/".to_string(),
+            paths: crate::config::PathsConfig::default(),
+            nav: crate::config::NavConfig {
+                nested: true,
+                toc: true,
+            },
+            feed: crate::config::FeedConfig::default(),
+            sitemap: crate::config::SitemapConfig::default(),
+        };
+
+        let ctx = ConfigContext::from(&config);
+        assert!(ctx.nav.nested);
+        assert!(ctx.nav.toc);
+        assert_eq!(
+            ctx.base_url, "https://example.com",
+            "trailing slash trimmed"
+        );
+        assert_eq!(ctx.title, "Test");
+        assert_eq!(ctx.author, "Author");
+    }
+
+    #[test]
     fn test_toc_config_fallback() {
         use crate::content::Frontmatter;
 

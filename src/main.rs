@@ -183,8 +183,8 @@ fn run(config_path: &Path) -> Result<()> {
         eprintln!("  → {}", out_path.display());
     }
 
-    // 2. Generate Atom feed (blog posts only)
-    if !manifest.posts.is_empty() {
+    // 2. Generate Atom feed (blog posts only, if enabled)
+    if config.feed.enabled && !manifest.posts.is_empty() {
         generate_feed(&output_dir, &manifest, &config, &content_dir)?;
     }
 
@@ -194,8 +194,10 @@ fn run(config_path: &Path) -> Result<()> {
     // 4. Generate homepage
     generate_homepage(&manifest, &output_dir, &config, &engine)?;
 
-    // 5. Generate sitemap
-    generate_sitemap_file(&output_dir, &manifest, &config, &content_dir)?;
+    // 5. Generate sitemap (if enabled)
+    if config.sitemap.enabled {
+        generate_sitemap_file(&output_dir, &manifest, &config, &content_dir)?;
+    }
 
     eprintln!("done!");
     Ok(())
