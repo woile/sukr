@@ -382,7 +382,7 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
     Ok(sections)
 }
 
-/// Discover standalone pages (top-level .md files except _index.md).
+/// Discover standalone pages (top-level .md files except _index.md and _404.md).
 pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
     let mut pages = Vec::new();
 
@@ -395,7 +395,9 @@ pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
         let path = entry.path();
         if path.is_file()
             && path.extension().is_some_and(|ext| ext == "md")
-            && path.file_name().is_some_and(|n| n != "_index.md")
+            && path
+                .file_name()
+                .is_some_and(|n| n != "_index.md" && n != "_404.md")
         {
             let content = Content::from_path(&path, ContentKind::Page)?;
             if !content.frontmatter.draft {
@@ -414,6 +416,8 @@ pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
 pub struct SiteManifest {
     /// Homepage content (content/_index.md)
     pub homepage: Content,
+    /// Custom 404 page (content/_404.md), if present
+    pub page_404: Option<Content>,
     /// All sections (directories with _index.md)
     pub sections: Vec<Section>,
     /// Standalone pages (top-level .md files)
@@ -434,6 +438,14 @@ impl SiteManifest {
         // Load homepage
         let homepage_path = content_dir.join("_index.md");
         let homepage = Content::from_path(&homepage_path, ContentKind::Section)?;
+
+        // Load 404 page if present
+        let page_404_path = content_dir.join("_404.md");
+        let page_404 = if page_404_path.exists() {
+            Some(Content::from_path(&page_404_path, ContentKind::Page)?)
+        } else {
+            None
+        };
 
         // Discover navigation
         let nav = discover_nav(content_dir)?;
@@ -457,6 +469,7 @@ impl SiteManifest {
 
         Ok(SiteManifest {
             homepage,
+            page_404,
             sections,
             pages,
             posts,
@@ -882,5 +895,56 @@ mod tests {
         let pages = discover_pages(content_dir).unwrap();
         assert_eq!(pages.len(), 1, "draft page should not appear in pages");
         assert_eq!(pages[0].frontmatter.title, "About");
+    }
+
+    #[test]
+    fn test_discover_pages_excludes_404() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        write_frontmatter(&content_dir.join("about.md"), "About", None, None);
+        fs::write(
+            content_dir.join("_404.md"),
+            "+++\ntitle = \"Not Found\"\n+++\n\n404 body.",
+        )
+        .unwrap();
+
+        let pages = discover_pages(content_dir).unwrap();
+        assert_eq!(pages.len(), 1, "_404.md should not appear in pages");
+        assert_eq!(pages[0].frontmatter.title, "About");
+    }
+
+    #[test]
+    fn test_manifest_detects_404() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        write_frontmatter(&content_dir.join("_index.md"), "Home", None, None);
+        fs::write(
+            content_dir.join("_404.md"),
+            "+++\ntitle = \"Page Not Found\"\n+++\n\n404 body.",
+        )
+        .unwrap();
+
+        let manifest = SiteManifest::discover(content_dir).unwrap();
+        assert!(manifest.page_404.is_some(), "page_404 should be populated");
+        assert_eq!(
+            manifest.page_404.unwrap().frontmatter.title,
+            "Page Not Found"
+        );
+    }
+
+    #[test]
+    fn test_manifest_without_404() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        write_frontmatter(&content_dir.join("_index.md"), "Home", None, None);
+
+        let manifest = SiteManifest::discover(content_dir).unwrap();
+        assert!(
+            manifest.page_404.is_none(),
+            "page_404 should be None when _404.md absent"
+        );
     }
 }

@@ -126,14 +126,14 @@ Items validated by codebase investigation:
    - [x] Add tests: alias redirect generation (valid HTML, correct target URL)
 
 3. **Phase 3: 404 & Tag Pages** — new content generation features
-   - [ ] Detect `content/404.md` in content discovery, treat as special page
-   - [ ] Render `404.md` to `404.html` in output root
-   - [ ] Collect all unique tags across content items during build
-   - [ ] Create `tags/default.html` template in `docs/templates/`
-   - [ ] Generate `/tags/<tag>.html` for each unique tag with list of tagged items
+   - [x] Detect `content/_404.md` in content discovery, treat as special page
+   - [x] Render `_404.md` to `404.html` in output root
+   - [x] Collect all unique tags across content items during build
+   - [x] Create `tags/default.html` template in `docs/templates/`
+   - [x] Generate `/tags/<tag>.html` for each unique tag with list of tagged items
    - [ ] Add tag listing page entries to sitemap (if enabled)
-   - [ ] Add tests: 404 page generation
-   - [ ] Add tests: tag listing page generation (correct paths, correct items per tag)
+   - [x] Add tests: 404 page generation
+   - [x] Add tests: tag listing page generation (correct paths, correct items per tag)
    - [ ] End-to-end: build `docs/` site and verify all outputs
 
 ## Verification
@@ -145,7 +145,7 @@ Items validated by codebase investigation:
 - [ ] End-to-end: build `docs/` site with `cargo run`, verify:
   - [ ] `public/sitemap.xml` exists (default enabled)
   - [ ] `public/atom.xml` exists (default enabled)
-  - [ ] `public/404.html` exists (with 404.md in docs/content)
+  - [ ] `public/404.html` exists (with \_404.md in docs/content)
   - [ ] Templates use `config.nav.nested` (not `config.nested_nav`)
   - [ ] Templates use `config.base_url` (not bare `base_url`)
   - [ ] No `section/features.html` or `homepage.html` templates remain

@@ -18,6 +18,7 @@ mod template_engine;
 use crate::content::{Content, ContentKind, DEFAULT_WEIGHT, DEFAULT_WEIGHT_HIGH, NavItem};
 use crate::error::{Error, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -194,12 +195,20 @@ fn run(config_path: &Path) -> Result<()> {
     // 4. Generate homepage
     generate_homepage(&manifest, &output_dir, &config, &engine)?;
 
-    // 5. Generate sitemap (if enabled)
+    // 5. Generate 404 page (if _404.md exists)
+    if let Some(ref page_404) = manifest.page_404 {
+        generate_404(page_404, &output_dir, &config, &manifest.nav, &engine)?;
+    }
+
+    // 6. Generate tag listing pages
+    generate_tag_pages(&output_dir, &content_dir, &config, &manifest, &engine)?;
+
+    // 7. Generate sitemap (if enabled)
     if config.sitemap.enabled {
         generate_sitemap_file(&output_dir, &manifest, &config, &content_dir)?;
     }
 
-    // 6. Generate alias redirects
+    // 8. Generate alias redirects
     generate_aliases(&output_dir, &content_dir, &manifest, &config)?;
 
     eprintln!("done!");
@@ -266,7 +275,9 @@ fn process_pages(
         let path = entry.path();
         if path.is_file()
             && path.extension().is_some_and(|ext| ext == "md")
-            && path.file_name().is_some_and(|n| n != "_index.md")
+            && path
+                .file_name()
+                .is_some_and(|n| n != "_index.md" && n != "_404.md")
         {
             eprintln!("processing: {}", path.display());
 
@@ -314,6 +325,106 @@ fn generate_homepage(
     })?;
 
     eprintln!("  → {}", out_path.display());
+    Ok(())
+}
+
+/// Generate the 404 error page from manifest.page_404
+fn generate_404(
+    page_404: &Content,
+    output_dir: &Path,
+    config: &config::SiteConfig,
+    nav: &[NavItem],
+    engine: &TemplateEngine,
+) -> Result<()> {
+    eprintln!("generating: 404 page");
+
+    let (html_body, anchors) = render::markdown_to_html(&page_404.body);
+    let html = engine.render_page(page_404, &html_body, "/404.html", config, nav, &anchors)?;
+
+    let out_path = output_dir.join("404.html");
+    fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+        path: out_path.clone(),
+        source: e,
+    })?;
+
+    eprintln!("  → {}", out_path.display());
+    Ok(())
+}
+
+/// Collect all unique tags across section items and standalone pages.
+///
+/// Returns a sorted map of tag → tagged items for deterministic output.
+fn collect_tags(
+    sections: &[content::Section],
+    pages: &[Content],
+    content_dir: &Path,
+    config: &config::SiteConfig,
+) -> BTreeMap<String, Vec<ContentContext>> {
+    let mut tags: BTreeMap<String, Vec<ContentContext>> = BTreeMap::new();
+
+    // Collect from section items
+    for section in sections {
+        if let Ok(items) = section.collect_items() {
+            for item in &items {
+                for tag in &item.frontmatter.tags {
+                    tags.entry(tag.clone())
+                        .or_default()
+                        .push(ContentContext::from_content(item, content_dir, config));
+                }
+            }
+        }
+    }
+
+    // Collect from standalone pages
+    for page in pages {
+        for tag in &page.frontmatter.tags {
+            tags.entry(tag.clone())
+                .or_default()
+                .push(ContentContext::from_content(page, content_dir, config));
+        }
+    }
+
+    tags
+}
+
+/// Generate tag listing pages for all unique tags across content.
+fn generate_tag_pages(
+    output_dir: &Path,
+    content_dir: &Path,
+    config: &config::SiteConfig,
+    manifest: &content::SiteManifest,
+    engine: &TemplateEngine,
+) -> Result<()> {
+    let tags = collect_tags(&manifest.sections, &manifest.pages, content_dir, config);
+
+    if tags.is_empty() {
+        return Ok(());
+    }
+
+    let tags_dir = output_dir.join("tags");
+    fs::create_dir_all(&tags_dir).map_err(|e| Error::CreateDir {
+        path: tags_dir.clone(),
+        source: e,
+    })?;
+
+    for (tag, items) in &tags {
+        let page_path = format!("/tags/{}.html", tag);
+        let html = engine.render_tag_page(tag, items, &page_path, config, &manifest.nav)?;
+
+        let out_path = tags_dir.join(format!("{}.html", tag));
+        fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+            path: out_path.clone(),
+            source: e,
+        })?;
+
+        eprintln!(
+            "  tag: {} ({} items) → {}",
+            tag,
+            items.len(),
+            out_path.display()
+        );
+    }
+
     Ok(())
 }
 
@@ -530,5 +641,82 @@ mod tests {
         assert!(html.contains("</html>"));
         assert!(html.contains("<head>"));
         assert!(html.contains("</head>"));
+    }
+
+    #[test]
+    fn test_collect_tags_groups_items() {
+        let dir = tempfile::tempdir().unwrap();
+        let content_dir = dir.path();
+
+        // Create a section with tagged items
+        let section_dir = content_dir.join("blog");
+        std::fs::create_dir_all(&section_dir).unwrap();
+        std::fs::write(
+            section_dir.join("_index.md"),
+            "+++\ntitle = \"Blog\"\nsection_type = \"blog\"\n+++\n",
+        )
+        .unwrap();
+        std::fs::write(
+            section_dir.join("post1.md"),
+            "+++\ntitle = \"Post 1\"\ntags = [\"rust\", \"web\"]\n+++\n\nBody.",
+        )
+        .unwrap();
+        std::fs::write(
+            section_dir.join("post2.md"),
+            "+++\ntitle = \"Post 2\"\ntags = [\"rust\"]\n+++\n\nBody.",
+        )
+        .unwrap();
+
+        let sections = content::discover_sections(content_dir).unwrap();
+        let pages: Vec<Content> = vec![];
+        let config = config::SiteConfig {
+            title: String::new(),
+            author: String::new(),
+            base_url: "https://example.com".into(),
+            paths: Default::default(),
+            nav: Default::default(),
+            feed: Default::default(),
+            sitemap: Default::default(),
+        };
+
+        let tags = collect_tags(&sections, &pages, content_dir, &config);
+        assert_eq!(tags.len(), 2, "should have 2 unique tags");
+        assert_eq!(tags["rust"].len(), 2, "rust tag should have 2 items");
+        assert_eq!(tags["web"].len(), 1, "web tag should have 1 item");
+    }
+
+    #[test]
+    fn test_collect_tags_empty_when_no_tags() {
+        let dir = tempfile::tempdir().unwrap();
+        let content_dir = dir.path();
+
+        // Create a section with untagged items
+        let section_dir = content_dir.join("docs");
+        std::fs::create_dir_all(&section_dir).unwrap();
+        std::fs::write(
+            section_dir.join("_index.md"),
+            "+++\ntitle = \"Docs\"\n+++\n",
+        )
+        .unwrap();
+        std::fs::write(
+            section_dir.join("page.md"),
+            "+++\ntitle = \"A Page\"\n+++\n\nBody.",
+        )
+        .unwrap();
+
+        let sections = content::discover_sections(content_dir).unwrap();
+        let pages: Vec<Content> = vec![];
+        let config = config::SiteConfig {
+            title: String::new(),
+            author: String::new(),
+            base_url: "https://example.com".into(),
+            paths: Default::default(),
+            nav: Default::default(),
+            feed: Default::default(),
+            sitemap: Default::default(),
+        };
+
+        let tags = collect_tags(&sections, &pages, content_dir, &config);
+        assert!(tags.is_empty(), "should have no tags");
     }
 }

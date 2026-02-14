@@ -115,6 +115,24 @@ impl TemplateEngine {
         self.render(&template, &ctx)
     }
 
+    /// Render a tag listing page.
+    ///
+    /// Shows all content items tagged with the given tag.
+    pub fn render_tag_page(
+        &self,
+        tag: &str,
+        items: &[ContentContext],
+        page_path: &str,
+        config: &SiteConfig,
+        nav: &[NavItem],
+    ) -> Result<String> {
+        let mut ctx = self.base_context(page_path, config, nav);
+        ctx.insert("title", &format!("Tagged: {}", tag));
+        ctx.insert("tag", tag);
+        ctx.insert("items", items);
+        self.render("tags/default.html", &ctx)
+    }
+
     /// Build base context with common variables.
     fn base_context(&self, page_path: &str, config: &SiteConfig, nav: &[NavItem]) -> Context {
         let mut ctx = Context::new();
