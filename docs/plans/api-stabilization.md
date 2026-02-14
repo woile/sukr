@@ -116,13 +116,13 @@ Items validated by codebase investigation:
    - [x] Verify all 69 existing tests pass (updated for TOML)
 
 2. **Phase 2: Draft & Alias Features** — implement filtering and redirect generation
-   - [ ] Filter items where `draft == true` from `collect_items()` results
-   - [ ] Filter drafts from `SiteManifest.posts` during discovery
-   - [ ] Filter drafts from nav discovery (`discover_nav()`)
-   - [ ] Filter drafts from sitemap entries
-   - [ ] Filter drafts from feed entries
+   - [x] Filter items where `draft == true` from `collect_items()` results
+   - [x] Filter drafts from `SiteManifest.posts` during discovery
+   - [x] Filter drafts from nav discovery (`discover_nav()`)
+   - [x] Filter drafts from sitemap entries
+   - [x] Filter drafts from feed entries
    - [ ] Generate HTML redirect stubs for each alias path (`<meta http-equiv="refresh">`)
-   - [ ] Add tests: draft filtering (excluded from listing, nav, feed, sitemap)
+   - [x] Add tests: draft filtering (excluded from listing, nav, feed, sitemap)
    - [ ] Add tests: alias redirect generation (valid HTML, correct target URL)
 
 3. **Phase 3: 404 & Tag Pages** — new content generation features

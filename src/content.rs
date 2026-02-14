@@ -216,16 +216,18 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if file_name != "_index.md" {
                     let content = Content::from_path(&path, ContentKind::Page)?;
-                    let slug = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
-                    nav_items.push(NavItem {
-                        label: content
-                            .frontmatter
-                            .nav_label
-                            .unwrap_or(content.frontmatter.title),
-                        path: format!("/{}.html", slug),
-                        weight: content.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT),
-                        children: Vec::new(),
-                    });
+                    if !content.frontmatter.draft {
+                        let slug = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
+                        nav_items.push(NavItem {
+                            label: content
+                                .frontmatter
+                                .nav_label
+                                .unwrap_or(content.frontmatter.title),
+                            path: format!("/{}.html", slug),
+                            weight: content.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT),
+                            children: Vec::new(),
+                        });
+                    }
                 }
             }
         } else if path.is_dir() {
@@ -298,7 +300,7 @@ pub struct Section {
 }
 
 impl Section {
-    /// Collect all content items in this section (excluding _index.md).
+    /// Collect all content items in this section (excluding _index.md and drafts).
     pub fn collect_items(&self) -> Result<Vec<Content>> {
         let mut items = Vec::new();
 
@@ -320,7 +322,10 @@ impl Section {
                     "projects" => ContentKind::Project,
                     _ => ContentKind::Page,
                 };
-                items.push(Content::from_path(&path, kind)?);
+                let content = Content::from_path(&path, kind)?;
+                if !content.frontmatter.draft {
+                    items.push(content);
+                }
             }
         }
 
@@ -392,7 +397,10 @@ pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
             && path.extension().is_some_and(|ext| ext == "md")
             && path.file_name().is_some_and(|n| n != "_index.md")
         {
-            pages.push(Content::from_path(&path, ContentKind::Page)?);
+            let content = Content::from_path(&path, ContentKind::Page)?;
+            if !content.frontmatter.draft {
+                pages.push(content);
+            }
         }
     }
 
@@ -818,5 +826,61 @@ mod tests {
         // Nav should be sorted by weight
         assert_eq!(manifest.nav[0].label, "About"); // weight 10
         assert_eq!(manifest.nav[1].label, "Blog"); // weight 20
+    }
+
+    fn write_draft(path: &Path, title: &str) {
+        let content = format!(
+            "+++\ntitle = \"{}\"\ndraft = true\n+++\n\nDraft content.",
+            title
+        );
+        fs::write(path, content).expect("failed to write draft file");
+    }
+
+    #[test]
+    fn test_collect_items_excludes_drafts() {
+        let dir = create_test_dir();
+        let section_dir = dir.path().join("features");
+        fs::create_dir(&section_dir).unwrap();
+        write_frontmatter(&section_dir.join("_index.md"), "Features", None, None);
+        write_frontmatter(&section_dir.join("visible.md"), "Visible", None, None);
+        write_draft(&section_dir.join("hidden.md"), "Hidden");
+
+        let section = Section {
+            index: Content::from_path(&section_dir.join("_index.md"), ContentKind::Section)
+                .unwrap(),
+            name: "features".to_string(),
+            section_type: "features".to_string(),
+            path: section_dir,
+        };
+
+        let items = section.collect_items().unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].frontmatter.title, "Visible");
+    }
+
+    #[test]
+    fn test_discover_nav_excludes_drafts() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        write_frontmatter(&content_dir.join("about.md"), "About", Some(10), None);
+        write_draft(&content_dir.join("secret.md"), "Secret Page");
+
+        let nav = discover_nav(content_dir).unwrap();
+        assert_eq!(nav.len(), 1, "draft page should not appear in nav");
+        assert_eq!(nav[0].label, "About");
+    }
+
+    #[test]
+    fn test_discover_pages_excludes_drafts() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        write_frontmatter(&content_dir.join("about.md"), "About", None, None);
+        write_draft(&content_dir.join("wip.md"), "Work in Progress");
+
+        let pages = discover_pages(content_dir).unwrap();
+        assert_eq!(pages.len(), 1, "draft page should not appear in pages");
+        assert_eq!(pages[0].frontmatter.title, "About");
     }
 }
