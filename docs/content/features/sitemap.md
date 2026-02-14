@@ -1,8 +1,8 @@
----
-title: Sitemap
-description: Automatic XML sitemap generation for SEO
-weight: 7
----
++++
+title = "Sitemap"
+description = "Automatic XML sitemap generation for SEO"
+weight = 7
++++
 
 sukr generates an XML sitemap at build time for search engine optimization.
 
@@ -38,11 +38,11 @@ URLs use the `base_url` from `site.toml` to construct absolute URLs as required 
 
 If content has a `date` field in frontmatter, it's included as `<lastmod>`:
 
-```yaml
----
-title: My Post
-date: 2024-01-15
----
+```toml
++++
+title = "My Post"
+date = 2024-01-15
++++
 ```
 
 Content without dates omits the `<lastmod>` element.

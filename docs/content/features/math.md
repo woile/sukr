@@ -1,8 +1,8 @@
----
-title: Math Rendering
-description: Build-time LaTeX math with KaTeX
-weight: 5
----
++++
+title = "Math Rendering"
+description = "Build-time LaTeX math with KaTeX"
+weight = 5
++++
 
 sukr renders LaTeX math expressions at build time using KaTeX, producing static HTML and CSS. No client-side JavaScript required.
 

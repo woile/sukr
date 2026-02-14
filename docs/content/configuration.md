@@ -1,8 +1,8 @@
----
-title: Configuration
-description: Complete reference for site.toml configuration
-weight: 3
----
++++
+title = "Configuration"
+description = "Complete reference for site.toml configuration"
+weight = 3
++++
 
 sukr is configured via `site.toml`. All settings have sensible defaults.
 
@@ -70,36 +70,41 @@ sukr -h, --help                # Show help
 
 ## Frontmatter
 
-Each Markdown file can have YAML frontmatter:
+Each Markdown file can have TOML frontmatter:
 
-```yaml
----
-title: Page Title
-description: Optional description
-date: 2024-01-15 # For blog posts
-weight: 10 # Sort order (lower = first)
-nav_label: Short Name # Override nav display
-section_type: blog # Override section template
-template: custom # Override page template
-toc: true # Override global TOC setting
-link_to: https://... # External link (for project cards)
----
+```toml
++++
+title = "Page Title"
+description = "Optional description"
+date = 2024-01-15              # For blog posts (native TOML date)
+weight = 10                    # Sort order (lower = first)
+nav_label = "Short Name"       # Override nav display
+section_type = "blog"          # Override section template
+template = "custom"            # Override page template
+toc = true                     # Override global TOC setting
+link_to = "https://..."        # External link (for project cards)
+tags = ["rust", "tutorial"]    # Tags for categorization
+draft = true                   # Exclude from output
+aliases = ["/old/path"]        # Redirect old URLs here
++++
 ```
 
 ### Frontmatter Fields
 
-| Field          | Type    | Default        | Description                                    |
-| -------------- | ------- | -------------- | ---------------------------------------------- |
-| `title`        | string  | _(required)_   | Page title                                     |
-| `description`  | string  | _(none)_       | Meta description                               |
-| `date`         | string  | _(none)_       | Publication date (YYYY-MM-DD)                  |
-| `weight`       | integer | `50`           | Sort order (lower = first)                     |
-| `nav_label`    | string  | title          | Override navigation label                      |
-| `section_type` | string  | directory name | Template dispatch (e.g., "blog", "projects")   |
-| `template`     | string  | _(none)_       | Custom template name                           |
-| `toc`          | boolean | global setting | Enable/disable table of contents for this page |
-| `link_to`      | string  | _(none)_       | External URL (renders as link instead of page) |
-| `tags`         | list    | `[]`           | Tags for categorization                        |
+| Field          | Type    | Default        | Description                                     |
+| -------------- | ------- | -------------- | ----------------------------------------------- |
+| `title`        | string  | _(required)_   | Page title                                      |
+| `description`  | string  | _(none)_       | Meta description                                |
+| `date`         | date    | _(none)_       | Publication date (YYYY-MM-DD, native TOML date) |
+| `weight`       | integer | `50`           | Sort order (lower = first)                      |
+| `nav_label`    | string  | title          | Override navigation label                       |
+| `section_type` | string  | directory name | Template dispatch (e.g., "blog", "projects")    |
+| `template`     | string  | _(none)_       | Custom template name                            |
+| `toc`          | boolean | global setting | Enable/disable table of contents for this page  |
+| `link_to`      | string  | _(none)_       | External URL (renders as link instead of page)  |
+| `tags`         | list    | `[]`           | Tags for categorization                         |
+| `draft`        | boolean | `false`        | Exclude content from output                     |
+| `aliases`      | list    | `[]`           | Old URL paths that redirect here                |
 
 ### Section Types
 

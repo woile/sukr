@@ -1,8 +1,8 @@
----
-title: "Comparison"
-description: "How sukr compares to other static site generators"
-weight: 10
----
++++
+title = "Comparison"
+description = "How sukr compares to other static site generators"
+weight = 10
++++
 
 This page provides a factual comparison of sukr with other popular static site generators.
 

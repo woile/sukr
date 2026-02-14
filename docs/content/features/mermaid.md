@@ -1,8 +1,8 @@
----
-title: Mermaid Diagrams
-description: Build-time diagram rendering with Mermaid
-weight: 4
----
++++
+title = "Mermaid Diagrams"
+description = "Build-time diagram rendering with Mermaid"
+weight = 4
++++
 
 sukr renders Mermaid diagrams at build time, producing inline SVG. No client-side JavaScript required.
 

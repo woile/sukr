@@ -1,8 +1,8 @@
----
-title: Tera Templates
-description: Customizable templates without recompilation
-weight: 1
----
++++
+title = "Tera Templates"
+description = "Customizable templates without recompilation"
+weight = 1
++++
 
 sukr uses [Tera](https://keats.github.io/tera/), a Jinja2-like templating engine. Templates are loaded at runtime, so you can modify them without recompiling sukr. See the [Tera documentation](https://keats.github.io/tera/docs/) for template authoring syntax (filters, blocks, inheritance).
 
@@ -95,11 +95,11 @@ Each anchor in `anchors` has:
 
 Set `template` in frontmatter to use a custom template:
 
-```yaml
----
-title: Special Page
-template: special
----
+```toml
++++
+title = "Special Page"
+template = "special"
++++
 ```
 
 This uses `templates/content/special.html` instead of the default.

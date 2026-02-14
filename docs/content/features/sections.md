@@ -1,8 +1,8 @@
----
-title: Sections
-description: Section types, frontmatter, and template dispatch reference
-weight: 2
----
++++
+title = "Sections"
+description = "Section types, frontmatter, and template dispatch reference"
+weight = 2
++++
 
 sukr discovers sections from your content directory structure. For an explanation of how sections work and how directories map to site structure, see [Content Organization](../content-organization.html).
 
@@ -10,7 +10,7 @@ sukr discovers sections from your content directory structure. For an explanatio
 
 The section type determines which template is used. It resolves in order:
 
-1. **Frontmatter override**: `section_type: blog` in `_index.md`
+1. **Frontmatter override**: `section_type = "blog"` in `_index.md`
 2. **Directory name**: `content/blog/` → type `blog`
 
 ### Built-in Section Types
@@ -25,13 +25,13 @@ The section type determines which template is used. It resolves in order:
 
 In `_index.md`:
 
-```yaml
----
-title: My Blog
-description: Thoughts and tutorials
-section_type: blog # Optional, defaults to directory name
-weight: 1 # Nav order
----
+```toml
++++
+title = "My Blog"
+description = "Thoughts and tutorials"
+section_type = "blog"  # Optional, defaults to directory name
+weight = 1             # Nav order
++++
 ```
 
 ## Adding a New Section

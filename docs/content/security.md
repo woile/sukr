@@ -1,8 +1,8 @@
----
-title: Security
-description: Content trust model and deployment security guidance
-weight: 90
----
++++
+title = "Security"
+description = "Content trust model and deployment security guidance"
+weight = 90
++++
 
 # Security
 
@@ -13,7 +13,7 @@ sukr is a **build-time only** compiler with no runtime attack surface. Security 
 | Source               | Trust Level      | Rationale                                            |
 | :------------------- | :--------------- | :--------------------------------------------------- |
 | Markdown content     | **Untrusted**    | May come from contributors, CMS, or external sources |
-| YAML frontmatter     | **Untrusted**    | Parsed from content files                            |
+| TOML frontmatter     | **Untrusted**    | Parsed from content files                            |
 | Templates            | **Semi-trusted** | User-controlled but typically from known sources     |
 | sukr binary          | **Trusted**      | Compiled from audited Rust code                      |
 | Tree-sitter grammars | **Trusted**      | Compiled into the binary                             |

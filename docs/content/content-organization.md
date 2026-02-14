@@ -1,8 +1,8 @@
----
-title: Content Organization
-description: How the filesystem maps to your site structure
-weight: 2
----
++++
+title = "Content Organization"
+description = "How the filesystem maps to your site structure"
+weight = 2
++++
 
 sukr builds your site structure from your `content/` directory. No routing config needed — the filesystem _is_ the config.
 
@@ -53,7 +53,7 @@ sukr automatically discovers sections during the build:
 
 The **section type** determines which template renders the index. It resolves in order:
 
-1. **Frontmatter override** — `section_type: blog` in the section's `_index.md`
+1. **Frontmatter override** — `section_type = "blog"` in the section's `_index.md`
 2. **Directory name** — `content/blog/` becomes type `blog`
 
 For the full section type reference (built-in types, frontmatter fields, and template dispatch), see [Sections](features/sections.html).
@@ -67,11 +67,11 @@ Navigation builds automatically from:
 
 Items sort by `weight` in frontmatter (lower first), then alphabetically.
 
-```yaml
----
-title: Blog
-weight: 10 # Appears before items with weight > 10
----
+```toml
++++
+title = "Blog"
+weight = 10  # Appears before items with weight > 10
++++
 ```
 
 ### Hierarchical Navigation

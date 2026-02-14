@@ -1,8 +1,8 @@
----
-title: Atom Feeds
-description: Build-time feed generation for blog posts
-weight: 6
----
++++
+title = "Atom Feeds"
+description = "Build-time feed generation for blog posts"
+weight = 6
++++
 
 sukr generates an Atom 1.0 feed for blog posts at build time.
 
@@ -29,7 +29,7 @@ The feed includes:
 
 ## Auto-generation
 
-Feed generation happens automatically when any content exists in a section with `section_type: blog`. No configuration required.
+Feed generation happens automatically when any content exists in a section with `section_type = "blog"`. No configuration required.
 
 Posts are sorted by date (newest first), matching the blog section ordering.
 
@@ -50,11 +50,11 @@ Add a link in your `base.html` template:
 
 Post dates in frontmatter should use `YYYY-MM-DD` format:
 
-```yaml
----
-title: My Post
-date: 2024-01-15
----
+```toml
++++
+title = "My Post"
+date = 2024-01-15
++++
 ```
 
 The feed converts this to RFC 3339 format required by Atom.

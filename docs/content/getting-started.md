@@ -1,8 +1,8 @@
----
-title: Getting Started
-description: Install sukr and build your first site
-weight: 0
----
++++
+title = "Getting Started"
+description = "Install sukr and build your first site"
+weight = 0
++++
 
 This guide walks you through installing sukr and creating your first static site.
 
@@ -47,10 +47,10 @@ base_url = "https://example.com"
 Create `content/_index.md`:
 
 ```markdown
----
-title: Welcome
-description: My awesome site
----
++++
+title = "Welcome"
+description = "My awesome site"
++++
 
 # Hello, World!
 

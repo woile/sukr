@@ -1,7 +1,7 @@
----
-title: sukr
-description: Minimal static site compiler — suckless, Rust, zero JS
----
++++
+title = "sukr"
+description = "Minimal static site compiler — suckless, Rust, zero JS"
++++
 
 # sukr
 

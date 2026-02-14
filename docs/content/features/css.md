@@ -1,8 +1,8 @@
----
-title: CSS Minification
-description: Automatic CSS optimization at build time
-weight: 7
----
++++
+title = "CSS Minification"
+description = "Automatic CSS optimization at build time"
+weight = 7
++++
 
 sukr automatically minifies CSS files in your static directory during the build.
 

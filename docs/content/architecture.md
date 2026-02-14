@@ -1,9 +1,9 @@
----
-title: "Architecture"
-description: "How sukr transforms markdown into zero-JS static sites"
-weight: 5
-toc: true
----
++++
+title = "Architecture"
+description = "How sukr transforms markdown into zero-JS static sites"
+weight = 5
+toc = true
++++
 
 sukr is a 13-module static site compiler. Every feature that would typically require client-side JavaScript is moved to build-time.
 

@@ -1,8 +1,8 @@
----
-title: Syntax Highlighting
-description: Build-time code highlighting with Tree-sitter and tree-house
-weight: 3
----
++++
+title = "Syntax Highlighting"
+description = "Build-time code highlighting with Tree-sitter and tree-house"
+weight = 3
++++
 
 sukr highlights code blocks at build time using [tree-house](https://github.com/helix-editor/tree-house) (Helix editor's Tree-sitter integration). No client-side JavaScript required.
 

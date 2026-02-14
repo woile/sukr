@@ -100,8 +100,8 @@ Items validated by codebase investigation:
    - [x] Update `extract_frontmatter()` to detect `+++` delimiters instead of `---`
    - [x] Add date validation: custom `deserialize_date` fn for TOML native dates → `chrono::NaiveDate`
    - [x] Change `tags` from `taxonomies.tags` nesting to flat `tags = ["..."]` (direct TOML array)
-   - [ ] Migrate all 17 content files from YAML (`---`) to TOML (`+++`) frontmatter
-   - [ ] Update embedded frontmatter examples in documentation pages (7 files)
+   - [x] Migrate all 17 content files from YAML (`---`) to TOML (`+++`) frontmatter
+   - [x] Update embedded frontmatter examples in documentation pages (7 files)
    - [ ] Add `FeedConfig` and `SitemapConfig` structs to `config.rs` with `enabled: bool` (default `true`)
    - [ ] Wire feed/sitemap config into `SiteConfig` deserialization
    - [ ] Gate feed generation in `main.rs` on `config.feed.enabled`
@@ -111,7 +111,7 @@ Items validated by codebase investigation:
    - [ ] Update `docs/templates/base.html`: `config.nested_nav` → `config.nav.nested`, `base_url` → `config.base_url`
    - [ ] Delete `docs/templates/section/features.html` and `docs/templates/homepage.html`
    - [ ] Add template section fallback in `render_section`: try `section/<type>.html`, fall back to `section/default.html`
-   - [ ] Update/fix all existing tests to use TOML frontmatter
+   - [x] Update/fix all existing tests to use TOML frontmatter
    - [ ] Add new tests: TOML parsing, date validation (valid + invalid), feed/sitemap config gating
    - [ ] Verify all 69 existing tests pass (updated for TOML)
 
