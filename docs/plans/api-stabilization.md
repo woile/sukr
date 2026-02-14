@@ -121,9 +121,9 @@ Items validated by codebase investigation:
    - [x] Filter drafts from nav discovery (`discover_nav()`)
    - [x] Filter drafts from sitemap entries
    - [x] Filter drafts from feed entries
-   - [ ] Generate HTML redirect stubs for each alias path (`<meta http-equiv="refresh">`)
+   - [x] Generate HTML redirect stubs for each alias path (`<meta http-equiv="refresh">`)
    - [x] Add tests: draft filtering (excluded from listing, nav, feed, sitemap)
-   - [ ] Add tests: alias redirect generation (valid HTML, correct target URL)
+   - [x] Add tests: alias redirect generation (valid HTML, correct target URL)
 
 3. **Phase 3: 404 & Tag Pages** — new content generation features
    - [ ] Detect `content/404.md` in content discovery, treat as special page

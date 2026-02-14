@@ -199,6 +199,9 @@ fn run(config_path: &Path) -> Result<()> {
         generate_sitemap_file(&output_dir, &manifest, &config, &content_dir)?;
     }
 
+    // 6. Generate alias redirects
+    generate_aliases(&output_dir, &content_dir, &manifest, &config)?;
+
     eprintln!("done!");
     Ok(())
 }
@@ -338,6 +341,97 @@ fn write_output(
     Ok(())
 }
 
+/// Generate HTML redirect stubs for alias paths.
+///
+/// For each content item with `aliases = ["/old/path", ...]` in frontmatter,
+/// writes a minimal HTML file at the alias path that redirects to the canonical URL.
+fn generate_aliases(
+    output_dir: &Path,
+    content_dir: &Path,
+    manifest: &content::SiteManifest,
+    config: &config::SiteConfig,
+) -> Result<()> {
+    let base_url = config.base_url.trim_end_matches('/');
+
+    // Process section items
+    for section in &manifest.sections {
+        if let Ok(items) = section.collect_items() {
+            for item in &items {
+                write_aliases(output_dir, content_dir, item, base_url)?;
+            }
+        }
+    }
+
+    // Process standalone pages
+    for page in &manifest.pages {
+        write_aliases(output_dir, content_dir, page, base_url)?;
+    }
+
+    Ok(())
+}
+
+/// Write redirect stubs for a single content item's aliases.
+fn write_aliases(
+    output_dir: &Path,
+    content_dir: &Path,
+    content: &Content,
+    base_url: &str,
+) -> Result<()> {
+    if content.frontmatter.aliases.is_empty() {
+        return Ok(());
+    }
+
+    let canonical_path = content.output_path(content_dir);
+    let canonical_url = format!("{}/{}", base_url, canonical_path.display());
+
+    for alias in &content.frontmatter.aliases {
+        let alias_path = alias.trim_start_matches('/');
+        // Append index.html if alias ends with / or has no extension
+        let alias_file = if alias_path.ends_with('/') || !alias_path.contains('.') {
+            format!("{}/index.html", alias_path.trim_end_matches('/'))
+        } else {
+            alias_path.to_string()
+        };
+
+        let out_path = output_dir.join(&alias_file);
+        let out_dir = out_path.parent().unwrap();
+
+        fs::create_dir_all(out_dir).map_err(|e| Error::CreateDir {
+            path: out_dir.to_path_buf(),
+            source: e,
+        })?;
+
+        let html = redirect_html(&canonical_url);
+        fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+            path: out_path.clone(),
+            source: e,
+        })?;
+
+        eprintln!("  alias: {} → {}", alias, canonical_url);
+    }
+
+    Ok(())
+}
+
+/// Generate minimal HTML for a redirect page.
+fn redirect_html(target_url: &str) -> String {
+    format!(
+        r#"<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url={url}">
+  <link rel="canonical" href="{url}">
+</head>
+<body>
+  <p>Redirecting to <a href="{url}">{url}</a></p>
+</body>
+</html>
+"#,
+        url = target_url,
+    )
+}
+
 /// Copy static assets (CSS, images, etc.) to output directory.
 /// CSS files are minified before writing.
 fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
@@ -413,4 +507,28 @@ fn walk_dir_inner(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_redirect_html_contains_meta_refresh() {
+        let html = redirect_html("https://example.com/blog/new-post.html");
+        assert!(html.contains(r#"http-equiv="refresh""#));
+        assert!(html.contains(r#"content="0; url=https://example.com/blog/new-post.html""#));
+        assert!(html.contains(r#"rel="canonical""#));
+        assert!(html.contains(r#"href="https://example.com/blog/new-post.html""#));
+    }
+
+    #[test]
+    fn test_redirect_html_is_valid_document() {
+        let html = redirect_html("https://example.com/target.html");
+        assert!(html.starts_with("<!DOCTYPE html>"));
+        assert!(html.contains("<html>"));
+        assert!(html.contains("</html>"));
+        assert!(html.contains("<head>"));
+        assert!(html.contains("</head>"));
+    }
 }
