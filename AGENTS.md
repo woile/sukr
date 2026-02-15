@@ -7,11 +7,11 @@ This project uses [predicate](https://github.com/nrdxp/predicate) for agent conf
 > [!IMPORTANT]
 > You **must** review [.agent/PREDICATE.md](.agent/PREDICATE.md) and follow its instructions before beginning work.
 
-**Active Fragments:**
+**Active Personas:**
 
-- Rust idioms (`.agent/predicates/fragments/rust.md`)
-- DepMap MCP tools (`.agent/predicates/fragments/depmap.md`)
-- Personalization (`.agent/predicates/fragments/personalization.md`)
+- Rust idioms (`.agent/personas/rust.md`)
+- DepMap MCP tools (`.agent/personas/depmap.md`)
+- Personalization (`.agent/personas/personalization.md`)
 
 ---
 
@@ -61,7 +61,7 @@ sukr --help                    # Show usage
 ## Code Style
 
 - Rust 2024 edition
-- Follow `.agent/predicates/fragments/rust.md` conventions
+- Follow `.agent/personas/rust.md` conventions
 - Prefer standard library over external crates
 - No `unwrap()` in library code; use proper error handling
 
@@ -83,7 +83,7 @@ sukr --help                    # Show usage
 │   ├── highlight.rs     # Tree-sitter highlighting
 │   └── render.rs        # Pulldown-cmark interception
 ├── templates/           # Tera templates (base, page, section/*)
-├── content/             # Markdown + YAML frontmatter
+├── content/             # Markdown + TOML frontmatter
 ├── static/              # CSS, images, _headers
 └── public/              # Generated output
 ```
@@ -120,4 +120,14 @@ content   = "content"
 output    = "public"
 static    = "static"
 templates = "templates"
+
+[nav]
+nested = false  # Hierarchical sidebar navigation
+toc    = true   # Table of contents on pages
+
+[feed]
+enabled = true  # Generate Atom feed
+
+[sitemap]
+enabled = true  # Generate sitemap.xml
 ```

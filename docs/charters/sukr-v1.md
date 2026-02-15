@@ -30,7 +30,7 @@ The measure isn't feature count — it's _absence_. Absence of JS bundles, absen
 
 1. **API Stabilization** — Evaluate which features belong in 1.0 (candidates: taxonomies/tags, i18n, others surfaced during sketching), then lock the public contract: `site.toml` schema, frontmatter fields, template variables, CLI flags, content directory conventions. Includes a dependency health audit (git deps, alpha deps, local patches) since these affect whether the stable surface is reproducibly buildable. The sketch must answer "what's in?" before locking "what's stable?" — and may spawn additional feature workstreams if the answer introduces implementation work
    - Spawns: `.sketches/api-stabilization.md` (and potentially feature-specific sketches)
-   - Status: Not Started
+   - Status: Complete — see `docs/plans/api-stabilization.md`
 
 2. **Error Quality** — Every error message tells the user what failed, why, and what to do about it. No panics outside `main()`, no opaque messages
    - Spawns: `.sketches/error-quality.md`

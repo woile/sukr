@@ -30,7 +30,7 @@ Implement the pre-1.0 API changes required to stabilize sukr's public contract: 
 | Feed/sitemap config    | `[feed]` and `[sitemap]` tables with `enabled` boolean in `SiteConfig`                             | Users need opt-out. Default `true` preserves backward compat.                                                                                             |
 | Tag listing pages      | Generate `/tags/<tag>.html` using a new `tags/default.html` template                               | Minimal approach — one template, one generation loop. No pagination.                                                                                      |
 | Aliases                | `aliases = ["/old/path"]` in frontmatter, generate HTML redirect stubs                             | Standard pattern (Hugo). `<meta http-equiv="refresh">` redirect.                                                                                          |
-| 404 page               | `content/404.md` → `404.html` at output root                                                       | Simplest approach. Most static hosts auto-serve `/404.html`.                                                                                              |
+| 404 page               | `content/_404.md` → `404.html` at output root                                                      | Underscore prefix convention (matches `_index.md`). Most static hosts auto-serve `/404.html`.                                                             |
 | Template fallback      | Try `section/<type>.html`, fall back to `section/default.html`                                     | Removes the requirement to create a template for every section_type.                                                                                      |
 | Dead template cleanup  | Delete `section/features.html` and `homepage.html`                                                 | Byte-for-byte duplicate and dead code respectively.                                                                                                       |
 | `base_url` duplication | Remove top-level `base_url` template variable                                                      | Single source of truth via `config.base_url`.                                                                                                             |
@@ -75,7 +75,7 @@ Items validated by codebase investigation:
 4. `aliases` frontmatter field + redirect stub generation
 5. Date validation (YYYY-MM-DD) at parse time
 6. `[feed].enabled` and `[sitemap].enabled` config
-7. `content/404.md` → `404.html` support
+7. `content/_404.md` → `404.html` support
 8. Tag listing page generation (`/tags/<tag>.html`)
 9. Template section fallback (`section/<type>.html` → `section/default.html`)
 10. Dead template removal (`section/features.html`, `homepage.html`)
@@ -138,17 +138,17 @@ Items validated by codebase investigation:
 
 ## Verification
 
-- [ ] `cargo test` — all existing tests pass (updated for TOML frontmatter)
-- [ ] `cargo test` — all new tests pass (minimum 12 new tests across 3 phases)
-- [ ] `cargo clippy -- -D warnings` — no warnings
-- [ ] `cargo build` — clean compilation
-- [ ] End-to-end: build `docs/` site with `cargo run`, verify:
-  - [ ] `public/sitemap.xml` exists (default enabled)
-  - [ ] `public/atom.xml` exists (default enabled)
-  - [ ] `public/404.html` exists (with \_404.md in docs/content)
-  - [ ] Templates use `config.nav.nested` (not `config.nested_nav`)
-  - [ ] Templates use `config.base_url` (not bare `base_url`)
-  - [ ] No `section/features.html` or `homepage.html` templates remain
+- [x] `cargo test` — all existing tests pass (updated for TOML frontmatter)
+- [x] `cargo test` — all new tests pass (16 new tests across 3 phases: 69 → 84)
+- [x] `cargo clippy -- -D warnings` — no warnings
+- [x] `cargo build` — clean compilation
+- [x] End-to-end: build `docs/` site with `cargo run`, verify:
+  - [x] `public/sitemap.xml` exists (default enabled)
+  - [x] `public/atom.xml` — N/A (no blog sections in docs site; feed gating verified by unit tests)
+  - [x] `public/404.html` exists (with \_404.md in docs/content)
+  - [x] Templates use `config.nav.nested` (not `config.nested_nav`)
+  - [x] Templates use `config.base_url` (not bare `base_url`)
+  - [x] No `section/features.html` or `homepage.html` templates remain
 
 ## Technical Debt
 
@@ -156,29 +156,30 @@ Items validated by codebase investigation:
   Populated during execution. Empty at plan creation.
 -->
 
-| Item | Severity | Why Introduced | Follow-Up | Resolved |
-| :--- | :------- | :------------- | :-------- | :------: |
+| Item                                  | Severity | Why Introduced                                                                                                                 | Follow-Up                                                                               | Resolved |
+| :------------------------------------ | :------- | :----------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------- | :------: |
+| `collect_items()` called 4× per build | LOW      | Tag collection (commit 7) and alias generation (commit 6) each added a new call site, growing the original 2-call pattern to 4 | Cache section items in `SiteManifest` — deferred to Error Hardening or Performance pass |    ☐     |
 
 ## Retrospective
 
-<!--
-  Filled in after execution is complete.
--->
-
 ### Process
 
-- Did the plan hold up? Where did we diverge and why?
-- Were the estimates/appetite realistic?
-- Did CHALLENGE catch the risks that actually materialized?
+The plan held up without requiring replanning during execution. The YAML → TOML pivot — the single largest decision — was identified during CHALLENGE (in `/plan`), not mid-execution. Once baked into the plan, execution was linear across all 3 phases.
+
+Phase sequencing was sound: Phase 1 (parser + config) → Phase 2 (features depending on new fields) → Phase 3 (independent new features). No circular dependencies materialized.
+
+Estimates were accurate: 3 phases, 8 commits predicted and delivered. CHALLENGE caught the risks that materialized — the 17-file content migration (flagged HIGH) was the most labor-intensive step but proceeded mechanically.
 
 ### Outcomes
 
-- What unexpected debt was introduced?
-- What would we do differently next cycle?
+**Unexpected debt:** `collect_items()` grew from 2 to 4 call sites. The original plan flagged the triple-call as "Accepted — LOW" but execution added a fourth. Logged in Technical Debt above.
+
+**What we'd do differently:** Commit 3 (`45448cc`) bundled 4 concerns (config refactor, base_url dedup, dead template deletion, section fallback). Tests for that commit's new behavior landed in commit 4. A 2-commit split would have maintained stricter atomicity without being excessive.
 
 ### Pipeline Improvements
 
-- Should any axiom/persona/workflow be updated based on this experience?
+- AGENTS.md has stale fragment paths (`.agent/predicates/fragments/` → `.agent/personas/`). Discovered during predicate refresh — should be fixed independently.
+- `/plan-review` should remind agents to mark Verification checkboxes during execution, not defer to review time.
 
 ## References
 
