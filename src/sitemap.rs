@@ -24,6 +24,7 @@ pub fn generate_sitemap(
     manifest: &SiteManifest,
     config: &SiteConfig,
     content_root: &Path,
+    tag_names: &[String],
 ) -> String {
     let base_url = config.base_url.trim_end_matches('/');
     let mut entries = Vec::new();
@@ -60,6 +61,14 @@ pub fn generate_sitemap(
         entries.push(SitemapEntry {
             loc: format!("{}/{}", base_url, relative_path.display()),
             lastmod: page.frontmatter.date.map(|d| d.to_string()),
+        });
+    }
+
+    // Tag listing pages
+    for tag in tag_names {
+        entries.push(SitemapEntry {
+            loc: format!("{}/tags/{}.html", base_url, tag),
+            lastmod: None,
         });
     }
 
@@ -164,5 +173,23 @@ mod tests {
         // & should be escaped
         assert!(xml.contains("&amp;"));
         assert!(!xml.contains("?q=foo&bar")); // Raw & should not appear
+    }
+
+    #[test]
+    fn test_sitemap_includes_tag_pages() {
+        let tag_names = vec!["rust".to_string(), "web".to_string()];
+        let entries: Vec<SitemapEntry> = tag_names
+            .iter()
+            .map(|tag| SitemapEntry {
+                loc: format!("https://example.com/tags/{}.html", tag),
+                lastmod: None,
+            })
+            .collect();
+
+        let xml = build_sitemap_xml(&entries);
+
+        assert!(xml.contains("https://example.com/tags/rust.html"));
+        assert!(xml.contains("https://example.com/tags/web.html"));
+        assert_eq!(xml.matches("<url>").count(), 2);
     }
 }

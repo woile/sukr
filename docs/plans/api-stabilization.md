@@ -131,10 +131,10 @@ Items validated by codebase investigation:
    - [x] Collect all unique tags across content items during build
    - [x] Create `tags/default.html` template in `docs/templates/`
    - [x] Generate `/tags/<tag>.html` for each unique tag with list of tagged items
-   - [ ] Add tag listing page entries to sitemap (if enabled)
+   - [x] Add tag listing page entries to sitemap (if enabled)
    - [x] Add tests: 404 page generation
    - [x] Add tests: tag listing page generation (correct paths, correct items per tag)
-   - [ ] End-to-end: build `docs/` site and verify all outputs
+   - [x] End-to-end: build `docs/` site and verify all outputs
 
 ## Verification
 

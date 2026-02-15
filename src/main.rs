@@ -200,12 +200,16 @@ fn run(config_path: &Path) -> Result<()> {
         generate_404(page_404, &output_dir, &config, &manifest.nav, &engine)?;
     }
 
-    // 6. Generate tag listing pages
-    generate_tag_pages(&output_dir, &content_dir, &config, &manifest, &engine)?;
+    // 6. Collect tags and generate tag listing pages
+    let tags = collect_tags(&manifest.sections, &manifest.pages, &content_dir, &config);
+    if !tags.is_empty() {
+        write_tag_pages(&output_dir, &tags, &config, &manifest.nav, &engine)?;
+    }
 
     // 7. Generate sitemap (if enabled)
+    let tag_names: Vec<String> = tags.keys().cloned().collect();
     if config.sitemap.enabled {
-        generate_sitemap_file(&output_dir, &manifest, &config, &content_dir)?;
+        generate_sitemap_file(&output_dir, &manifest, &config, &content_dir, &tag_names)?;
     }
 
     // 8. Generate alias redirects
@@ -242,11 +246,12 @@ fn generate_sitemap_file(
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
     content_dir: &Path,
+    tag_names: &[String],
 ) -> Result<()> {
     let out_path = output_dir.join("sitemap.xml");
     eprintln!("generating: {}", out_path.display());
 
-    let sitemap_xml = sitemap::generate_sitemap(manifest, config, content_dir);
+    let sitemap_xml = sitemap::generate_sitemap(manifest, config, content_dir, tag_names);
 
     fs::write(&out_path, sitemap_xml).map_err(|e| Error::WriteFile {
         path: out_path.clone(),
@@ -387,29 +392,23 @@ fn collect_tags(
     tags
 }
 
-/// Generate tag listing pages for all unique tags across content.
-fn generate_tag_pages(
+/// Write tag listing pages from pre-collected tag data.
+fn write_tag_pages(
     output_dir: &Path,
-    content_dir: &Path,
+    tags: &BTreeMap<String, Vec<ContentContext>>,
     config: &config::SiteConfig,
-    manifest: &content::SiteManifest,
+    nav: &[NavItem],
     engine: &TemplateEngine,
 ) -> Result<()> {
-    let tags = collect_tags(&manifest.sections, &manifest.pages, content_dir, config);
-
-    if tags.is_empty() {
-        return Ok(());
-    }
-
     let tags_dir = output_dir.join("tags");
     fs::create_dir_all(&tags_dir).map_err(|e| Error::CreateDir {
         path: tags_dir.clone(),
         source: e,
     })?;
 
-    for (tag, items) in &tags {
+    for (tag, items) in tags {
         let page_path = format!("/tags/{}.html", tag);
-        let html = engine.render_tag_page(tag, items, &page_path, config, &manifest.nav)?;
+        let html = engine.render_tag_page(tag, items, &page_path, config, nav)?;
 
         let out_path = tags_dir.join(format!("{}.html", tag));
         fs::write(&out_path, html).map_err(|e| Error::WriteFile {
