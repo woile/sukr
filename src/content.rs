@@ -431,6 +431,32 @@ pub fn extract_links(blocks: &[ContentBlock]) -> Vec<LinkTarget> {
         .collect()
 }
 
+/// Normalize a markdown internal link URL to a canonical output path.
+///
+/// Strips fragments (`#section`), adds `.html` suffix if missing,
+/// and ensures a leading `/` for consistency with output_path format.
+fn normalize_link_url(url: &str) -> String {
+    // Strip fragment
+    let path = url.split('#').next().unwrap_or(url);
+    if path.is_empty() {
+        return String::new();
+    }
+
+    // Ensure leading /
+    let path = if path.starts_with('/') {
+        path.to_string()
+    } else {
+        format!("/{}", path)
+    };
+
+    // Add .html if no extension present
+    if Path::new(&path).extension().is_none() {
+        format!("{}.html", path)
+    } else {
+        path
+    }
+}
+
 /// A navigation menu item discovered from the filesystem.
 #[derive(Debug, Clone, Serialize)]
 pub struct NavItem {
@@ -903,14 +929,89 @@ impl SiteManifest {
         // Derive navigation from already-parsed sections and pages
         let nav = derive_nav(&sections, &pages);
 
-        Ok(SiteManifest {
+        let manifest = SiteManifest {
             homepage,
             page_404,
             sections,
             pages,
             posts,
             nav,
-        })
+        };
+
+        // Validate internal links (non-fatal: print warnings)
+        let broken = manifest.validate_internal_links();
+        for err in &broken {
+            eprintln!("warning: {}", err);
+        }
+
+        Ok(manifest)
+    }
+
+    /// Check all internal links against known output paths.
+    ///
+    /// Returns a list of `BrokenLink` errors for any internal link
+    /// that doesn't resolve to a known page. This is non-fatal —
+    /// callers decide whether to treat these as warnings or errors.
+    pub fn validate_internal_links(&self) -> Vec<Error> {
+        use std::collections::HashSet;
+
+        // Build set of all known canonical output paths (with leading /)
+        let mut known_paths: HashSet<String> = HashSet::new();
+
+        // Homepage
+        known_paths.insert(format!("/{}", self.homepage.output_path.display()));
+
+        // 404
+        if let Some(ref page) = self.page_404 {
+            known_paths.insert(format!("/{}", page.output_path.display()));
+        }
+
+        // Sections (index + items)
+        for section in &self.sections {
+            known_paths.insert(format!("/{}", section.index.output_path.display()));
+            for item in &section.items {
+                known_paths.insert(format!("/{}", item.output_path.display()));
+            }
+        }
+
+        // Standalone pages
+        for page in &self.pages {
+            known_paths.insert(format!("/{}", page.output_path.display()));
+        }
+
+        // Check all content's internal links
+        let mut broken = Vec::new();
+
+        let all_content: Vec<&Content> = std::iter::once(&self.homepage)
+            .chain(self.page_404.iter())
+            .chain(
+                self.sections
+                    .iter()
+                    .flat_map(|s| std::iter::once(&s.index).chain(s.items.iter())),
+            )
+            .chain(self.pages.iter())
+            .collect();
+
+        for content in all_content {
+            for link in &content.links {
+                if !link.is_internal {
+                    continue;
+                }
+                let normalized = normalize_link_url(&link.url);
+                if normalized.is_empty() {
+                    continue;
+                }
+                if !known_paths.contains(&normalized) {
+                    broken.push(Error::BrokenLink {
+                        source_page: content.source_path.clone(),
+                        target: link.url.clone(),
+                        line: link.source_line,
+                    });
+                }
+            }
+        }
+
+        broken
     }
 }
 
@@ -1731,5 +1832,93 @@ mod tests {
         assert_eq!(links.len(), 1);
         assert!(links[0].is_internal);
         assert_eq!(links[0].url, "/img/photo.png");
+    }
+
+    // =========================================================================
+    // validate_internal_links tests
+    // =========================================================================
+
+    #[test]
+    fn test_normalize_link_url() {
+        // Absolute with extension
+        assert_eq!(normalize_link_url("/about.html"), "/about.html");
+        // Absolute without extension → adds .html
+        assert_eq!(normalize_link_url("/about"), "/about.html");
+        // Relative → adds leading / and .html
+        assert_eq!(normalize_link_url("about"), "/about.html");
+        // With fragment → strips fragment
+        assert_eq!(normalize_link_url("/about#section"), "/about.html");
+        // Already correct
+        assert_eq!(normalize_link_url("/blog/post.html"), "/blog/post.html");
+        // Empty after fragment strip
+        assert_eq!(normalize_link_url("#section"), "");
+    }
+
+    #[test]
+    fn test_validate_internal_links_valid() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        // Set up homepage and a page that links to another page
+        write_frontmatter(&content_dir.join("_index.md"), "Home", None, None);
+        fs::write(
+            content_dir.join("about.md"),
+            "+++\ntitle = \"About\"\n+++\n\n[Home](/index.html)\n",
+        )
+        .unwrap();
+
+        let manifest = SiteManifest::discover(content_dir).unwrap();
+        let broken = manifest.validate_internal_links();
+        assert!(
+            broken.is_empty(),
+            "expected no broken links, got: {:?}",
+            broken
+        );
+    }
+
+    #[test]
+    fn test_validate_internal_links_broken() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        // Set up homepage and a page with a broken link
+        write_frontmatter(&content_dir.join("_index.md"), "Home", None, None);
+        fs::write(
+            content_dir.join("about.md"),
+            "+++\ntitle = \"About\"\n+++\n\n[Missing](/nonexistent)\n",
+        )
+        .unwrap();
+
+        let manifest = SiteManifest::discover(content_dir).unwrap();
+        let broken = manifest.validate_internal_links();
+        assert_eq!(broken.len(), 1, "expected 1 broken link, got: {:?}", broken);
+        match &broken[0] {
+            Error::BrokenLink { target, .. } => {
+                assert_eq!(target, "/nonexistent");
+            },
+            other => panic!("expected BrokenLink, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_validate_internal_links_ignores_external() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        // External link should not be validated
+        write_frontmatter(&content_dir.join("_index.md"), "Home", None, None);
+        fs::write(
+            content_dir.join("about.md"),
+            "+++\ntitle = \"About\"\n+++\n\n[External](https://example.com/missing)\n",
+        )
+        .unwrap();
+
+        let manifest = SiteManifest::discover(content_dir).unwrap();
+        let broken = manifest.validate_internal_links();
+        assert!(
+            broken.is_empty(),
+            "external links should not be validated, got: {:?}",
+            broken
+        );
     }
 }

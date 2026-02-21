@@ -45,6 +45,13 @@ pub enum Error {
 
     /// Failed to bundle CSS.
     CssBundle(String),
+
+    /// Broken internal link detected during reference validation.
+    BrokenLink {
+        source_page: PathBuf,
+        target: String,
+        line: Option<usize>,
+    },
 }
 
 impl fmt::Display for Error {
@@ -78,6 +85,23 @@ impl fmt::Display for Error {
                 write!(f, "failed to render template '{}'", template)
             },
             Error::CssBundle(msg) => write!(f, "CSS bundle error: {}", msg),
+            Error::BrokenLink {
+                source_page,
+                target,
+                line,
+            } => {
+                if let Some(ln) = line {
+                    write!(
+                        f,
+                        "broken link in {} (line {}): {}",
+                        source_page.display(),
+                        ln,
+                        target
+                    )
+                } else {
+                    write!(f, "broken link in {}: {}", source_page.display(), target)
+                }
+            },
         }
     }
 }
