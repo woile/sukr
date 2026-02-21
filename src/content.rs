@@ -3,6 +3,8 @@
 use crate::error::{Error, Result};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -25,6 +27,212 @@ pub enum ContentKind {
     Project,
 }
 
+// ============================================================================
+// Category C types — formal model alignment
+// ============================================================================
+
+/// A structured block of content parsed from markdown.
+///
+/// Represents the coproduct from the formal model. Each variant corresponds
+/// to a build-time interception point in the rendering pipeline.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ContentBlock {
+    /// Fenced code block with optional language annotation.
+    Code {
+        language: Option<String>,
+        source: String,
+    },
+    /// Mathematical expression (KaTeX). `display` = block vs inline.
+    Math { source: String, display: bool },
+    /// Diagram source (Mermaid).
+    Diagram { source: String },
+    /// Heading with computed slug for anchor navigation.
+    Heading { level: u8, text: String, id: String },
+    /// Inline or block text content.
+    Text(String),
+    /// Hyperlink.
+    Link {
+        url: String,
+        title: Option<String>,
+        text: String,
+    },
+    /// Image reference.
+    Image {
+        url: String,
+        alt: String,
+        title: Option<String>,
+    },
+    /// Pass-through HTML or unmapped pulldown-cmark events.
+    Raw(String),
+}
+
+/// A content tag — validated newtype over String.
+///
+/// Parse-don't-validate: constructed once, used everywhere with
+/// compile-time type safety. No bare `String` can be confused for a tag.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Tag(String);
+
+impl Tag {
+    /// Create a new tag from any string-like value.
+    pub fn new(s: impl Into<String>) -> Self {
+        Self(s.into())
+    }
+
+    /// Borrow the inner string.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for Tag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl AsRef<str> for Tag {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Serialize for Tag {
+    fn serialize<S: serde::Serializer>(
+        &self,
+        serializer: S,
+    ) -> std::result::Result<S::Ok, S::Error> {
+        self.0.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Tag {
+    fn deserialize<D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Tag)
+    }
+}
+
+/// Section type for exhaustive dispatch on sort strategy and template selection.
+///
+/// Replaces bare string comparisons against "blog", "projects", etc.
+/// Adding a new section type forces handling at every match site.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum SectionType {
+    Blog,
+    Projects,
+    Custom(String),
+}
+
+impl SectionType {
+    /// Convert a string into a typed section kind.
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "blog" => Self::Blog,
+            "projects" => Self::Projects,
+            other => Self::Custom(other.to_string()),
+        }
+    }
+}
+
+impl fmt::Display for SectionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Blog => f.write_str("blog"),
+            Self::Projects => f.write_str("projects"),
+            Self::Custom(s) => f.write_str(s),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for SectionType {
+    fn deserialize<D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<Self, D::Error> {
+        String::deserialize(deserializer).map(|s| Self::from_str(&s))
+    }
+}
+
+/// Sort key for ordered content collections.
+///
+/// Used as the key type in `BTreeMap<SortKey, Content>` for
+/// sorted-by-construction section items. The variant is determined
+/// by `SectionType` at construction time.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SortKey {
+    /// Blog-style: sort by date, newest first. Falls back to weight
+    /// for undated items.
+    DateDesc(NaiveDate),
+    /// Weight-based: sort by weight ascending, then title ascending.
+    /// Used for projects and custom sections.
+    WeightTitle(i64, String),
+}
+
+impl SortKey {
+    /// Default weight when none is specified in frontmatter.
+    const DEFAULT_WEIGHT: i64 = 50;
+
+    /// Construct the appropriate sort key for a content item based on
+    /// its section type and frontmatter.
+    pub fn for_content(section_type: &SectionType, frontmatter: &Frontmatter) -> Self {
+        match section_type {
+            SectionType::Blog => {
+                if let Some(date) = frontmatter.date {
+                    Self::DateDesc(date)
+                } else {
+                    // Undated blog posts sort by weight+title as fallback
+                    Self::WeightTitle(
+                        frontmatter.weight.unwrap_or(Self::DEFAULT_WEIGHT),
+                        frontmatter.title.clone(),
+                    )
+                }
+            },
+            _ => Self::WeightTitle(
+                frontmatter.weight.unwrap_or(Self::DEFAULT_WEIGHT),
+                frontmatter.title.clone(),
+            ),
+        }
+    }
+}
+
+impl Ord for SortKey {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            // Newest date first (reverse chronological)
+            (Self::DateDesc(a), Self::DateDesc(b)) => b.cmp(a),
+            // Weight ascending, then title ascending
+            (Self::WeightTitle(wa, ta), Self::WeightTitle(wb, tb)) => {
+                wa.cmp(wb).then_with(|| ta.cmp(tb))
+            },
+            // DateDesc sorts before WeightTitle (dated items first)
+            (Self::DateDesc(_), Self::WeightTitle(_, _)) => Ordering::Less,
+            (Self::WeightTitle(_, _), Self::DateDesc(_)) => Ordering::Greater,
+        }
+    }
+}
+
+impl PartialOrd for SortKey {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// An inter-page reference discovered during parsing.
+///
+/// Placeholder for Phase 2 link extraction. Will be populated by
+/// `extract_links()` when blocks are parsed from markdown.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LinkTarget {
+    /// The URL or relative path as written in markdown.
+    pub url: String,
+    /// Source line number for error reporting.
+    pub source_line: Option<usize>,
+    /// Whether this is an internal (relative) reference vs external URL.
+    pub is_internal: bool,
+}
+
 /// A navigation menu item discovered from the filesystem.
 #[derive(Debug, Clone, Serialize)]
 pub struct NavItem {
@@ -37,6 +245,28 @@ pub struct NavItem {
     /// Child navigation items (section pages)
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<NavItem>,
+}
+
+impl Eq for NavItem {}
+
+impl PartialEq for NavItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.weight == other.weight && self.label == other.label
+    }
+}
+
+impl Ord for NavItem {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.weight
+            .cmp(&other.weight)
+            .then_with(|| self.label.cmp(&other.label))
+    }
+}
+
+impl PartialOrd for NavItem {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 /// Parsed frontmatter from a content file.
@@ -960,5 +1190,259 @@ mod tests {
             manifest.page_404.is_none(),
             "page_404 should be None when _404.md absent"
         );
+    }
+
+    // ========================================================================
+    // Category C type tests
+    // ========================================================================
+
+    #[test]
+    fn test_content_block_construction() {
+        let code = ContentBlock::Code {
+            language: Some("rust".to_string()),
+            source: "fn main() {}".to_string(),
+        };
+        assert_eq!(
+            code,
+            ContentBlock::Code {
+                language: Some("rust".to_string()),
+                source: "fn main() {}".to_string(),
+            }
+        );
+
+        let text = ContentBlock::Text("hello".to_string());
+        assert_eq!(text, ContentBlock::Text("hello".to_string()));
+
+        let raw = ContentBlock::Raw("<div>html</div>".to_string());
+        assert_ne!(raw, text);
+    }
+
+    #[test]
+    fn test_tag_ordering() {
+        let a = Tag::new("alpha");
+        let b = Tag::new("beta");
+        let a2 = Tag::new("alpha");
+
+        assert!(a < b);
+        assert_eq!(a, a2);
+        assert!(b > a);
+    }
+
+    #[test]
+    fn test_tag_display_and_as_ref() {
+        let tag = Tag::new("rust");
+        assert_eq!(tag.to_string(), "rust");
+        assert_eq!(tag.as_ref(), "rust");
+        assert_eq!(tag.as_str(), "rust");
+    }
+
+    #[test]
+    fn test_tag_serde_round_trip() {
+        let tag = Tag::new("testing");
+        // Tag serializes as a plain string
+        assert_eq!(tag.as_str(), "testing");
+
+        // Demonstrate round-trip through TOML (the actual format)
+        #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        struct Wrapper {
+            tag: Tag,
+        }
+        let w = Wrapper {
+            tag: Tag::new("round-trip"),
+        };
+        let toml_str = toml::to_string(&w).unwrap();
+        let back: Wrapper = toml::from_str(&toml_str).unwrap();
+        assert_eq!(back, w);
+    }
+
+    #[test]
+    fn test_tag_hash_dedup() {
+        use std::collections::HashSet;
+        let mut set = HashSet::new();
+        set.insert(Tag::new("rust"));
+        set.insert(Tag::new("rust"));
+        set.insert(Tag::new("go"));
+        assert_eq!(set.len(), 2);
+    }
+
+    #[test]
+    fn test_section_type_from_str() {
+        assert_eq!(SectionType::from_str("blog"), SectionType::Blog);
+        assert_eq!(SectionType::from_str("projects"), SectionType::Projects);
+        assert_eq!(
+            SectionType::from_str("gallery"),
+            SectionType::Custom("gallery".to_string())
+        );
+    }
+
+    #[test]
+    fn test_section_type_display_round_trip() {
+        let cases = [SectionType::Blog, SectionType::Projects];
+        for st in &cases {
+            let s = st.to_string();
+            assert_eq!(SectionType::from_str(&s), *st);
+        }
+
+        let custom = SectionType::Custom("wiki".to_string());
+        assert_eq!(custom.to_string(), "wiki");
+        assert_eq!(SectionType::from_str("wiki"), custom);
+    }
+
+    #[test]
+    fn test_section_type_serde() {
+        #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        struct Wrapper {
+            kind: SectionType,
+        }
+        let w = Wrapper {
+            kind: SectionType::Blog,
+        };
+        let toml_str = toml::to_string(&w).unwrap();
+        assert!(toml_str.contains("blog"));
+
+        let back: Wrapper = toml::from_str(&toml_str).unwrap();
+        assert_eq!(back.kind, SectionType::Blog);
+    }
+
+    #[test]
+    fn test_sort_key_date_desc_newest_first() {
+        let newer = SortKey::DateDesc(NaiveDate::from_ymd_opt(2026, 2, 21).unwrap());
+        let older = SortKey::DateDesc(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
+
+        // Newer should sort BEFORE older (reverse chronological)
+        assert!(newer < older);
+    }
+
+    #[test]
+    fn test_sort_key_weight_title_ordering() {
+        let light = SortKey::WeightTitle(10, "Zebra".to_string());
+        let heavy = SortKey::WeightTitle(99, "Alpha".to_string());
+        let same_weight_a = SortKey::WeightTitle(50, "Alpha".to_string());
+        let same_weight_z = SortKey::WeightTitle(50, "Zebra".to_string());
+
+        // Lower weight sorts first
+        assert!(light < heavy);
+        // Same weight: alphabetical by title
+        assert!(same_weight_a < same_weight_z);
+    }
+
+    #[test]
+    fn test_sort_key_cross_variant() {
+        let dated = SortKey::DateDesc(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
+        let weighted = SortKey::WeightTitle(1, "First".to_string());
+
+        // DateDesc sorts before WeightTitle
+        assert!(dated < weighted);
+    }
+
+    #[test]
+    fn test_sort_key_for_content_blog() {
+        let fm = Frontmatter {
+            title: "Test Post".to_string(),
+            date: Some(NaiveDate::from_ymd_opt(2026, 2, 21).unwrap()),
+            weight: None,
+            description: None,
+            tags: vec![],
+            link_to: None,
+            nav_label: None,
+            section_type: None,
+            template: None,
+            toc: None,
+            draft: false,
+            aliases: vec![],
+        };
+
+        let key = SortKey::for_content(&SectionType::Blog, &fm);
+        assert_eq!(
+            key,
+            SortKey::DateDesc(NaiveDate::from_ymd_opt(2026, 2, 21).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_sort_key_for_content_blog_undated_fallback() {
+        let fm = Frontmatter {
+            title: "Undated Post".to_string(),
+            date: None,
+            weight: Some(10),
+            description: None,
+            tags: vec![],
+            link_to: None,
+            nav_label: None,
+            section_type: None,
+            template: None,
+            toc: None,
+            draft: false,
+            aliases: vec![],
+        };
+
+        let key = SortKey::for_content(&SectionType::Blog, &fm);
+        assert_eq!(key, SortKey::WeightTitle(10, "Undated Post".to_string()));
+    }
+
+    #[test]
+    fn test_sort_key_for_content_projects() {
+        let fm = Frontmatter {
+            title: "My Project".to_string(),
+            date: Some(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()),
+            weight: None,
+            description: None,
+            tags: vec![],
+            link_to: None,
+            nav_label: None,
+            section_type: None,
+            template: None,
+            toc: None,
+            draft: false,
+            aliases: vec![],
+        };
+
+        // Projects always use WeightTitle, even if dated
+        let key = SortKey::for_content(&SectionType::Projects, &fm);
+        assert_eq!(key, SortKey::WeightTitle(50, "My Project".to_string()));
+    }
+
+    #[test]
+    fn test_nav_item_ordering() {
+        let first = NavItem {
+            label: "About".to_string(),
+            path: "/about.html".to_string(),
+            weight: 10,
+            children: vec![],
+        };
+        let second = NavItem {
+            label: "Blog".to_string(),
+            path: "/blog/index.html".to_string(),
+            weight: 20,
+            children: vec![],
+        };
+        let same_weight = NavItem {
+            label: "Contact".to_string(),
+            path: "/contact.html".to_string(),
+            weight: 10,
+            children: vec![],
+        };
+
+        assert!(first < second);
+        // Same weight: alphabetical
+        assert!(first < same_weight);
+    }
+
+    #[test]
+    fn test_link_target_construction() {
+        let internal = LinkTarget {
+            url: "/blog/post.html".to_string(),
+            source_line: Some(42),
+            is_internal: true,
+        };
+        let external = LinkTarget {
+            url: "https://example.com".to_string(),
+            source_line: None,
+            is_internal: false,
+        };
+
+        assert_ne!(internal, external);
+        assert!(internal.is_internal);
+        assert!(!external.is_internal);
     }
 }

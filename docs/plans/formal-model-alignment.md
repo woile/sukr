@@ -138,12 +138,12 @@ minimum documented as an explicit convention rather than buried in code.
 1. **Phase 1: Content Category Types** — Establish the type system for Category C
 
    **New types:**
-   - [ ] Define `ContentBlock` enum with 7+1 variants: `Code`, `Math`, `Diagram`, `Heading`, `Text`, `Link`, `Image`, `Raw` (fallback)
-   - [ ] Define `Tag` newtype with `Display`, `AsRef<str>`, `Serialize`, `Deserialize`, `Eq`, `Hash`, `Ord`
-   - [ ] Define `SectionType` enum: `Blog`, `Projects`, `Custom(String)` with `Display`, `Serialize`, `Deserialize` — **resolves H1, H2, H11**
-   - [ ] Define `SortKey` enum: `DateDesc(NaiveDate)`, `WeightTitle(i64, String)` with appropriate `Ord` — a plain key type, no collection wrapper — **absorbs C7 (`DEFAULT_WEIGHT_HIGH`), C8 (`DEFAULT_WEIGHT`) into construction logic, resolves H7, H8**
-   - [ ] `impl Ord for NavItem` with `(weight, label)` ordering; `impl PartialOrd`, `Eq`, `PartialEq` (derive or manual)
-   - [ ] Define `LinkTarget` type (relative path or URL with source location for error reporting)
+   - [x] Define `ContentBlock` enum with 7+1 variants: `Code`, `Math`, `Diagram`, `Heading`, `Text`, `Link`, `Image`, `Raw` (fallback)
+   - [x] Define `Tag` newtype with `Display`, `AsRef<str>`, `Serialize`, `Deserialize`, `Eq`, `Hash`, `Ord`
+   - [x] Define `SectionType` enum: `Blog`, `Projects`, `Custom(String)` with `Display`, `Serialize`, `Deserialize` — **resolves H1, H2, H11**
+   - [x] Define `SortKey` enum: `DateDesc(NaiveDate)`, `WeightTitle(i64, String)` with appropriate `Ord` — a plain key type, no collection wrapper — **absorbs C7 (`DEFAULT_WEIGHT_HIGH`), C8 (`DEFAULT_WEIGHT`) into construction logic, resolves H7, H8**
+   - [x] `impl Ord for NavItem` with `(weight, label)` ordering; `impl PartialOrd`, `Eq`, `PartialEq` (derive or manual)
+   - [x] Define `LinkTarget` type (relative path or URL with source location for error reporting)
 
    **Struct updates:**
    - [ ] Update `Frontmatter.tags` from `Vec<String>` to `Vec<Tag>`
@@ -160,7 +160,7 @@ minimum documented as an explicit convention rather than buried in code.
 
    **Cruft + verification:**
    - [ ] **Cruft audit:** Remove any dead types, holdover methods, or unused fields. Pre-1.0 = no backwards compat tax.
-   - [ ] All existing tests pass, new unit tests for `ContentBlock`, `Tag`, `SectionType`, `SortKey`, `LinkTarget`
+   - [x] All existing tests pass, new unit tests for `ContentBlock`, `Tag`, `SectionType`, `SortKey`, `LinkTarget`
 
 2. **Phase 2: Parse Functor** — Content discovery produces fully-typed Category C objects
 
@@ -279,6 +279,7 @@ minimum documented as an explicit convention rather than buried in code.
 
 | Item | Severity | Why Introduced | Follow-Up | Resolved |
 | :--- | :------- | :------------- | :-------- | :------: |
+| `NavItem::PartialEq` ignores `path` and `children` | LOW | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only | Add doc comment on the impl | |
 
 ## Deviation Log
 
