@@ -214,7 +214,7 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
             // Top-level .md file (except _index.md) → page nav item
             if path.extension().is_some_and(|ext| ext == "md") {
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if file_name != "_index.md" {
+                if file_name != "_index.md" && file_name != "_404.md" {
                     let content = Content::from_path(&path, ContentKind::Page)?;
                     if !content.frontmatter.draft {
                         let slug = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
@@ -536,6 +536,20 @@ mod tests {
 
         // Create _index.md at root (should be excluded from nav)
         write_frontmatter(&content_dir.join("_index.md"), "Home", None, None);
+        write_frontmatter(&content_dir.join("about.md"), "About", None, None);
+
+        let nav = discover_nav(content_dir).expect("discover_nav failed");
+        assert_eq!(nav.len(), 1);
+        assert_eq!(nav[0].label, "About");
+    }
+
+    #[test]
+    fn test_discover_nav_excludes_404() {
+        let dir = create_test_dir();
+        let content_dir = dir.path();
+
+        // Create _404.md at root (should be excluded from nav)
+        write_frontmatter(&content_dir.join("_404.md"), "Not Found", None, None);
         write_frontmatter(&content_dir.join("about.md"), "About", None, None);
 
         let nav = discover_nav(content_dir).expect("discover_nav failed");
