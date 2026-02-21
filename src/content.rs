@@ -8,12 +8,6 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Default weight for content items in navigation and listings.
-pub(crate) const DEFAULT_WEIGHT: i64 = 50;
-
-/// High default weight for content that should appear last (e.g., projects).
-pub(crate) const DEFAULT_WEIGHT_HIGH: i64 = 99;
-
 /// The type of content being processed.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ContentKind {
@@ -172,7 +166,7 @@ pub enum SortKey {
 
 impl SortKey {
     /// Default weight when none is specified in frontmatter.
-    const DEFAULT_WEIGHT: i64 = 50;
+    pub const DEFAULT_WEIGHT: i64 = 50;
 
     /// Construct the appropriate sort key for a content item based on
     /// its section type and frontmatter.
@@ -463,7 +457,10 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
                                 .nav_label
                                 .unwrap_or(content.frontmatter.title),
                             path: format!("/{}.html", slug),
-                            weight: content.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT),
+                            weight: content
+                                .frontmatter
+                                .weight
+                                .unwrap_or(SortKey::DEFAULT_WEIGHT),
                             children: Vec::new(),
                         });
                     }
@@ -498,7 +495,7 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
                     .map(|item| NavItem {
                         label: item.frontmatter.nav_label.unwrap_or(item.frontmatter.title),
                         path: format!("/{}/{}.html", dir_name, item.slug),
-                        weight: item.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT),
+                        weight: item.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT),
                         children: Vec::new(),
                     })
                     .collect();
@@ -513,7 +510,10 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
                         .nav_label
                         .unwrap_or(content.frontmatter.title),
                     path: format!("/{}/index.html", dir_name),
-                    weight: content.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT),
+                    weight: content
+                        .frontmatter
+                        .weight
+                        .unwrap_or(SortKey::DEFAULT_WEIGHT),
                     children,
                 });
             }
@@ -617,8 +617,16 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
 
     // Sort by weight
     sections.sort_by(|a, b| {
-        let wa = a.index.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT);
-        let wb = b.index.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT);
+        let wa = a
+            .index
+            .frontmatter
+            .weight
+            .unwrap_or(SortKey::DEFAULT_WEIGHT);
+        let wb = b
+            .index
+            .frontmatter
+            .weight
+            .unwrap_or(SortKey::DEFAULT_WEIGHT);
         wa.cmp(&wb)
     });
 

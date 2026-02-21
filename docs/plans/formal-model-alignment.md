@@ -154,9 +154,9 @@ minimum documented as an explicit convention rather than buried in code.
    - [ ] Update `discover_sections` and `discover_pages` to return sorted-by-construction collections (no post-hoc `sort_by`)
 
    **Downstream consumers:**
-   - [ ] Update all consumers of `Frontmatter.tags`: `collect_tags`, `write_tag_pages`, `FrontmatterContext::new`, `sitemap.rs`
-   - [ ] Update all consumers of `section_type`: sort dispatch in `run()` , template resolution in `template_engine.rs` — replace `match section.section_type.as_str()` with `match section.section_type`
-   - [ ] Remove `DEFAULT_WEIGHT` and `DEFAULT_WEIGHT_HIGH` constants — **resolves C7, C8**
+   - [x] Update all consumers of `Frontmatter.tags`: `collect_tags`, `write_tag_pages`, `FrontmatterContext::new`, `sitemap.rs`
+   - [x] Update all consumers of `section_type`: sort dispatch in `run()` , template resolution in `template_engine.rs` — replace `match section.section_type.as_str()` with `match section.section_type`
+   - [x] Remove `DEFAULT_WEIGHT` and `DEFAULT_WEIGHT_HIGH` constants — **resolves C7, C8**
 
    **Cruft + verification:**
    - [ ] **Cruft audit:** Remove any dead types, holdover methods, or unused fields. Pre-1.0 = no backwards compat tax.

@@ -15,7 +15,7 @@ mod render;
 mod sitemap;
 mod template_engine;
 
-use crate::content::{Content, ContentKind, DEFAULT_WEIGHT, DEFAULT_WEIGHT_HIGH, NavItem};
+use crate::content::{Content, ContentKind, NavItem, SortKey};
 use crate::error::{Error, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
 use std::collections::BTreeMap;
@@ -121,12 +121,12 @@ fn run(config_path: &Path) -> Result<()> {
                 items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
             },
             content::SectionType::Projects => {
-                // Projects: sort by weight
+                // Projects: sort by weight (high default so unweighted items sink)
                 items.sort_by(|a, b| {
                     a.frontmatter
                         .weight
-                        .unwrap_or(DEFAULT_WEIGHT_HIGH)
-                        .cmp(&b.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT_HIGH))
+                        .unwrap_or(99)
+                        .cmp(&b.frontmatter.weight.unwrap_or(99))
                 });
             },
             _ => {
@@ -134,8 +134,8 @@ fn run(config_path: &Path) -> Result<()> {
                 items.sort_by(|a, b| {
                     a.frontmatter
                         .weight
-                        .unwrap_or(DEFAULT_WEIGHT)
-                        .cmp(&b.frontmatter.weight.unwrap_or(DEFAULT_WEIGHT))
+                        .unwrap_or(SortKey::DEFAULT_WEIGHT)
+                        .cmp(&b.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT))
                         .then_with(|| a.frontmatter.title.cmp(&b.frontmatter.title))
                 });
             },
