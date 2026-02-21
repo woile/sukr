@@ -15,7 +15,7 @@ mod render;
 mod sitemap;
 mod template_engine;
 
-use crate::content::{Content, ContentKind, NavItem, SortKey};
+use crate::content::{Content, ContentKind, NavItem};
 use crate::error::{Error, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
 use std::collections::BTreeMap;
@@ -111,38 +111,11 @@ fn run(config_path: &Path) -> Result<()> {
     for section in &manifest.sections {
         eprintln!("processing section: {}", section.name);
 
-        // Collect and sort items in this section
-        let mut items = section.collect_items()?;
-
-        // Sort based on section type
-        match &section.section_type {
-            content::SectionType::Blog => {
-                // Blog: sort by date, newest first
-                items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
-            },
-            content::SectionType::Projects => {
-                // Projects: sort by weight (high default so unweighted items sink)
-                items.sort_by(|a, b| {
-                    a.frontmatter
-                        .weight
-                        .unwrap_or(99)
-                        .cmp(&b.frontmatter.weight.unwrap_or(99))
-                });
-            },
-            _ => {
-                // Default: sort by weight then title
-                items.sort_by(|a, b| {
-                    a.frontmatter
-                        .weight
-                        .unwrap_or(SortKey::DEFAULT_WEIGHT)
-                        .cmp(&b.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT))
-                        .then_with(|| a.frontmatter.title.cmp(&b.frontmatter.title))
-                });
-            },
-        }
+        // Items are pre-sorted at construction in discover_sections
+        let items = &section.items;
 
         // Render individual content pages for all sections
-        for item in &items {
+        for item in items {
             eprintln!("  processing: {}", item.slug);
             let (html_body, anchors) = render::markdown_to_html(&item.body);
             let page_path = format!("/{}", item.output_path.display());
@@ -369,13 +342,11 @@ fn collect_tags(
 
     // Collect from section items
     for section in sections {
-        if let Ok(items) = section.collect_items() {
-            for item in &items {
-                for tag in &item.frontmatter.tags {
-                    tags.entry(tag.to_string())
-                        .or_default()
-                        .push(ContentContext::from_content(item, content_dir, config));
-                }
+        for item in &section.items {
+            for tag in &item.frontmatter.tags {
+                tags.entry(tag.to_string())
+                    .or_default()
+                    .push(ContentContext::from_content(item, content_dir, config));
             }
         }
     }
@@ -465,10 +436,8 @@ fn generate_aliases(
 
     // Process section items
     for section in &manifest.sections {
-        if let Ok(items) = section.collect_items() {
-            for item in &items {
-                write_aliases(output_dir, content_dir, item, base_url)?;
-            }
+        for item in &section.items {
+            write_aliases(output_dir, content_dir, item, base_url)?;
         }
     }
 

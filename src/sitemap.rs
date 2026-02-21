@@ -44,14 +44,12 @@ pub fn generate_sitemap(
         });
 
         // Section items
-        if let Ok(items) = section.collect_items() {
-            for item in items {
-                let relative_path = &item.output_path;
-                entries.push(SitemapEntry {
-                    loc: format!("{}/{}", base_url, relative_path.display()),
-                    lastmod: item.frontmatter.date.map(|d| d.to_string()),
-                });
-            }
+        for item in &section.items {
+            let relative_path = &item.output_path;
+            entries.push(SitemapEntry {
+                loc: format!("{}/{}", base_url, relative_path.display()),
+                lastmod: item.frontmatter.date.map(|d| d.to_string()),
+            });
         }
     }
 

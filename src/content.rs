@@ -476,29 +476,31 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
                     .and_then(|n| n.to_str())
                     .unwrap_or("section");
 
-                // Collect section items as child nav items
-                let section = Section {
-                    index: content.clone(),
-                    name: dir_name.to_string(),
-                    section_type: content
-                        .frontmatter
-                        .section_type
-                        .clone()
-                        .unwrap_or_else(|| SectionType::from_str(dir_name)),
-                    path: path.clone(),
-                    content_root: content_dir.to_path_buf(),
-                };
-
-                let mut children: Vec<NavItem> = section
-                    .collect_items()?
-                    .into_iter()
-                    .map(|item| NavItem {
-                        label: item.frontmatter.nav_label.unwrap_or(item.frontmatter.title),
-                        path: format!("/{}/{}.html", dir_name, item.slug),
-                        weight: item.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT),
-                        children: Vec::new(),
-                    })
-                    .collect();
+                // Collect child nav items from section directory
+                let mut children: Vec<NavItem> = Vec::new();
+                for child in fs::read_dir(&path)
+                    .map_err(|e| Error::ReadFile {
+                        path: path.clone(),
+                        source: e,
+                    })?
+                    .filter_map(|e| e.ok())
+                {
+                    let child_path = child.path();
+                    if child_path.is_file()
+                        && child_path.extension().is_some_and(|ext| ext == "md")
+                        && child_path.file_name().is_some_and(|n| n != "_index.md")
+                    {
+                        let item = Content::from_path(&child_path, ContentKind::Page, content_dir)?;
+                        if !item.frontmatter.draft {
+                            children.push(NavItem {
+                                label: item.frontmatter.nav_label.unwrap_or(item.frontmatter.title),
+                                path: format!("/{}/{}.html", dir_name, item.slug),
+                                weight: item.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT),
+                                children: Vec::new(),
+                            });
+                        }
+                    }
+                }
 
                 // Sort children by weight, then alphabetically
                 children
@@ -535,47 +537,17 @@ pub struct Section {
     pub name: String,
     /// Section type for template dispatch (from frontmatter or directory name)
     pub section_type: SectionType,
-    /// Path to section directory
-    pub path: PathBuf,
-    /// Content root for constructing child items
-    pub content_root: PathBuf,
-}
-
-impl Section {
-    /// Collect all content items in this section (excluding _index.md and drafts).
-    pub fn collect_items(&self) -> Result<Vec<Content>> {
-        let mut items = Vec::new();
-
-        for entry in fs::read_dir(&self.path)
-            .map_err(|e| Error::ReadFile {
-                path: self.path.clone(),
-                source: e,
-            })?
-            .filter_map(|e| e.ok())
-        {
-            let path = entry.path();
-            if path.is_file()
-                && path.extension().is_some_and(|ext| ext == "md")
-                && path.file_name().is_some_and(|n| n != "_index.md")
-            {
-                // Determine content kind based on section type
-                let kind = match &self.section_type {
-                    SectionType::Blog => ContentKind::Post,
-                    SectionType::Projects => ContentKind::Project,
-                    _ => ContentKind::Page,
-                };
-                let content = Content::from_path(&path, kind, &self.content_root)?;
-                if !content.frontmatter.draft {
-                    items.push(content);
-                }
-            }
-        }
-
-        Ok(items)
-    }
+    /// Section items, sorted at construction time by section type:
+    /// - Blog: date descending
+    /// - Projects: weight ascending (unweighted items sink to 99)
+    /// - Custom: weight ascending, then title alphabetically
+    pub items: Vec<Content>,
 }
 
 /// Discover all sections (directories with _index.md) in the content directory.
+///
+/// Section items are collected and sorted at construction time based on
+/// section type. Callers access `section.items` directly.
 pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
     let mut sections = Vec::new();
 
@@ -604,18 +576,68 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
                     .clone()
                     .unwrap_or_else(|| SectionType::from_str(&name));
 
+                // Collect items and sort by section type
+                let kind = match &section_type {
+                    SectionType::Blog => ContentKind::Post,
+                    SectionType::Projects => ContentKind::Project,
+                    _ => ContentKind::Page,
+                };
+
+                let mut items = Vec::new();
+                for child in fs::read_dir(&path)
+                    .map_err(|e| Error::ReadFile {
+                        path: path.clone(),
+                        source: e,
+                    })?
+                    .filter_map(|e| e.ok())
+                {
+                    let child_path = child.path();
+                    if child_path.is_file()
+                        && child_path.extension().is_some_and(|ext| ext == "md")
+                        && child_path.file_name().is_some_and(|n| n != "_index.md")
+                    {
+                        let content = Content::from_path(&child_path, kind.clone(), content_dir)?;
+                        if !content.frontmatter.draft {
+                            items.push(content);
+                        }
+                    }
+                }
+
+                // Sort items by section type
+                match &section_type {
+                    SectionType::Blog => {
+                        items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
+                    },
+                    SectionType::Projects => {
+                        items.sort_by(|a, b| {
+                            a.frontmatter
+                                .weight
+                                .unwrap_or(99)
+                                .cmp(&b.frontmatter.weight.unwrap_or(99))
+                        });
+                    },
+                    SectionType::Custom(_) => {
+                        items.sort_by(|a, b| {
+                            a.frontmatter
+                                .weight
+                                .unwrap_or(SortKey::DEFAULT_WEIGHT)
+                                .cmp(&b.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT))
+                                .then_with(|| a.frontmatter.title.cmp(&b.frontmatter.title))
+                        });
+                    },
+                }
+
                 sections.push(Section {
                     index,
                     name,
                     section_type,
-                    path,
-                    content_root: content_dir.to_path_buf(),
+                    items,
                 });
             }
         }
     }
 
-    // Sort by weight
+    // Sort sections by weight
     sections.sort_by(|a, b| {
         let wa = a
             .index
@@ -708,14 +730,11 @@ impl SiteManifest {
         // Discover sections
         let sections = discover_sections(content_dir)?;
 
-        // Collect section items and identify blog posts
+        // Collect blog posts from pre-sorted section items
         let mut posts = Vec::new();
         for section in &sections {
             if section.section_type == SectionType::Blog {
-                let mut items = section.collect_items()?;
-                // Sort blog posts by date, newest first
-                items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
-                posts.extend(items);
+                posts.extend(section.items.iter().cloned());
             }
         }
 
@@ -1004,7 +1023,7 @@ mod tests {
         let sections = discover_sections(content_dir).expect("discover_sections failed");
         assert_eq!(sections.len(), 1);
 
-        let items = sections[0].collect_items().expect("collect_items failed");
+        let items = &sections[0].items;
         assert_eq!(items.len(), 2);
 
         let titles: Vec<_> = items.iter().map(|c| c.frontmatter.title.as_str()).collect();
@@ -1130,22 +1149,10 @@ mod tests {
         write_frontmatter(&section_dir.join("visible.md"), "Visible", None, None);
         write_draft(&section_dir.join("hidden.md"), "Hidden");
 
-        let section = Section {
-            index: Content::from_path(
-                &section_dir.join("_index.md"),
-                ContentKind::Section,
-                dir.path(),
-            )
-            .unwrap(),
-            name: "features".to_string(),
-            section_type: SectionType::Custom("features".to_string()),
-            path: section_dir,
-            content_root: dir.path().to_path_buf(),
-        };
-
-        let items = section.collect_items().unwrap();
-        assert_eq!(items.len(), 1);
-        assert_eq!(items[0].frontmatter.title, "Visible");
+        let sections = discover_sections(dir.path()).unwrap();
+        assert_eq!(sections.len(), 1);
+        assert_eq!(sections[0].items.len(), 1);
+        assert_eq!(sections[0].items[0].frontmatter.title, "Visible");
     }
 
     #[test]

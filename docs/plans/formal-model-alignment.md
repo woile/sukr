@@ -150,8 +150,8 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Update `Frontmatter.section_type` from `Option<String>` to `Option<SectionType>`
    - [x] Update `Content` struct: add `blocks: Vec<ContentBlock>`, `links: Vec<LinkTarget>`, `output_path: PathBuf`
    - [x] Remove `Content::output_path()` method, replace all call sites with field access — **resolves C4 (field side; parameter pruning in Phase 4)**
-   - [ ] Update `Section`: add `items: BTreeMap<SortKey, Content>` field — `SortKey` variant determined by `SectionType` at construction time — **prepares for C1 resolution**
-   - [ ] Update `discover_sections` and `discover_pages` to return sorted-by-construction collections (no post-hoc `sort_by`)
+   - [x] Update `Section`: add `items: Vec<Content>` field — items collected and sorted at construction time — **resolves C1 (sorted-by-construction)**
+   - [x] Update `discover_sections` and `discover_pages` to return sorted-by-construction collections (no post-hoc `sort_by`)
 
    **Downstream consumers:**
    - [x] Update all consumers of `Frontmatter.tags`: `collect_tags`, `write_tag_pages`, `FrontmatterContext::new`, `sitemap.rs`
@@ -159,7 +159,7 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Remove `DEFAULT_WEIGHT` and `DEFAULT_WEIGHT_HIGH` constants — **resolves C7, C8**
 
    **Cruft + verification:**
-   - [ ] **Cruft audit:** Remove any dead types, holdover methods, or unused fields. Pre-1.0 = no backwards compat tax.
+   - [x] **Cruft audit:** Removed `Section.path`, `Section.content_root` (no readers after `collect_items` removal). `Tag::new`/`as_str` and `SortKey::for_content` retained (test-only usage). Pre-1.0 = no backwards compat tax.
    - [x] All existing tests pass, new unit tests for `ContentBlock`, `Tag`, `SectionType`, `SortKey`, `LinkTarget`
 
 2. **Phase 2: Parse Functor** — Content discovery produces fully-typed Category C objects
@@ -277,17 +277,25 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Item                                                      | Severity | Why Introduced                                                                                       | Follow-Up                   | Resolved |
-| :-------------------------------------------------------- | :------- | :--------------------------------------------------------------------------------------------------- | :-------------------------- | :------: |
-| `NavItem::PartialEq` ignores `path` and `children`        | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only | Add doc comment on the impl |          |
-| Unused `content_dir`/`content_root` params in 5 functions | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change               | Phase 4 (C4 completion)     |          |
+| Item                                                              | Severity | Why Introduced                                                                                         | Follow-Up                   | Resolved |
+| :---------------------------------------------------------------- | :------- | :----------------------------------------------------------------------------------------------------- | :-------------------------- | :------: |
+| `NavItem::PartialEq` ignores `path` and `children`                | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only   | Add doc comment on the impl |          |
+| Unused `content_dir`/`content_root` params in 5 functions         | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change                 | Phase 4 (C4 completion)     |          |
+| Magic literal `99` in Projects sort branch                        | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                              | Phase 2 (SortKey adoption)  |          |
+| `ContentBlock` variants never constructed                         | LOW      | Category C types defined in Commit 1; construction deferred to Phase 2 parse functor                   | Phase 2                     |          |
+| `SortKey::DateDesc`/`WeightTitle` never constructed               | LOW      | SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them | Phase 2                     |          |
+| `SortKey::for_content` never used (non-test)                      | LOW      | Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4           | Phase 2 or remove if unused |          |
+| `Tag::new`/`as_str` never used (non-test)                         | LOW      | API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests      | Phase 2 or remove if unused |          |
+| `Content` fields `kind`/`source_path`/`blocks`/`links` never read | LOW      | Fields added in Commit 2 for Category C; consumers not yet implemented                                 | Phase 2                     |          |
 
 ## Deviation Log
 
 <!-- Populated during execution -->
 
-| Commit | Planned | Actual | Rationale |
-| :----- | :------ | :----- | :-------- |
+| Commit | Planned                                     | Actual                                               | Rationale                                                                                                      |
+| :----- | :------------------------------------------ | :--------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| C4     | `Section.items: BTreeMap<SortKey, Content>` | `Section.items: Vec<Content>` sorted at construction | Vec is simpler and sufficient — items are immutable after construction, BTreeMap adds overhead without benefit |
+| C4     | — (not planned)                             | Removed `Section.path` and `Section.content_root`    | Discovered as vestigial after `collect_items()` removal — 0 external readers remained                          |
 
 ## Retrospective
 
