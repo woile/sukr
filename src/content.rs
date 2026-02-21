@@ -632,107 +632,62 @@ where
         .map(Some)
 }
 
-/// Discover navigation items from the content directory structure.
+/// Build navigation items from already-parsed sections and pages.
 ///
-/// Rules:
-/// - Top-level `.md` files (except `_index.md`) become nav items (pages)
-/// - Directories containing `_index.md` become nav items (sections)
-/// - Items are sorted by weight (lower first), then alphabetically by label
-pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
+/// Replaces the filesystem-based `discover_nav` — derives nav from typed
+/// objects that were already parsed by `discover_sections`/`discover_pages`.
+/// Result is sorted by weight (ascending), then label (alphabetic).
+pub fn derive_nav(sections: &[Section], pages: &[Content]) -> Vec<NavItem> {
     let mut nav_items = Vec::new();
 
-    // Read top-level entries in content directory
-    let entries = fs::read_dir(content_dir).map_err(|e| Error::ReadFile {
-        path: content_dir.to_path_buf(),
-        source: e,
-    })?;
+    // Sections → nav items with children
+    for section in sections {
+        let fm = &section.index.frontmatter;
+        let children: Vec<NavItem> = section
+            .items
+            .iter()
+            .filter(|item| !item.frontmatter.draft)
+            .map(|item| NavItem {
+                label: item
+                    .frontmatter
+                    .nav_label
+                    .clone()
+                    .unwrap_or_else(|| item.frontmatter.title.clone()),
+                path: format!("/{}/{}.html", section.name, item.slug),
+                weight: item.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT),
+                children: Vec::new(),
+            })
+            .collect();
 
-    for entry in entries.filter_map(|e| e.ok()) {
-        let path = entry.path();
+        nav_items.push(NavItem {
+            label: fm.nav_label.clone().unwrap_or_else(|| fm.title.clone()),
+            path: format!("/{}/index.html", section.name),
+            weight: fm.weight.unwrap_or(SortKey::DEFAULT_WEIGHT),
+            children,
+        });
+    }
 
-        if path.is_file() {
-            // Top-level .md file (except _index.md) → page nav item
-            if path.extension().is_some_and(|ext| ext == "md") {
-                let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if file_name != SECTION_INDEX && file_name != PAGE_404 {
-                    let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
-                    if !content.frontmatter.draft {
-                        let slug = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
-                        nav_items.push(NavItem {
-                            label: content
-                                .frontmatter
-                                .nav_label
-                                .unwrap_or(content.frontmatter.title),
-                            path: format!("/{}.html", slug),
-                            weight: content
-                                .frontmatter
-                                .weight
-                                .unwrap_or(SortKey::DEFAULT_WEIGHT),
-                            children: Vec::new(),
-                        });
-                    }
-                }
-            }
-        } else if path.is_dir() {
-            // Directory with _index.md → section nav item
-            let index_path = path.join(SECTION_INDEX);
-            if index_path.exists() {
-                let content = Content::from_path(&index_path, ContentKind::Section, content_dir)?;
-                let dir_name = path
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("section");
-
-                // Collect child nav items from section directory
-                let mut children: Vec<NavItem> = Vec::new();
-                for child in fs::read_dir(&path)
-                    .map_err(|e| Error::ReadFile {
-                        path: path.clone(),
-                        source: e,
-                    })?
-                    .filter_map(|e| e.ok())
-                {
-                    let child_path = child.path();
-                    if child_path.is_file()
-                        && child_path.extension().is_some_and(|ext| ext == "md")
-                        && child_path.file_name().is_some_and(|n| n != SECTION_INDEX)
-                    {
-                        let item = Content::from_path(&child_path, ContentKind::Page, content_dir)?;
-                        if !item.frontmatter.draft {
-                            children.push(NavItem {
-                                label: item.frontmatter.nav_label.unwrap_or(item.frontmatter.title),
-                                path: format!("/{}/{}.html", dir_name, item.slug),
-                                weight: item.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT),
-                                children: Vec::new(),
-                            });
-                        }
-                    }
-                }
-
-                // Sort children by weight, then alphabetically
-                children
-                    .sort_by(|a, b| a.weight.cmp(&b.weight).then_with(|| a.label.cmp(&b.label)));
-
-                nav_items.push(NavItem {
-                    label: content
-                        .frontmatter
-                        .nav_label
-                        .unwrap_or(content.frontmatter.title),
-                    path: format!("/{}/index.html", dir_name),
-                    weight: content
-                        .frontmatter
-                        .weight
-                        .unwrap_or(SortKey::DEFAULT_WEIGHT),
-                    children,
-                });
-            }
+    // Pages → leaf nav items
+    for page in pages {
+        if page.frontmatter.draft {
+            continue;
         }
+        nav_items.push(NavItem {
+            label: page
+                .frontmatter
+                .nav_label
+                .clone()
+                .unwrap_or_else(|| page.frontmatter.title.clone()),
+            path: format!("/{}.html", page.slug),
+            weight: page.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT),
+            children: Vec::new(),
+        });
     }
 
     // Sort by weight, then alphabetically by label
     nav_items.sort_by(|a, b| a.weight.cmp(&b.weight).then_with(|| a.label.cmp(&b.label)));
 
-    Ok(nav_items)
+    nav_items
 }
 
 /// A discovered section from the content directory.
@@ -931,9 +886,6 @@ impl SiteManifest {
             None
         };
 
-        // Discover navigation
-        let nav = discover_nav(content_dir)?;
-
         // Discover sections
         let sections = discover_sections(content_dir)?;
 
@@ -947,6 +899,9 @@ impl SiteManifest {
 
         // Discover standalone pages
         let pages = discover_pages(content_dir)?;
+
+        // Derive navigation from already-parsed sections and pages
+        let nav = derive_nav(&sections, &pages);
 
         Ok(SiteManifest {
             homepage,
@@ -980,130 +935,51 @@ mod tests {
         fs::write(path, content).expect("failed to write test file");
     }
 
+    // =========================================================================
+    // derive_nav tests
+    // =========================================================================
+
     #[test]
-    fn test_discover_nav_finds_pages() {
+    fn test_derive_nav_builds_from_sections_and_pages() {
         let dir = create_test_dir();
         let content_dir = dir.path();
 
-        // Create top-level page
-        write_frontmatter(&content_dir.join("about.md"), "About Me", None, None);
-
-        let nav = discover_nav(content_dir).expect("discover_nav failed");
-        assert_eq!(nav.len(), 1);
-        assert_eq!(nav[0].label, "About Me");
-        assert_eq!(nav[0].path, "/about.html");
-    }
-
-    #[test]
-    fn test_discover_nav_finds_sections() {
-        let dir = create_test_dir();
-        let content_dir = dir.path();
-
-        // Create section directory with _index.md
+        // Set up a section with children and standalone pages
         let blog_dir = content_dir.join("blog");
-        fs::create_dir(&blog_dir).expect("failed to create blog dir");
-        write_frontmatter(&blog_dir.join("_index.md"), "Blog", None, None);
+        fs::create_dir(&blog_dir).unwrap();
+        write_section_index(&blog_dir.join("_index.md"), "Blog", None, Some(20));
 
-        let nav = discover_nav(content_dir).expect("discover_nav failed");
-        assert_eq!(nav.len(), 1);
-        assert_eq!(nav[0].label, "Blog");
-        assert_eq!(nav[0].path, "/blog/index.html");
-    }
+        // Use TOML+++ frontmatter since sukr's parser requires it
+        fs::write(
+            blog_dir.join("post1.md"),
+            "+++\ntitle = \"Post 1\"\nweight = 10\n+++\n",
+        )
+        .unwrap();
+        fs::write(
+            blog_dir.join("post2.md"),
+            "+++\ntitle = \"Post 2\"\nweight = 5\n+++\n",
+        )
+        .unwrap();
 
-    #[test]
-    fn test_discover_nav_excludes_root_index() {
-        let dir = create_test_dir();
-        let content_dir = dir.path();
+        write_frontmatter(&content_dir.join("about.md"), "About", Some(10), None);
 
-        // Create _index.md at root (should be excluded from nav)
-        write_frontmatter(&content_dir.join("_index.md"), "Home", None, None);
-        write_frontmatter(&content_dir.join("about.md"), "About", None, None);
+        let sections = discover_sections(content_dir).unwrap();
+        let pages = discover_pages(content_dir).unwrap();
+        let nav = derive_nav(&sections, &pages);
 
-        let nav = discover_nav(content_dir).expect("discover_nav failed");
-        assert_eq!(nav.len(), 1);
+        // Pages (weight 10) come before sections (weight 20)
+        assert_eq!(nav.len(), 2);
         assert_eq!(nav[0].label, "About");
+        assert_eq!(nav[0].path, "/about.html");
+        assert_eq!(nav[1].label, "Blog");
+        assert_eq!(nav[1].path, "/blog/index.html");
+
+        // Section children sorted by weight
+        assert_eq!(nav[1].children.len(), 2);
+        assert_eq!(nav[1].children[0].label, "Post 2"); // weight 5
+        assert_eq!(nav[1].children[1].label, "Post 1"); // weight 10
     }
 
-    #[test]
-    fn test_discover_nav_excludes_404() {
-        let dir = create_test_dir();
-        let content_dir = dir.path();
-
-        // Create _404.md at root (should be excluded from nav)
-        write_frontmatter(&content_dir.join("_404.md"), "Not Found", None, None);
-        write_frontmatter(&content_dir.join("about.md"), "About", None, None);
-
-        let nav = discover_nav(content_dir).expect("discover_nav failed");
-        assert_eq!(nav.len(), 1);
-        assert_eq!(nav[0].label, "About");
-    }
-
-    #[test]
-    fn test_discover_nav_sorts_by_weight() {
-        let dir = create_test_dir();
-        let content_dir = dir.path();
-
-        write_frontmatter(&content_dir.join("about.md"), "About", Some(30), None);
-        write_frontmatter(&content_dir.join("contact.md"), "Contact", Some(10), None);
-        write_frontmatter(&content_dir.join("blog.md"), "Blog", Some(20), None);
-
-        let nav = discover_nav(content_dir).expect("discover_nav failed");
-        assert_eq!(nav.len(), 3);
-        assert_eq!(nav[0].label, "Contact"); // weight 10
-        assert_eq!(nav[1].label, "Blog"); // weight 20
-        assert_eq!(nav[2].label, "About"); // weight 30
-    }
-
-    #[test]
-    fn test_discover_nav_uses_nav_label() {
-        let dir = create_test_dir();
-        let content_dir = dir.path();
-
-        write_frontmatter(
-            &content_dir.join("about.md"),
-            "About The Author",
-            None,
-            Some("About"),
-        );
-
-        let nav = discover_nav(content_dir).expect("discover_nav failed");
-        assert_eq!(nav.len(), 1);
-        assert_eq!(nav[0].label, "About"); // Uses nav_label, not title
-    }
-
-    #[test]
-    fn test_discover_nav_populates_section_children() {
-        let dir = create_test_dir();
-        let content_dir = dir.path();
-
-        // Create section directory with _index.md and child pages
-        let features_dir = content_dir.join("features");
-        fs::create_dir(&features_dir).expect("failed to create features dir");
-        write_frontmatter(&features_dir.join("_index.md"), "Features", Some(10), None);
-        write_frontmatter(
-            &features_dir.join("templates.md"),
-            "Templates",
-            Some(20),
-            None,
-        );
-        write_frontmatter(
-            &features_dir.join("highlights.md"),
-            "Syntax Highlighting",
-            Some(10),
-            None,
-        );
-
-        let nav = discover_nav(content_dir).expect("discover_nav failed");
-        assert_eq!(nav.len(), 1);
-        assert_eq!(nav[0].label, "Features");
-        assert_eq!(nav[0].children.len(), 2);
-
-        // Children should be sorted by weight
-        assert_eq!(nav[0].children[0].label, "Syntax Highlighting"); // weight 10
-        assert_eq!(nav[0].children[0].path, "/features/highlights.html");
-        assert_eq!(nav[0].children[1].label, "Templates"); // weight 20
-        assert_eq!(nav[0].children[1].path, "/features/templates.html");
-    }
     // =========================================================================
     // discover_sections tests
     // =========================================================================
@@ -1360,19 +1236,6 @@ mod tests {
         assert_eq!(sections.len(), 1);
         assert_eq!(sections[0].items.len(), 1);
         assert_eq!(sections[0].items[0].frontmatter.title, "Visible");
-    }
-
-    #[test]
-    fn test_discover_nav_excludes_drafts() {
-        let dir = create_test_dir();
-        let content_dir = dir.path();
-
-        write_frontmatter(&content_dir.join("about.md"), "About", Some(10), None);
-        write_draft(&content_dir.join("secret.md"), "Secret Page");
-
-        let nav = discover_nav(content_dir).unwrap();
-        assert_eq!(nav.len(), 1, "draft page should not appear in nav");
-        assert_eq!(nav[0].label, "About");
     }
 
     #[test]

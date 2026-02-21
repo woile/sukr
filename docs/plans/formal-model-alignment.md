@@ -175,9 +175,9 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Update all 6 sites that called `section.collect_items()` to use `section.items` directly: `run()`, `collect_tags()`, `generate_aliases()`, `sitemap.rs`, `discover_inner()`, `discover_nav()` _(completed Phase 1 C4)_
 
    **Nav derivation (resolves C3):**
-   - [ ] Replace `discover_nav()` with `derive_nav()` that builds nav from already-parsed `sections` and `pages`, returning `BTreeSet<NavItem>` — **resolves C3**
-   - [ ] Update `SiteManifest.nav` field type from `Vec<NavItem>` to `BTreeSet<NavItem>`
-   - [ ] Update `template_engine.rs::base_context` to accept `&BTreeSet<NavItem>` or `impl IntoIterator<Item=&NavItem>`
+   - [x] Replace `discover_nav()` with `derive_nav()` that builds nav from already-parsed `sections` and `pages`, returning `Vec<NavItem>` sorted at construction — **resolves C3**
+   - [x] Kept `SiteManifest.nav` as `Vec<NavItem>` — BTreeSet rejected due to NavItem's lossy PartialEq _(deviation from plan)_
+   - [x] `template_engine.rs::base_context` already accepts `&Vec<NavItem>` — no change needed
 
    **Hardcoded conventions → named constants (resolves H9, H10):**
    - [x] Extract `"_index.md"` to `const SECTION_INDEX: &str` — used in 6 locations — **resolves H9**
@@ -189,7 +189,7 @@ minimum documented as an explicit convention rather than buried in code.
    - [ ] Add `ParseError::BrokenLink { source_page, target, line }` error variant
 
    **Cruft + verification:**
-   - [ ] **Cruft audit:** Remove `discover_nav()` after `derive_nav()` migration, remove any dead code paths revealed by nav refactor _(Note: `DEFAULT_WEIGHT`/`DEFAULT_WEIGHT_HIGH` already removed in Phase 1 C3, `collect_items()` already removed in Phase 1 C4)_
+   - [x] **Cruft audit:** Removed `discover_nav()` after `derive_nav()` migration (8 tests removed, 1 added) _(Note: `DEFAULT_WEIGHT`/`DEFAULT_WEIGHT_HIGH` already removed in Phase 1 C3, `collect_items()` already removed in Phase 1 C4)_
    - [ ] Tests: broken link detection, valid link pass-through, link extraction from markdown, nav derivation consistency
 
 3. **Phase 3: Compile Functor** — Rendering consumes ContentBlock, not raw markdown
@@ -295,10 +295,11 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Commit | Planned                                     | Actual                                               | Rationale                                                                                                      |
-| :----- | :------------------------------------------ | :--------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-| C4     | `Section.items: BTreeMap<SortKey, Content>` | `Section.items: Vec<Content>` sorted at construction | Vec is simpler and sufficient — items are immutable after construction, BTreeMap adds overhead without benefit |
-| C4     | — (not planned)                             | Removed `Section.path` and `Section.content_root`    | Discovered as vestigial after `collect_items()` removal — 0 external readers remained                          |
+| Commit | Planned                                     | Actual                                                  | Rationale                                                                                                      |
+| :----- | :------------------------------------------ | :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------- |
+| C4     | `Section.items: BTreeMap<SortKey, Content>` | `Section.items: Vec<Content>` sorted at construction    | Vec is simpler and sufficient — items are immutable after construction, BTreeMap adds overhead without benefit |
+| C4     | — (not planned)                             | Removed `Section.path` and `Section.content_root`       | Discovered as vestigial after `collect_items()` removal — 0 external readers remained                          |
+| C7     | `SiteManifest.nav: BTreeSet<NavItem>`       | `SiteManifest.nav: Vec<NavItem>` sorted at construction | NavItem's PartialEq ignores path/children — BTreeSet would silently deduplicate items sharing (weight, label)  |
 
 ## Retrospective
 
