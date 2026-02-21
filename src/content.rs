@@ -8,6 +8,11 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Conventional filename for section index pages.
+pub const SECTION_INDEX: &str = "_index.md";
+/// Conventional filename for the custom 404 page.
+pub const PAGE_404: &str = "_404.md";
+
 /// The type of content being processed.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ContentKind {
@@ -649,7 +654,7 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
             // Top-level .md file (except _index.md) → page nav item
             if path.extension().is_some_and(|ext| ext == "md") {
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if file_name != "_index.md" && file_name != "_404.md" {
+                if file_name != SECTION_INDEX && file_name != PAGE_404 {
                     let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
                     if !content.frontmatter.draft {
                         let slug = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
@@ -670,7 +675,7 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
             }
         } else if path.is_dir() {
             // Directory with _index.md → section nav item
-            let index_path = path.join("_index.md");
+            let index_path = path.join(SECTION_INDEX);
             if index_path.exists() {
                 let content = Content::from_path(&index_path, ContentKind::Section, content_dir)?;
                 let dir_name = path
@@ -690,7 +695,7 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
                     let child_path = child.path();
                     if child_path.is_file()
                         && child_path.extension().is_some_and(|ext| ext == "md")
-                        && child_path.file_name().is_some_and(|n| n != "_index.md")
+                        && child_path.file_name().is_some_and(|n| n != SECTION_INDEX)
                     {
                         let item = Content::from_path(&child_path, ContentKind::Page, content_dir)?;
                         if !item.frontmatter.draft {
@@ -762,7 +767,7 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
         let path = entry.path();
 
         if path.is_dir() {
-            let index_path = path.join("_index.md");
+            let index_path = path.join(SECTION_INDEX);
             if index_path.exists() {
                 let index = Content::from_path(&index_path, ContentKind::Section, content_dir)?;
                 let name = path
@@ -796,7 +801,7 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
                     let child_path = child.path();
                     if child_path.is_file()
                         && child_path.extension().is_some_and(|ext| ext == "md")
-                        && child_path.file_name().is_some_and(|n| n != "_index.md")
+                        && child_path.file_name().is_some_and(|n| n != SECTION_INDEX)
                     {
                         let content = Content::from_path(&child_path, kind.clone(), content_dir)?;
                         if !content.frontmatter.draft {
@@ -872,7 +877,7 @@ pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
             && path.extension().is_some_and(|ext| ext == "md")
             && path
                 .file_name()
-                .is_some_and(|n| n != "_index.md" && n != "_404.md")
+                .is_some_and(|n| n != SECTION_INDEX && n != PAGE_404)
         {
             let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
             if !content.frontmatter.draft {
@@ -911,11 +916,11 @@ impl SiteManifest {
 
     fn discover_inner(content_dir: &Path) -> Result<Self> {
         // Load homepage
-        let homepage_path = content_dir.join("_index.md");
+        let homepage_path = content_dir.join(SECTION_INDEX);
         let homepage = Content::from_path(&homepage_path, ContentKind::Section, content_dir)?;
 
         // Load 404 page if present
-        let page_404_path = content_dir.join("_404.md");
+        let page_404_path = content_dir.join(PAGE_404);
         let page_404 = if page_404_path.exists() {
             Some(Content::from_path(
                 &page_404_path,

@@ -180,8 +180,8 @@ minimum documented as an explicit convention rather than buried in code.
    - [ ] Update `template_engine.rs::base_context` to accept `&BTreeSet<NavItem>` or `impl IntoIterator<Item=&NavItem>`
 
    **Hardcoded conventions → named constants (resolves H9, H10):**
-   - [ ] Extract `"_index.md"` to `const SECTION_INDEX: &str` — used in 6 locations — **resolves H9**
-   - [ ] Extract `"_404.md"` to `const PAGE_404: &str` — used in 3 locations — **resolves H10**
+   - [x] Extract `"_index.md"` to `const SECTION_INDEX: &str` — used in 6 locations — **resolves H9**
+   - [x] Extract `"_404.md"` to `const PAGE_404: &str` — used in 3 locations — **resolves H10**
 
    **Reference validation:**
    - [ ] Add reference integrity validation to `SiteManifest::discover`: validate every `LinkTarget` pointing to an internal path, producing `ValidatedRef` newtypes

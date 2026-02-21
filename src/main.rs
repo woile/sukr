@@ -15,7 +15,7 @@ mod render;
 mod sitemap;
 mod template_engine;
 
-use crate::content::{Content, ContentKind, NavItem};
+use crate::content::{Content, ContentKind, NavItem, PAGE_404, SECTION_INDEX};
 use crate::error::{Error, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
 use std::collections::BTreeMap;
@@ -255,7 +255,7 @@ fn process_pages(
             && path.extension().is_some_and(|ext| ext == "md")
             && path
                 .file_name()
-                .is_some_and(|n| n != "_index.md" && n != "_404.md")
+                .is_some_and(|n| n != SECTION_INDEX && n != PAGE_404)
         {
             eprintln!("processing: {}", path.display());
 
