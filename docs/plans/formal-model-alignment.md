@@ -146,10 +146,10 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Define `LinkTarget` type (relative path or URL with source location for error reporting)
 
    **Struct updates:**
-   - [ ] Update `Frontmatter.tags` from `Vec<String>` to `Vec<Tag>`
-   - [ ] Update `Frontmatter.section_type` from `Option<String>` to `Option<SectionType>`
-   - [ ] Update `Content` struct: add `blocks: Vec<ContentBlock>`, `links: Vec<LinkTarget>`, `output_path: PathBuf`
-   - [ ] Remove `Content::output_path()` method, replace all call sites with field access — **resolves C4 (field side; parameter pruning in Phase 4)**
+   - [x] Update `Frontmatter.tags` from `Vec<String>` to `Vec<Tag>`
+   - [x] Update `Frontmatter.section_type` from `Option<String>` to `Option<SectionType>`
+   - [x] Update `Content` struct: add `blocks: Vec<ContentBlock>`, `links: Vec<LinkTarget>`, `output_path: PathBuf`
+   - [x] Remove `Content::output_path()` method, replace all call sites with field access — **resolves C4 (field side; parameter pruning in Phase 4)**
    - [ ] Update `Section`: add `items: BTreeMap<SortKey, Content>` field — `SortKey` variant determined by `SectionType` at construction time — **prepares for C1 resolution**
    - [ ] Update `discover_sections` and `discover_pages` to return sorted-by-construction collections (no post-hoc `sort_by`)
 
@@ -277,9 +277,10 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Item | Severity | Why Introduced | Follow-Up | Resolved |
-| :--- | :------- | :------------- | :-------- | :------: |
-| `NavItem::PartialEq` ignores `path` and `children` | LOW | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only | Add doc comment on the impl | |
+| Item                                                      | Severity | Why Introduced                                                                                       | Follow-Up                   | Resolved |
+| :-------------------------------------------------------- | :------- | :--------------------------------------------------------------------------------------------------- | :-------------------------- | :------: |
+| `NavItem::PartialEq` ignores `path` and `children`        | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only | Add doc comment on the impl |          |
+| Unused `content_dir`/`content_root` params in 5 functions | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change               | Phase 4 (C4 completion)     |          |
 
 ## Deviation Log
 

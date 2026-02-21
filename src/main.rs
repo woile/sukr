@@ -115,12 +115,12 @@ fn run(config_path: &Path) -> Result<()> {
         let mut items = section.collect_items()?;
 
         // Sort based on section type
-        match section.section_type.as_str() {
-            "blog" => {
+        match &section.section_type {
+            content::SectionType::Blog => {
                 // Blog: sort by date, newest first
                 items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
             },
-            "projects" => {
+            content::SectionType::Projects => {
                 // Projects: sort by weight
                 items.sort_by(|a, b| {
                     a.frontmatter
@@ -145,7 +145,7 @@ fn run(config_path: &Path) -> Result<()> {
         for item in &items {
             eprintln!("  processing: {}", item.slug);
             let (html_body, anchors) = render::markdown_to_html(&item.body);
-            let page_path = format!("/{}", item.output_path(&content_dir).display());
+            let page_path = format!("/{}", item.output_path.display());
             let html = engine.render_content(
                 item,
                 &html_body,
@@ -165,7 +165,7 @@ fn run(config_path: &Path) -> Result<()> {
             .collect();
         let html = engine.render_section(
             &section.index,
-            &section.section_type,
+            &section.section_type.to_string(),
             &item_contexts,
             &page_path,
             &config,
@@ -286,9 +286,9 @@ fn process_pages(
         {
             eprintln!("processing: {}", path.display());
 
-            let content = Content::from_path(&path, ContentKind::Page)?;
+            let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
             let (html_body, anchors) = render::markdown_to_html(&content.body);
-            let page_path = format!("/{}", content.output_path(content_dir).display());
+            let page_path = format!("/{}", content.output_path.display());
             let html =
                 engine.render_page(&content, &html_body, &page_path, config, nav, &anchors)?;
 
@@ -372,7 +372,7 @@ fn collect_tags(
         if let Ok(items) = section.collect_items() {
             for item in &items {
                 for tag in &item.frontmatter.tags {
-                    tags.entry(tag.clone())
+                    tags.entry(tag.to_string())
                         .or_default()
                         .push(ContentContext::from_content(item, content_dir, config));
                 }
@@ -383,7 +383,7 @@ fn collect_tags(
     // Collect from standalone pages
     for page in pages {
         for tag in &page.frontmatter.tags {
-            tags.entry(tag.clone())
+            tags.entry(tag.to_string())
                 .or_default()
                 .push(ContentContext::from_content(page, content_dir, config));
         }
@@ -434,7 +434,7 @@ fn write_output(
     content: &Content,
     html: String,
 ) -> Result<()> {
-    let out_path = output_dir.join(content.output_path(content_dir));
+    let out_path = output_dir.join(&content.output_path);
     let out_dir = out_path.parent().unwrap();
 
     fs::create_dir_all(out_dir).map_err(|e| Error::CreateDir {
@@ -491,7 +491,7 @@ fn write_aliases(
         return Ok(());
     }
 
-    let canonical_path = content.output_path(content_dir);
+    let canonical_path = &content.output_path;
     let canonical_url = format!("{}/{}", base_url, canonical_path.display());
 
     for alias in &content.frontmatter.aliases {

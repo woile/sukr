@@ -24,7 +24,7 @@ pub fn generate_atom_feed(
     let mut entries = String::new();
     for post in posts {
         // Derive URL from output path (e.g., blog/foo.html → /blog/foo.html)
-        let relative_path = post.output_path(content_root);
+        let relative_path = &post.output_path;
         let post_url = format!("{}/{}", base_url, relative_path.display());
         let post_date = post
             .frontmatter

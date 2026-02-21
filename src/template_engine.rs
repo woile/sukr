@@ -215,7 +215,7 @@ impl FrontmatterContext {
             title: fm.title.clone(),
             description: fm.description.clone(),
             date: fm.date.map(|d| d.to_string()),
-            tags: fm.tags.clone(),
+            tags: fm.tags.iter().map(|t| t.to_string()).collect(),
             weight: fm.weight,
             link_to: fm.link_to.clone(),
             toc: fm.toc.unwrap_or(config.nav.toc),
@@ -240,7 +240,7 @@ impl ContentContext {
             frontmatter: FrontmatterContext::new(&content.frontmatter, config),
             body: content.body.clone(),
             slug: content.slug.clone(),
-            path: format!("/{}", content.output_path(content_dir).display()),
+            path: format!("/{}", content.output_path.display()),
         }
     }
 }

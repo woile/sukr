@@ -278,7 +278,7 @@ pub struct Frontmatter {
     #[serde(default, deserialize_with = "deserialize_date")]
     pub date: Option<NaiveDate>,
     #[serde(default)]
-    pub tags: Vec<String>,
+    pub tags: Vec<Tag>,
     /// Sort order for nav and listings
     #[serde(default)]
     pub weight: Option<i64>,
@@ -290,7 +290,7 @@ pub struct Frontmatter {
     pub nav_label: Option<String>,
     /// Section type for template dispatch (e.g., "blog", "projects")
     #[serde(default)]
-    pub section_type: Option<String>,
+    pub section_type: Option<SectionType>,
     /// Override template for this content item
     #[serde(default)]
     pub template: Option<String>,
@@ -313,15 +313,25 @@ pub struct Content {
     pub body: String,
     pub source_path: PathBuf,
     pub slug: String,
+    /// Output path relative to the output directory, computed once during Parse.
+    pub output_path: PathBuf,
+    /// Structured content blocks (populated in Phase 2).
+    pub blocks: Vec<ContentBlock>,
+    /// Inter-page references (populated in Phase 2).
+    pub links: Vec<LinkTarget>,
 }
 
 impl Content {
     /// Load and parse a markdown file with TOML frontmatter.
-    pub fn from_path(path: impl AsRef<Path>, kind: ContentKind) -> Result<Self> {
-        Self::from_path_inner(path.as_ref(), kind)
+    pub fn from_path(
+        path: impl AsRef<Path>,
+        kind: ContentKind,
+        content_root: &Path,
+    ) -> Result<Self> {
+        Self::from_path_inner(path.as_ref(), kind, content_root)
     }
 
-    fn from_path_inner(path: &Path, kind: ContentKind) -> Result<Self> {
+    fn from_path_inner(path: &Path, kind: ContentKind, content_root: &Path) -> Result<Self> {
         let raw = fs::read_to_string(path).map_err(|e| Error::ReadFile {
             path: path.to_path_buf(),
             source: e,
@@ -337,35 +347,34 @@ impl Content {
             .unwrap_or("untitled")
             .to_string();
 
+        // Compute output path once during Parse, storing as a field.
+        let output_path = {
+            let relative = path.strip_prefix(content_root).unwrap_or(path);
+
+            match kind {
+                ContentKind::Section => {
+                    // _index.md → parent/index.html
+                    let parent = relative.parent().unwrap_or(Path::new(""));
+                    parent.join("index.html")
+                },
+                _ => {
+                    // Regular content → parent/slug.html
+                    let parent = relative.parent().unwrap_or(Path::new(""));
+                    parent.join(format!("{}.html", slug))
+                },
+            }
+        };
+
         Ok(Content {
             kind,
             frontmatter,
             body,
             source_path: path.to_path_buf(),
             slug,
+            output_path,
+            blocks: Vec::new(),
+            links: Vec::new(),
         })
-    }
-
-    /// Compute the output path relative to the output directory.
-    /// e.g., content/blog/foo.md → blog/foo.html
-    pub fn output_path(&self, content_root: &Path) -> PathBuf {
-        let relative = self
-            .source_path
-            .strip_prefix(content_root)
-            .unwrap_or(&self.source_path);
-
-        match self.kind {
-            ContentKind::Section => {
-                // _index.md → parent/index.html (listing pages stay as index.html)
-                let parent = relative.parent().unwrap_or(Path::new(""));
-                parent.join("index.html")
-            },
-            _ => {
-                // Regular content → parent/slug.html (flat structure)
-                let parent = relative.parent().unwrap_or(Path::new(""));
-                parent.join(format!("{}.html", self.slug))
-            },
-        }
     }
 }
 
@@ -445,7 +454,7 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
             if path.extension().is_some_and(|ext| ext == "md") {
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if file_name != "_index.md" && file_name != "_404.md" {
-                    let content = Content::from_path(&path, ContentKind::Page)?;
+                    let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
                     if !content.frontmatter.draft {
                         let slug = path.file_stem().and_then(|s| s.to_str()).unwrap_or("page");
                         nav_items.push(NavItem {
@@ -464,7 +473,7 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
             // Directory with _index.md → section nav item
             let index_path = path.join("_index.md");
             if index_path.exists() {
-                let content = Content::from_path(&index_path, ContentKind::Section)?;
+                let content = Content::from_path(&index_path, ContentKind::Section, content_dir)?;
                 let dir_name = path
                     .file_name()
                     .and_then(|n| n.to_str())
@@ -478,8 +487,9 @@ pub fn discover_nav(content_dir: &Path) -> Result<Vec<NavItem>> {
                         .frontmatter
                         .section_type
                         .clone()
-                        .unwrap_or_else(|| dir_name.to_string()),
+                        .unwrap_or_else(|| SectionType::from_str(dir_name)),
                     path: path.clone(),
+                    content_root: content_dir.to_path_buf(),
                 };
 
                 let mut children: Vec<NavItem> = section
@@ -524,9 +534,11 @@ pub struct Section {
     /// Directory name (e.g., "blog", "projects")
     pub name: String,
     /// Section type for template dispatch (from frontmatter or directory name)
-    pub section_type: String,
+    pub section_type: SectionType,
     /// Path to section directory
     pub path: PathBuf,
+    /// Content root for constructing child items
+    pub content_root: PathBuf,
 }
 
 impl Section {
@@ -547,12 +559,12 @@ impl Section {
                 && path.file_name().is_some_and(|n| n != "_index.md")
             {
                 // Determine content kind based on section type
-                let kind = match self.section_type.as_str() {
-                    "blog" => ContentKind::Post,
-                    "projects" => ContentKind::Project,
+                let kind = match &self.section_type {
+                    SectionType::Blog => ContentKind::Post,
+                    SectionType::Projects => ContentKind::Project,
                     _ => ContentKind::Page,
                 };
-                let content = Content::from_path(&path, kind)?;
+                let content = Content::from_path(&path, kind, &self.content_root)?;
                 if !content.frontmatter.draft {
                     items.push(content);
                 }
@@ -578,7 +590,7 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
         if path.is_dir() {
             let index_path = path.join("_index.md");
             if index_path.exists() {
-                let index = Content::from_path(&index_path, ContentKind::Section)?;
+                let index = Content::from_path(&index_path, ContentKind::Section, content_dir)?;
                 let name = path
                     .file_name()
                     .and_then(|n| n.to_str())
@@ -590,13 +602,14 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
                     .frontmatter
                     .section_type
                     .clone()
-                    .unwrap_or_else(|| name.clone());
+                    .unwrap_or_else(|| SectionType::from_str(&name));
 
                 sections.push(Section {
                     index,
                     name,
                     section_type,
                     path,
+                    content_root: content_dir.to_path_buf(),
                 });
             }
         }
@@ -629,7 +642,7 @@ pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
                 .file_name()
                 .is_some_and(|n| n != "_index.md" && n != "_404.md")
         {
-            let content = Content::from_path(&path, ContentKind::Page)?;
+            let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
             if !content.frontmatter.draft {
                 pages.push(content);
             }
@@ -667,12 +680,16 @@ impl SiteManifest {
     fn discover_inner(content_dir: &Path) -> Result<Self> {
         // Load homepage
         let homepage_path = content_dir.join("_index.md");
-        let homepage = Content::from_path(&homepage_path, ContentKind::Section)?;
+        let homepage = Content::from_path(&homepage_path, ContentKind::Section, content_dir)?;
 
         // Load 404 page if present
         let page_404_path = content_dir.join("_404.md");
         let page_404 = if page_404_path.exists() {
-            Some(Content::from_path(&page_404_path, ContentKind::Page)?)
+            Some(Content::from_path(
+                &page_404_path,
+                ContentKind::Page,
+                content_dir,
+            )?)
         } else {
             None
         };
@@ -686,7 +703,7 @@ impl SiteManifest {
         // Collect section items and identify blog posts
         let mut posts = Vec::new();
         for section in &sections {
-            if section.section_type == "blog" {
+            if section.section_type == SectionType::Blog {
                 let mut items = section.collect_items()?;
                 // Sort blog posts by date, newest first
                 items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
@@ -915,7 +932,7 @@ mod tests {
         let sections = discover_sections(content_dir).expect("discover_sections failed");
         assert_eq!(sections.len(), 1);
         assert_eq!(sections[0].name, "writings");
-        assert_eq!(sections[0].section_type, "blog"); // From frontmatter, not dir name
+        assert_eq!(sections[0].section_type, SectionType::Blog); // From frontmatter, not dir name
     }
 
     #[test]
@@ -933,7 +950,10 @@ mod tests {
 
         let sections = discover_sections(content_dir).expect("discover_sections failed");
         assert_eq!(sections.len(), 1);
-        assert_eq!(sections[0].section_type, "gallery"); // Falls back to dir name
+        assert_eq!(
+            sections[0].section_type,
+            SectionType::Custom("gallery".to_string())
+        ); // Falls back to dir name
     }
 
     #[test]
@@ -1103,11 +1123,16 @@ mod tests {
         write_draft(&section_dir.join("hidden.md"), "Hidden");
 
         let section = Section {
-            index: Content::from_path(&section_dir.join("_index.md"), ContentKind::Section)
-                .unwrap(),
+            index: Content::from_path(
+                &section_dir.join("_index.md"),
+                ContentKind::Section,
+                dir.path(),
+            )
+            .unwrap(),
             name: "features".to_string(),
-            section_type: "features".to_string(),
+            section_type: SectionType::Custom("features".to_string()),
             path: section_dir,
+            content_root: dir.path().to_path_buf(),
         };
 
         let items = section.collect_items().unwrap();

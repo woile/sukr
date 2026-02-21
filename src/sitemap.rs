@@ -46,7 +46,7 @@ pub fn generate_sitemap(
         // Section items
         if let Ok(items) = section.collect_items() {
             for item in items {
-                let relative_path = item.output_path(content_root);
+                let relative_path = &item.output_path;
                 entries.push(SitemapEntry {
                     loc: format!("{}/{}", base_url, relative_path.display()),
                     lastmod: item.frontmatter.date.map(|d| d.to_string()),
@@ -57,7 +57,7 @@ pub fn generate_sitemap(
 
     // Standalone pages
     for page in &manifest.pages {
-        let relative_path = page.output_path(content_root);
+        let relative_path = &page.output_path;
         entries.push(SitemapEntry {
             loc: format!("{}/{}", base_url, relative_path.display()),
             lastmod: page.frontmatter.date.map(|d| d.to_string()),
