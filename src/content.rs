@@ -227,6 +227,205 @@ pub struct LinkTarget {
     pub is_internal: bool,
 }
 
+/// Parse markdown body into structured content blocks.
+///
+/// Walks pulldown-cmark events and maps them to `ContentBlock` variants.
+/// Uses the same parser options as `render::markdown_to_html` to ensure
+/// consistent interpretation of the source.
+pub fn parse_blocks(markdown: &str) -> Vec<ContentBlock> {
+    use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd};
+
+    let options = Options::ENABLE_TABLES
+        | Options::ENABLE_FOOTNOTES
+        | Options::ENABLE_STRIKETHROUGH
+        | Options::ENABLE_TASKLISTS
+        | Options::ENABLE_MATH;
+
+    let parser = Parser::new_ext(markdown, options);
+    let mut blocks = Vec::new();
+
+    // Accumulation state for multi-event blocks
+    let mut code_lang: Option<String> = None;
+    let mut code_buf = String::new();
+    let mut in_code = false;
+
+    let mut heading_level: Option<u8> = None;
+    let mut heading_buf = String::new();
+
+    let mut link_url: Option<String> = None;
+    let mut link_title: Option<String> = None;
+    let mut link_buf = String::new();
+
+    let mut image_url: Option<String> = None;
+    let mut image_title: Option<String> = None;
+    let mut image_buf = String::new();
+
+    for event in parser {
+        match event {
+            // --- Code blocks ---
+            Event::Start(Tag::CodeBlock(kind)) => {
+                code_lang = match kind {
+                    CodeBlockKind::Fenced(lang) => {
+                        let s = lang.split_whitespace().next().unwrap_or("");
+                        if s.is_empty() {
+                            None
+                        } else {
+                            Some(s.to_string())
+                        }
+                    },
+                    CodeBlockKind::Indented => None,
+                };
+                in_code = true;
+                code_buf.clear();
+            },
+            Event::Text(text) if in_code => code_buf.push_str(&text),
+            Event::End(TagEnd::CodeBlock) => {
+                let block = if code_lang.as_deref() == Some("mermaid") {
+                    ContentBlock::Diagram {
+                        source: std::mem::take(&mut code_buf),
+                    }
+                } else {
+                    ContentBlock::Code {
+                        language: code_lang.take(),
+                        source: std::mem::take(&mut code_buf),
+                    }
+                };
+                blocks.push(block);
+                code_lang = None;
+                in_code = false;
+            },
+
+            // --- Headings ---
+            Event::Start(Tag::Heading { level, .. }) => {
+                heading_level = Some(level as u8);
+                heading_buf.clear();
+            },
+            Event::Text(text) if heading_level.is_some() => heading_buf.push_str(&text),
+            Event::End(TagEnd::Heading(_)) => {
+                if let Some(level) = heading_level.take() {
+                    let id = crate::render::slugify(&heading_buf);
+                    blocks.push(ContentBlock::Heading {
+                        level,
+                        text: std::mem::take(&mut heading_buf),
+                        id,
+                    });
+                }
+            },
+
+            // --- Links ---
+            Event::Start(Tag::Link {
+                dest_url, title, ..
+            }) => {
+                link_url = Some(dest_url.to_string());
+                link_title = Some(title.to_string());
+                link_buf.clear();
+            },
+            Event::Text(text) if link_url.is_some() && image_url.is_none() => {
+                link_buf.push_str(&text);
+            },
+            Event::End(TagEnd::Link) => {
+                if let Some(url) = link_url.take() {
+                    let title_str = link_title.take().unwrap_or_default();
+                    blocks.push(ContentBlock::Link {
+                        url,
+                        title: if title_str.is_empty() {
+                            None
+                        } else {
+                            Some(title_str)
+                        },
+                        text: std::mem::take(&mut link_buf),
+                    });
+                }
+            },
+
+            // --- Images ---
+            Event::Start(Tag::Image {
+                dest_url, title, ..
+            }) => {
+                image_url = Some(dest_url.to_string());
+                image_title = Some(title.to_string());
+                image_buf.clear();
+            },
+            Event::Text(text) if image_url.is_some() => image_buf.push_str(&text),
+            Event::End(TagEnd::Image) => {
+                if let Some(url) = image_url.take() {
+                    let title_str = image_title.take().unwrap_or_default();
+                    blocks.push(ContentBlock::Image {
+                        url,
+                        alt: std::mem::take(&mut image_buf),
+                        title: if title_str.is_empty() {
+                            None
+                        } else {
+                            Some(title_str)
+                        },
+                    });
+                }
+            },
+
+            // --- Math ---
+            Event::InlineMath(latex) => {
+                blocks.push(ContentBlock::Math {
+                    source: latex.to_string(),
+                    display: false,
+                });
+            },
+            Event::DisplayMath(latex) => {
+                blocks.push(ContentBlock::Math {
+                    source: latex.to_string(),
+                    display: true,
+                });
+            },
+
+            // --- Plain text (not inside any accumulator) ---
+            Event::Text(text) => {
+                blocks.push(ContentBlock::Text(text.to_string()));
+            },
+            Event::Code(text) => {
+                blocks.push(ContentBlock::Text(format!("`{}`", text)));
+            },
+
+            // --- Raw HTML ---
+            Event::Html(html) | Event::InlineHtml(html) => {
+                blocks.push(ContentBlock::Raw(html.to_string()));
+            },
+
+            // Structural events (paragraph, list, etc.) — no block emitted
+            _ => {},
+        }
+    }
+
+    blocks
+}
+
+/// Extract link targets from parsed content blocks.
+///
+/// Filters `ContentBlock::Link` and `ContentBlock::Image` variants,
+/// producing `LinkTarget` items. Internal links are identified by
+/// the absence of a URL scheme (no `://` or `mailto:` prefix).
+pub fn extract_links(blocks: &[ContentBlock]) -> Vec<LinkTarget> {
+    blocks
+        .iter()
+        .filter_map(|block| {
+            let url = match block {
+                ContentBlock::Link { url, .. } => url,
+                ContentBlock::Image { url, .. } => url,
+                _ => return None,
+            };
+            // Skip fragment-only references (#section)
+            if url.starts_with('#') {
+                return None;
+            }
+            let is_internal =
+                !url.contains("://") && !url.starts_with("mailto:") && !url.starts_with("data:");
+            Some(LinkTarget {
+                url: url.clone(),
+                source_line: None,
+                is_internal,
+            })
+        })
+        .collect()
+}
+
 /// A navigation menu item discovered from the filesystem.
 #[derive(Debug, Clone, Serialize)]
 pub struct NavItem {
@@ -359,6 +558,9 @@ impl Content {
             }
         };
 
+        let blocks = parse_blocks(&body);
+        let links = extract_links(&blocks);
+
         Ok(Content {
             kind,
             frontmatter,
@@ -366,8 +568,8 @@ impl Content {
             source_path: path.to_path_buf(),
             slug,
             output_path,
-            blocks: Vec::new(),
-            links: Vec::new(),
+            blocks,
+            links,
         })
     }
 }
@@ -1484,5 +1686,182 @@ mod tests {
         assert_ne!(internal, external);
         assert!(internal.is_internal);
         assert!(!external.is_internal);
+    }
+
+    // =========================================================================
+    // parse_blocks tests
+    // =========================================================================
+
+    #[test]
+    fn test_parse_blocks_code_block() {
+        let md = "```rust\nfn main() {}\n```\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks
+                .iter()
+                .any(|b| matches!(b, ContentBlock::Code { language: Some(lang), source } if lang == "rust" && source.contains("fn main()"))),
+            "expected Code block with language=rust, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_mermaid_diagram() {
+        let md = "```mermaid\ngraph TD\n  A --> B\n```\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks.iter().any(
+                |b| matches!(b, ContentBlock::Diagram { source } if source.contains("graph TD"))
+            ),
+            "expected Diagram block, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_heading() {
+        let md = "## Hello World\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks
+                .iter()
+                .any(|b| matches!(b, ContentBlock::Heading { level: 2, text, id } if text == "Hello World" && id == "hello-world")),
+            "expected Heading level=2, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_link() {
+        let md = "[click here](https://example.com \"A title\")\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks.iter().any(
+                |b| matches!(b, ContentBlock::Link { url, title: Some(t), text } if url == "https://example.com" && t == "A title" && text == "click here")
+            ),
+            "expected Link block, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_image() {
+        let md = "![alt text](/img/photo.png)\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks.iter().any(
+                |b| matches!(b, ContentBlock::Image { url, alt, title: None } if url == "/img/photo.png" && alt == "alt text")
+            ),
+            "expected Image block, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_inline_math() {
+        let md = "The formula $E = mc^2$ is famous.\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks.iter().any(
+                |b| matches!(b, ContentBlock::Math { source, display: false } if source == "E = mc^2")
+            ),
+            "expected inline Math block, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_display_math() {
+        let md = "$$\n\\int_0^1 x^2 dx\n$$\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks
+                .iter()
+                .any(|b| matches!(b, ContentBlock::Math { display: true, .. })),
+            "expected display Math block, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_text() {
+        let md = "Hello world\n";
+        let blocks = parse_blocks(md);
+        assert!(
+            blocks
+                .iter()
+                .any(|b| matches!(b, ContentBlock::Text(t) if t == "Hello world")),
+            "expected Text block, got: {:?}",
+            blocks
+        );
+    }
+
+    // =========================================================================
+    // extract_links tests
+    // =========================================================================
+
+    #[test]
+    fn test_extract_links_internal_and_external() {
+        let blocks = vec![
+            ContentBlock::Link {
+                url: "/about.html".to_string(),
+                title: None,
+                text: "About".to_string(),
+            },
+            ContentBlock::Link {
+                url: "https://example.com".to_string(),
+                title: None,
+                text: "Example".to_string(),
+            },
+            ContentBlock::Text("filler".to_string()),
+        ];
+        let links = extract_links(&blocks);
+        assert_eq!(links.len(), 2);
+        assert!(links[0].is_internal);
+        assert!(!links[1].is_internal);
+    }
+
+    #[test]
+    fn test_extract_links_skips_fragments() {
+        let blocks = vec![ContentBlock::Link {
+            url: "#section".to_string(),
+            title: None,
+            text: "jump".to_string(),
+        }];
+        let links = extract_links(&blocks);
+        assert!(links.is_empty(), "fragment-only links should be skipped");
+    }
+
+    #[test]
+    fn test_extract_links_excludes_mailto_and_data() {
+        let blocks = vec![
+            ContentBlock::Link {
+                url: "mailto:user@example.com".to_string(),
+                title: None,
+                text: "email".to_string(),
+            },
+            ContentBlock::Link {
+                url: "data:text/plain;base64,SGVsbG8=".to_string(),
+                title: None,
+                text: "data".to_string(),
+            },
+        ];
+        let links = extract_links(&blocks);
+        assert_eq!(links.len(), 2);
+        assert!(!links[0].is_internal, "mailto should not be internal");
+        assert!(!links[1].is_internal, "data: should not be internal");
+    }
+
+    #[test]
+    fn test_extract_links_from_images() {
+        let blocks = vec![ContentBlock::Image {
+            url: "/img/photo.png".to_string(),
+            alt: "photo".to_string(),
+            title: None,
+        }];
+        let links = extract_links(&blocks);
+        assert_eq!(links.len(), 1);
+        assert!(links[0].is_internal);
+        assert_eq!(links[0].url, "/img/photo.png");
     }
 }

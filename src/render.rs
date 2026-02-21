@@ -252,7 +252,7 @@ pub fn markdown_to_html(markdown: &str) -> (String, Vec<Anchor>) {
 }
 
 /// Convert heading text to a URL-friendly slug ID.
-fn slugify(text: &str) -> String {
+pub(crate) fn slugify(text: &str) -> String {
     text.to_lowercase()
         .chars()
         .map(|c| if c.is_alphanumeric() { c } else { '-' })

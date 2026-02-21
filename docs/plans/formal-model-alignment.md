@@ -165,14 +165,14 @@ minimum documented as an explicit convention rather than buried in code.
 2. **Phase 2: Parse Functor** — Content discovery produces fully-typed Category C objects
 
    **Block parsing + link extraction:**
-   - [ ] Implement `parse_blocks(markdown: &str) -> Vec<ContentBlock>` in `content.rs` (or new `parse.rs`)
-   - [ ] Implement `extract_links(blocks: &[ContentBlock]) -> Vec<LinkTarget>` to discover inter-page references
-   - [ ] Update `Content::from_path` to populate `blocks`, `links`, and `output_path` fields
+   - [x] Implement `parse_blocks(markdown: &str) -> Vec<ContentBlock>` in `content.rs`
+   - [x] Implement `extract_links(blocks: &[ContentBlock]) -> Vec<LinkTarget>` to discover inter-page references
+   - [x] Update `Content::from_path` to populate `blocks`, `links`, and `output_path` fields
 
    **Section items as stored field (resolves C1, C9):**
-   - [ ] Populate `Section.items` during `discover_sections` — call `collect_items` logic once during discovery, store result as `BTreeMap<SortKey, Content>` — **resolves C1**
-   - [ ] Remove `Section::collect_items()` method entirely — **resolves C9**
-   - [ ] Update all 6 sites that called `section.collect_items()` to use `section.items` directly: `run()`, `collect_tags()`, `generate_aliases()`, `sitemap.rs`, `discover_inner()`, `discover_nav()`
+   - [x] Populate `Section.items` during `discover_sections` — sorted `Vec<Content>` at construction — **resolves C1** _(completed Phase 1 C4)_
+   - [x] Remove `Section::collect_items()` method entirely — **resolves C9** _(completed Phase 1 C4)_
+   - [x] Update all 6 sites that called `section.collect_items()` to use `section.items` directly: `run()`, `collect_tags()`, `generate_aliases()`, `sitemap.rs`, `discover_inner()`, `discover_nav()` _(completed Phase 1 C4)_
 
    **Nav derivation (resolves C3):**
    - [ ] Replace `discover_nav()` with `derive_nav()` that builds nav from already-parsed `sections` and `pages`, returning `BTreeSet<NavItem>` — **resolves C3**
@@ -189,7 +189,7 @@ minimum documented as an explicit convention rather than buried in code.
    - [ ] Add `ParseError::BrokenLink { source_page, target, line }` error variant
 
    **Cruft + verification:**
-   - [ ] **Cruft audit:** Remove `discover_nav()`, `Section::collect_items()`, `DEFAULT_WEIGHT`/`DEFAULT_WEIGHT_HIGH` if still lingering, remove any dead code paths revealed by nav refactor
+   - [ ] **Cruft audit:** Remove `discover_nav()` after `derive_nav()` migration, remove any dead code paths revealed by nav refactor _(Note: `DEFAULT_WEIGHT`/`DEFAULT_WEIGHT_HIGH` already removed in Phase 1 C3, `collect_items()` already removed in Phase 1 C4)_
    - [ ] Tests: broken link detection, valid link pass-through, link extraction from markdown, nav derivation consistency
 
 3. **Phase 3: Compile Functor** — Rendering consumes ContentBlock, not raw markdown
@@ -277,16 +277,19 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Item                                                              | Severity | Why Introduced                                                                                         | Follow-Up                   | Resolved |
-| :---------------------------------------------------------------- | :------- | :----------------------------------------------------------------------------------------------------- | :-------------------------- | :------: |
-| `NavItem::PartialEq` ignores `path` and `children`                | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only   | Add doc comment on the impl |          |
-| Unused `content_dir`/`content_root` params in 5 functions         | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change                 | Phase 4 (C4 completion)     |          |
-| Magic literal `99` in Projects sort branch                        | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                              | Phase 2 (SortKey adoption)  |          |
-| `ContentBlock` variants never constructed                         | LOW      | Category C types defined in Commit 1; construction deferred to Phase 2 parse functor                   | Phase 2                     |          |
-| `SortKey::DateDesc`/`WeightTitle` never constructed               | LOW      | SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them | Phase 2                     |          |
-| `SortKey::for_content` never used (non-test)                      | LOW      | Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4           | Phase 2 or remove if unused |          |
-| `Tag::new`/`as_str` never used (non-test)                         | LOW      | API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests      | Phase 2 or remove if unused |          |
-| `Content` fields `kind`/`source_path`/`blocks`/`links` never read | LOW      | Fields added in Commit 2 for Category C; consumers not yet implemented                                 | Phase 2                     |          |
+| Item                                                                | Severity | Why Introduced                                                                                         | Follow-Up                       | Resolved |
+| :------------------------------------------------------------------ | :------- | :----------------------------------------------------------------------------------------------------- | :------------------------------ | :------: |
+| `NavItem::PartialEq` ignores `path` and `children`                  | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only   | Add doc comment on the impl     |          |
+| Unused `content_dir`/`content_root` params in 5 functions           | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change                 | Phase 4 (C4 completion)         |          |
+| Magic literal `99` in Projects sort branch                          | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                              | Phase 2 (SortKey adoption)      |          |
+| `ContentBlock` variants never constructed                           | LOW      | Category C types defined in Commit 1; construction deferred to Phase 2 parse functor                   | Phase 2                         |    C5    |
+| `SortKey::DateDesc`/`WeightTitle` never constructed                 | LOW      | SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them | Phase 2                         |          |
+| `SortKey::for_content` never used (non-test)                        | LOW      | Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4           | Phase 2 or remove if unused     |          |
+| `Tag::new`/`as_str` never used (non-test)                           | LOW      | API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests      | Phase 2 or remove if unused     |          |
+| `Content` fields `kind`/`source_path`/`blocks`/`links` never read   | LOW      | Fields added in Commit 2 for Category C; consumers not yet implemented                                 | Phase 3                         |          |
+| `Event::Code` mapped to `Text` — loses inline code semantic         | LOW      | No `ContentBlock::InlineCode` variant; not needed for Phase 2 structural parsing                       | Add variant if Phase 3 needs it |          |
+| `LinkTarget.source_line` always `None`                              | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                             | Phase 2 reference validation    |          |
+| Duplicated `Options` flags in `parse_blocks` and `markdown_to_html` | LOW      | Same crate, 5 lines each, different modules; extracting shared const not yet warranted                 | Extract when warranted          |          |
 
 ## Deviation Log
 
