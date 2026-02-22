@@ -192,28 +192,28 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] **Cruft audit:** Removed `discover_nav()` after `derive_nav()` migration (8 tests removed, 1 added) _(Note: `DEFAULT_WEIGHT`/`DEFAULT_WEIGHT_HIGH` already removed in Phase 1 C3, `collect_items()` already removed in Phase 1 C4)_
    - [x] Tests: broken link detection, valid link pass-through, external link ignored, normalize_link_url
 
-3. **Phase 3: Compile Functor** — Rendering consumes ContentBlock, not raw markdown
+3. **Phase 3: Compile Functor** — Rendering dispatches intercepted blocks, passes through Prose
+
+   **Model refinement (pre-execution):**
+   - [ ] Remove `ContentBlock::Text` — absorbed into `Prose` (sukr doesn't intercept plain text)
+   - [ ] Rename `ContentBlock::Raw` → `ContentBlock::Prose` (structural honesty: standard rendering, not "raw")
+   - [ ] Remove `ContentBlock::Link` and `ContentBlock::Image` from the coproduct — reference extraction is a Parse side-channel via `extract_links`, not a block type. Rework `extract_links` to operate on pulldown-cmark events directly during `parse_blocks`.
 
    **Catamorphism:**
-   - [ ] Refactor `render.rs`: replace `markdown_to_html(markdown: &str)` with `render_blocks(blocks: &[ContentBlock]) -> (String, Vec<Anchor>)`
-   - [ ] Each `ContentBlock` variant dispatches to its specific renderer:
+   - [ ] Add `render_blocks(blocks: &[ContentBlock]) -> (String, Vec<Anchor>)` to `render.rs`
+   - [ ] Intercepted variant dispatch:
      - [ ] `Code` → `highlight_code` (existing)
      - [ ] `Math` → `crate::math::render_math` (existing)
      - [ ] `Diagram` → `crate::mermaid::render_diagram` (existing)
      - [ ] `Heading` → heading HTML with slug/anchor (existing logic)
-     - [ ] `Text` → `html_escape` (existing)
-     - [ ] `Link` → link HTML (existing)
-     - [ ] `Image` → image HTML (existing)
-     - [ ] `Raw` → pass-through (HTML events from pulldown-cmark)
+   - [ ] Passthrough: `Prose` → identity (HTML already produced by Parse)
 
    **Caller updates:**
    - [ ] Update `main.rs` callers: replace `render::markdown_to_html(&item.body)` with `render::render_blocks(&item.blocks)`
-   - [ ] Determine fate of `start_tag_to_html` / `end_tag_to_html` — absorb into per-variant renderers or retain as `Raw` sub-helpers. Remove if dead.
-   - [ ] Remove all imperative `items.sort_by(...)` in `main.rs::run()` — section items now arrive sorted-by-construction via `BTreeMap<SortKey, Content>`
-   - [ ] Update `template_engine.rs` if render function signatures changed
+   - [ ] Determine fate of `start_tag_to_html` / `end_tag_to_html` — likely dead after migration. Remove if unused.
 
    **Cruft + verification:**
-   - [ ] **Cruft audit:** Remove `markdown_to_html` (replaced by `render_blocks`), remove orphaned helper functions, ensure no pulldown-cmark event-loop code survives outside the Parse phase
+   - [ ] **Cruft audit:** Remove `markdown_to_html` (replaced by `render_blocks`), remove orphaned helper functions
    - [ ] Preserve all existing render tests, adapt to new API
 
 4. **Phase 4: Pipeline Clarity & Error Model** — Clean module boundaries, functor failure modes, and type-level phase separation
@@ -295,11 +295,12 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Commit | Planned                                     | Actual                                                  | Rationale                                                                                                      |
-| :----- | :------------------------------------------ | :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------- |
-| C4     | `Section.items: BTreeMap<SortKey, Content>` | `Section.items: Vec<Content>` sorted at construction    | Vec is simpler and sufficient — items are immutable after construction, BTreeMap adds overhead without benefit |
-| C4     | — (not planned)                             | Removed `Section.path` and `Section.content_root`       | Discovered as vestigial after `collect_items()` removal — 0 external readers remained                          |
-| C7     | `SiteManifest.nav: BTreeSet<NavItem>`       | `SiteManifest.nav: Vec<NavItem>` sorted at construction | NavItem's PartialEq ignores path/children — BTreeSet would silently deduplicate items sharing (weight, label)  |
+| Commit | Planned                                       | Actual                                                   | Rationale                                                                                                                                                                                                        |
+| :----- | :-------------------------------------------- | :------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C4     | `Section.items: BTreeMap<SortKey, Content>`   | `Section.items: Vec<Content>` sorted at construction     | Vec is simpler and sufficient — items are immutable after construction, BTreeMap adds overhead without benefit                                                                                                   |
+| C4     | — (not planned)                               | Removed `Section.path` and `Section.content_root`        | Discovered as vestigial after `collect_items()` removal — 0 external readers remained                                                                                                                            |
+| C7     | `SiteManifest.nav: BTreeSet<NavItem>`         | `SiteManifest.nav: Vec<NavItem>` sorted at construction  | NavItem's PartialEq ignores path/children — BTreeSet would silently deduplicate items sharing (weight, label)                                                                                                    |
+| P3     | Render catamorphism dispatches all 7 variants | 5-variant coproduct: Code, Math, Diagram, Heading, Prose | Model refined: Text, Link, Image removed. Text subsumed by Prose. Link/Image were overengineered — reference extraction is a Parse side-channel (`Content.links`), not a block type. Prose is the identity case. |
 
 ## Retrospective
 

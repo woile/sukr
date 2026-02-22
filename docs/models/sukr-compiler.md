@@ -157,16 +157,23 @@ A content block is an algebraic data type (a tagged union with per-variant
 structure):
 
 ```
-ContentBlock = Code(Language, String)
-             | Math(String, DisplayMode)
-             | Diagram(String)
-             | Heading(Level, String)
-             | Text(String)
-             | Link(Target, String)
-             | Image(Source, AltText)
+ContentBlock = Code(Language, String)      -- tree-sitter syntax highlighting
+             | Math(String, DisplayMode)   -- KaTeX → MathML
+             | Diagram(String)             -- Mermaid → SVG
+             | Heading(Level, String, Id)  -- slug generation, anchor extraction
+             | Prose(HTML)                 -- standard rendering (identity)
 ```
 
-This coproduct is what drives the interception pattern.
+The first four variants are interception points: domain-specific transformations
+that a standard markdown renderer cannot perform. `Prose` is the identity
+case — standard markdown rendering where the parser library's output is the
+desired output. Every variant earns its existence; nothing is modeled that
+sukr does not transform or that does not require distinct treatment.
+
+Reference extraction (the `references` morphism) is a side-channel of parsing,
+not a property of the block algebra. Internal link URLs are extracted directly
+from the markdown event stream and stored on the page, independent of
+ContentBlock construction.
 
 **Commutative Diagrams (Invariants):**
 
@@ -236,7 +243,8 @@ The Parse functor discovers content structure from the filesystem.
 
 - Directory containment in S maps to the `belongs to` morphism in C
 - File contents map to the `has body` morphism (markdown → content blocks)
-- Relative links in markdown map to `references` morphisms in C
+- Internal links in markdown map to `references` morphisms in C (extracted as
+  a side-channel during content block parsing)
 - Tag fields in frontmatter map to `tagged with` morphisms in C
 
 **Functor laws:**
@@ -298,10 +306,12 @@ Where:
   render(Math(tex, mode))      = katex(tex, mode)
   render(Diagram(src))         = mermaid_svg(src)
   render(Heading(level, text)) = heading_html(level, text)
-  render(Text(s))              = html_escape(s)
-  render(Link(target, label))  = link_html(target, label)
-  render(Image(src, alt))      = img_html(src, alt)
+  render(Prose(html))          = html
   ```
+
+  The first four cases are the interception points that justify sukr's
+  existence. `Prose` is the identity morphism — content the parser library
+  already rendered correctly.
 
 - **Template:** Applies the page template with navigation context, metadata,
   and site-wide configuration. Note that templates are a _parameter_ defining
@@ -374,14 +384,13 @@ morphism in S maps to a morphism in O, and composition is preserved.
    rendering (Compile), with the Content types as the interface between them.
 
 3. **Cross-dependency validation belongs in Parse, not Compile.** The
-   `references` morphisms should be discovered and validated during parsing, so
-   that by the time Compile runs, Content is known to be well-formed. The
-   current implementation discovers links during rendering, not parsing. This
-   is a rearchitecture finding.
+   `references` morphisms are discovered and validated during parsing, so
+   that by the time Compile runs, Content is known to be well-formed.
 
-4. **ContentBlock coproduct as interception pattern.** Each variant maps to a
-   renderer. Adding a new block type (e.g., a new diagram language) means
-   extending this coproduct: add the variant, add the renderer.
+4. **ContentBlock coproduct as interception pattern.** Each intercepted variant
+   maps to a renderer. Adding a new block type (e.g., a new diagram language)
+   means extending this coproduct: add the variant, add the renderer. `Prose`
+   absorbs everything that does not require interception.
 
 ### Testing Strategy
 
@@ -399,20 +408,21 @@ morphism in S maps to a morphism in O, and composition is preserved.
 4. **Catamorphism correctness tests:** Each ContentBlock variant renders
    correctly in isolation. This is the "unit test" level of the model.
 
-### Rearchitecture Findings
+### Architectural Invariants
 
-1. **Link extraction during Parse:** The current implementation likely does not
-   extract inter-page links during parsing. The model says it should: links are
-   morphisms in C, and C is fully constructed by Parse before Compile runs. This
-   would enable a "broken link" check before any rendering begins.
+1. **Link extraction during Parse.** Inter-page links are morphisms in C.
+   They must be discovered and validated during Parse, before Compile runs.
+   Broken internal references are compile-time errors (or warnings), never
+   silent corruption in the output.
 
-2. **Module boundary clarity:** The model suggests two clear phases
-   (Parse → Compile) with the Content types as the interface. The current
-   `main.rs` may not have this clean separation. Worth auditing.
+2. **Module boundary clarity.** Parse and Compile are the two phases. The
+   Content types are the interface between them. No rendering logic should
+   execute before Content is fully constructed; no parsing logic should
+   execute during Compile.
 
-3. **Tag as first-class object:** The model gives Tag its own object status in
-   C. If the current implementation treats tags as ad-hoc string lists rather
-   than typed objects, that's a structural deviation from the model.
+3. **Tag as first-class object.** Tag has its own object status in C. Tags
+   are typed values, not ad-hoc strings. The `tagged with` morphism is
+   enforced at the type level.
 
 ### Open Questions
 
