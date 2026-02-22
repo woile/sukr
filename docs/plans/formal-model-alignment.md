@@ -200,21 +200,21 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Remove `ContentBlock::Link` and `ContentBlock::Image` from the coproduct — reference extraction is a Parse side-channel via `extract_links`, not a block type. Rework `extract_links` to operate on pulldown-cmark events directly during `parse_blocks`.
 
    **Catamorphism:**
-   - [ ] Add `render_blocks(blocks: &[ContentBlock]) -> (String, Vec<Anchor>)` to `render.rs`
-   - [ ] Intercepted variant dispatch:
-     - [ ] `Code` → `highlight_code` (existing)
-     - [ ] `Math` → `crate::math::render_math` (existing)
-     - [ ] `Diagram` → `crate::mermaid::render_diagram` (existing)
-     - [ ] `Heading` → heading HTML with slug/anchor (existing logic)
-   - [ ] Passthrough: `Prose` → identity (HTML already produced by Parse)
+   - [x] Add `render_blocks(blocks: &[ContentBlock]) -> (String, Vec<Anchor>)` to `render.rs`
+   - [x] Intercepted variant dispatch:
+     - [x] `Code` → `highlight_code` (existing)
+     - [x] `Math` → `crate::math::render_math` (existing)
+     - [x] `Diagram` → `crate::mermaid::render_diagram` (existing)
+     - [x] `Heading` → heading HTML with slug/anchor (existing logic)
+   - [x] Passthrough: `Prose` → identity (HTML already produced by Parse)
 
    **Caller updates:**
-   - [ ] Update `main.rs` callers: replace `render::markdown_to_html(&item.body)` with `render::render_blocks(&item.blocks)`
-   - [ ] Determine fate of `start_tag_to_html` / `end_tag_to_html` — likely dead after migration. Remove if unused.
+   - [x] Update `main.rs` callers: replace `render::markdown_to_html(&item.body)` with `render::render_blocks(&item.blocks)`
+   - [x] Determine fate of `start_tag_to_html` / `end_tag_to_html` — likely dead after migration. Remove if unused.
 
    **Cruft + verification:**
-   - [ ] **Cruft audit:** Remove `markdown_to_html` (replaced by `render_blocks`), remove orphaned helper functions
-   - [ ] Preserve all existing render tests, adapt to new API
+   - [x] **Cruft audit:** Remove `markdown_to_html` (replaced by `render_blocks`), remove orphaned helper functions
+   - [x] Preserve all existing render tests, adapt to new API
 
 4. **Phase 4: Pipeline Clarity & Error Model** — Clean module boundaries, functor failure modes, and type-level phase separation
 
@@ -277,19 +277,19 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Item                                                                | Severity | Why Introduced                                                                                                           | Follow-Up                       | Resolved |
-| :------------------------------------------------------------------ | :------- | :----------------------------------------------------------------------------------------------------------------------- | :------------------------------ | :------: |
-| `NavItem::PartialEq` ignores `path` and `children`                  | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only                     | Add doc comment on the impl     |          |
-| Unused `content_dir`/`content_root` params in 5 functions           | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change                                   | Phase 4 (C4 completion)         |          |
-| Magic literal `99` in Projects sort branch                          | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                                                | Phase 2 (SortKey adoption)      |          |
-| `ContentBlock` variants never constructed                           | LOW      | Category C types defined in Commit 1; construction deferred to Phase 2 parse functor                                     | Phase 2                         |    C5    |
-| `SortKey::DateDesc`/`WeightTitle` never constructed                 | LOW      | SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them                   | Phase 2                         |          |
-| `SortKey::for_content` never used (non-test)                        | LOW      | Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4                             | Phase 2 or remove if unused     |          |
-| `Tag::new`/`as_str` never used (non-test)                           | LOW      | API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests                        | Phase 2 or remove if unused     |          |
-| `Content` fields `kind`/`blocks` never read                         | LOW      | Fields added in Commit 2 for Category C; `source_path`/`links` now consumed by validation, `kind`/`blocks` await Phase 3 | Phase 3                         |          |
-| `Event::Code` mapped to `Text` — loses inline code semantic         | LOW      | No `ContentBlock::InlineCode` variant; not needed for Phase 2 structural parsing                                         | Add variant if Phase 3 needs it |          |
-| `LinkTarget.source_line` always `None`                              | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                                               | Phase 2 reference validation    |          |
-| Duplicated `Options` flags in `parse_blocks` and `markdown_to_html` | LOW      | Same crate, 5 lines each, different modules; extracting shared const not yet warranted                                   | Extract when warranted          |          |
+| Item                                                                    | Severity | Why Introduced                                                                                              | Follow-Up                    | Resolved |
+| :---------------------------------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------- | :------: |
+| `NavItem::PartialEq` ignores `path` and `children`                      | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only        | Add doc comment on the impl  |          |
+| Unused `content_dir`/`content_root` params in 5 functions               | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change                      | Phase 4 (C4 completion)      |          |
+| Magic literal `99` in Projects sort branch                              | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                                   | Phase 2 (SortKey adoption)   |          |
+| ~~`ContentBlock` variants never constructed~~                           | ~~LOW~~  | ~~Category C types defined in Commit 1; construction deferred to Phase 2 parse functor~~                    | ~~Phase 2~~                  |  C5, C9  |
+| `SortKey::DateDesc`/`WeightTitle` never constructed                     | LOW      | SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them      | Phase 2                      |          |
+| `SortKey::for_content` never used (non-test)                            | LOW      | Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4                | Phase 2 or remove if unused  |          |
+| `Tag::new`/`as_str` never used (non-test)                               | LOW      | API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests           | Phase 2 or remove if unused  |          |
+| `Content.kind` never read                                               | LOW      | Field added in Commit 2 for Category C; `blocks` now consumed by `render_blocks` (C10); `kind` still unused | Phase 4                      |   C10    |
+| ~~`Event::Code` mapped to `Text` — loses inline code semantic~~         | ~~LOW~~  | ~~Resolved: inline code now renders as `<code>` in Prose blocks (C9), no separate variant needed~~          | ~~N/A~~                      |    C9    |
+| `LinkTarget.source_line` always `None`                                  | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                                  | Phase 2 reference validation |          |
+| ~~Duplicated `Options` flags in `parse_blocks` and `markdown_to_html`~~ | ~~LOW~~  | ~~Resolved: `markdown_to_html` removed (C10), only `parse_blocks` uses Options now~~                        | ~~N/A~~                      |   C10    |
 
 ## Deviation Log
 

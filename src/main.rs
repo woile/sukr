@@ -117,7 +117,7 @@ fn run(config_path: &Path) -> Result<()> {
         // Render individual content pages for all sections
         for item in items {
             eprintln!("  processing: {}", item.slug);
-            let (html_body, anchors) = render::markdown_to_html(&item.body);
+            let (html_body, anchors) = render::render_blocks(&item.blocks);
             let page_path = format!("/{}", item.output_path.display());
             let html = engine.render_content(
                 item,
@@ -260,7 +260,7 @@ fn process_pages(
             eprintln!("processing: {}", path.display());
 
             let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
-            let (html_body, anchors) = render::markdown_to_html(&content.body);
+            let (html_body, anchors) = render::render_blocks(&content.blocks);
             let page_path = format!("/{}", content.output_path.display());
             let html =
                 engine.render_page(&content, &html_body, &page_path, config, nav, &anchors)?;
@@ -280,7 +280,7 @@ fn generate_homepage(
 ) -> Result<()> {
     eprintln!("generating: homepage");
 
-    let (html_body, anchors) = render::markdown_to_html(&manifest.homepage.body);
+    let (html_body, anchors) = render::render_blocks(&manifest.homepage.blocks);
     let html = engine.render_page(
         &manifest.homepage,
         &html_body,
@@ -316,7 +316,7 @@ fn generate_404(
 ) -> Result<()> {
     eprintln!("generating: 404 page");
 
-    let (html_body, anchors) = render::markdown_to_html(&page_404.body);
+    let (html_body, anchors) = render::render_blocks(&page_404.blocks);
     let html = engine.render_page(page_404, &html_body, "/404.html", config, nav, &anchors)?;
 
     let out_path = output_dir.join("404.html");
