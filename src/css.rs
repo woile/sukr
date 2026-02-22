@@ -3,6 +3,7 @@
 //! Provides CSS bundling and minification. The bundler resolves `@import`
 //! rules at build time, inlining imported files into a single output.
 
+use crate::error::{CompileError, CompileResult};
 use lightningcss::bundler::{Bundler, FileProvider};
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions};
 use std::path::Path;
@@ -14,25 +15,25 @@ use std::path::Path;
 /// 2. Resolves and inlines all `@import` rules (relative to source file)
 /// 3. Minifies the combined output
 ///
-/// Returns minified CSS string on success, or an error message on failure.
-pub fn bundle_css(path: &Path) -> Result<String, String> {
+/// Returns minified CSS string on success.
+pub fn bundle_css(path: &Path) -> CompileResult<String> {
     let fs = FileProvider::new();
     let mut bundler = Bundler::new(&fs, None, ParserOptions::default());
 
     let mut stylesheet = bundler
         .bundle(path)
-        .map_err(|e| format!("bundle error: {e}"))?;
+        .map_err(|e| CompileError::CssBundle(format!("bundle error: {e}")))?;
 
     stylesheet
         .minify(MinifyOptions::default())
-        .map_err(|e| format!("minify error: {e}"))?;
+        .map_err(|e| CompileError::CssBundle(format!("minify error: {e}")))?;
 
     let result = stylesheet
         .to_css(PrinterOptions {
             minify: true,
             ..Default::default()
         })
-        .map_err(|e| format!("print error: {e}"))?;
+        .map_err(|e| CompileError::CssBundle(format!("print error: {e}")))?;
 
     Ok(result.code)
 }

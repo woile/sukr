@@ -234,10 +234,10 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Update `content.rs` functions to return `ParseResult<T>`, `template_engine.rs` and `config.rs` functions to return `CompileResult<T>` / `ParseResult<T>`
 
    **Out-of-model code integration:**
-   - [ ] `generate_aliases` / `write_aliases`: consume `Content.frontmatter.aliases` (typed input from C), return `Result<(), CompileError>`
-   - [ ] `copy_static_assets` / `walk_dir`: positioned as Compile-phase operation, return `Result<(), CompileError>`
-   - [ ] `bundle_css`: refactor from `Result<String, String>` to `Result<String, CompileError>`
-   - [ ] `generate_feed` / `generate_sitemap_file`: update to `CompileError` returns
+   - [x] `generate_aliases` / `write_aliases`: consume `Content.frontmatter.aliases` (typed input from C), return `CompileResult<()>`
+   - [x] `copy_static_assets` / `walk_dir`: kept at `Result<()>` — `walk_dir_inner` uses `ParseError::ReadFile` for directory listing (cross-phase)
+   - [x] `bundle_css`: refactored from `Result<String, String>` to `CompileResult<String>` with `CompileError::CssBundle`
+   - [x] `generate_feed` / `generate_sitemap_file`: narrowed to `CompileResult<()>` — underlying `generate_atom_feed`/`generate_sitemap` return `String` (infallible)
 
    **Cruft resolution (C2, C4-parameter, C5, C6):**
    - [x] Replace `process_pages()` with iteration over `manifest.pages` — **resolves C2**
@@ -293,6 +293,7 @@ minimum documented as an explicit convention rather than buried in code.
 | `SortKey` variants suppressed with `#[allow(dead_code)]`                | LOW      | Variants used by `Ord` impl but only constructed in `#[cfg(test)]` via `for_content`; production uses inline key construction    | Adopt `for_content` in `discover_sections` |          |
 | `TAG_PAGE_TITLE_PREFIX` still in Rust code                              | LOW      | Extracted to constant (C13) but display text ideally belongs in template, not compiled code                                      | Move tag page title into Tera template     |          |
 | Planned error variants not yet implemented                              | LOW      | Plan specified MissingSectionIndex, OrphanedNavEntry, RenderFailure, StaticAssetCopy — these error modes don't exist in code yet | Add when error conditions are implemented  |          |
+| `copy_static_assets`/`walk_dir` return `Result` not `CompileResult`     | LOW      | `walk_dir_inner` uses `ParseError::ReadFile` for directory listing in compile-phase context — cross-phase dependency             | Introduce `CompileError::ReadDir` variant  |          |
 
 ## Deviation Log
 

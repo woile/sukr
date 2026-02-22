@@ -16,7 +16,7 @@ mod sitemap;
 mod template_engine;
 
 use crate::content::{Content, NavItem, OUTPUT_INDEX};
-use crate::error::{CompileError, ParseError, Result};
+use crate::error::{CompileError, CompileResult, ParseError, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
 use std::collections::BTreeMap;
 use std::fs;
@@ -220,7 +220,7 @@ fn generate_feed(
     output_dir: &Path,
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
-) -> Result<()> {
+) -> CompileResult<()> {
     let out_path = output_dir.join(OUTPUT_FEED);
     eprintln!("generating: {}", out_path.display());
 
@@ -241,7 +241,7 @@ fn generate_sitemap_file(
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
     tag_names: &[String],
-) -> Result<()> {
+) -> CompileResult<()> {
     let out_path = output_dir.join(OUTPUT_SITEMAP);
     eprintln!("generating: {}", out_path.display());
 
@@ -262,7 +262,7 @@ fn generate_homepage(
     output_dir: &Path,
     config: &config::SiteConfig,
     engine: &TemplateEngine,
-) -> Result<()> {
+) -> CompileResult<()> {
     eprintln!("generating: homepage");
 
     let (html_body, anchors) = render::render_blocks(&manifest.homepage.blocks);
@@ -298,7 +298,7 @@ fn generate_404(
     config: &config::SiteConfig,
     nav: &[NavItem],
     engine: &TemplateEngine,
-) -> Result<()> {
+) -> CompileResult<()> {
     eprintln!("generating: 404 page");
 
     let (html_body, anchors) = render::render_blocks(&page_404.blocks);
@@ -361,7 +361,7 @@ fn write_tag_pages(
     config: &config::SiteConfig,
     nav: &[NavItem],
     engine: &TemplateEngine,
-) -> Result<()> {
+) -> CompileResult<()> {
     let tags_dir = output_dir.join("tags");
     fs::create_dir_all(&tags_dir).map_err(|e| CompileError::CreateDir {
         path: tags_dir.clone(),
@@ -390,7 +390,7 @@ fn write_tag_pages(
 }
 
 /// Write a content item to its output path
-fn write_output(output_dir: &Path, content: &Content, html: String) -> Result<()> {
+fn write_output(output_dir: &Path, content: &Content, html: String) -> CompileResult<()> {
     let out_path = output_dir.join(&content.output_path);
     let out_dir = out_path.parent().unwrap();
 
@@ -416,7 +416,7 @@ fn generate_aliases(
     output_dir: &Path,
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
-) -> Result<()> {
+) -> CompileResult<()> {
     let base_url = config.base_url.trim_end_matches('/');
 
     // Process section items
@@ -435,7 +435,7 @@ fn generate_aliases(
 }
 
 /// Write redirect stubs for a single content item's aliases.
-fn write_aliases(output_dir: &Path, content: &Content, base_url: &str) -> Result<()> {
+fn write_aliases(output_dir: &Path, content: &Content, base_url: &str) -> CompileResult<()> {
     if content.frontmatter.aliases.is_empty() {
         return Ok(());
     }
@@ -519,7 +519,7 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
         // Bundle CSS files (resolves @imports), copy others directly
         if src.extension().is_some_and(|ext| ext == "css") {
             let original_size = fs::metadata(&src).map(|m| m.len()).unwrap_or(0);
-            let bundled = bundle_css(&src).map_err(CompileError::CssBundle)?;
+            let bundled = bundle_css(&src)?;
             fs::write(&dest, &bundled).map_err(|e| CompileError::WriteFile {
                 path: dest.clone(),
                 source: e,
