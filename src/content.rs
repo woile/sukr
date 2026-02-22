@@ -34,6 +34,10 @@ pub enum ContentKind {
 ///
 /// Represents the coproduct from the formal model. Each variant corresponds
 /// to a build-time interception point in the rendering pipeline.
+///
+/// Five variants: four intercepted (Code, Math, Diagram, Heading) and one
+/// identity case (Prose). This is the minimal coproduct — every variant
+/// earns its existence. See `docs/models/sukr-compiler.md` §Content Block Algebra.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ContentBlock {
     /// Fenced code block with optional language annotation.
@@ -47,22 +51,10 @@ pub enum ContentBlock {
     Diagram { source: String },
     /// Heading with computed slug for anchor navigation.
     Heading { level: u8, text: String, id: String },
-    /// Inline or block text content.
-    Text(String),
-    /// Hyperlink.
-    Link {
-        url: String,
-        title: Option<String>,
-        text: String,
-    },
-    /// Image reference.
-    Image {
-        url: String,
-        alt: String,
-        title: Option<String>,
-    },
-    /// Pass-through HTML or unmapped pulldown-cmark events.
-    Raw(String),
+    /// Standard-rendered HTML content (identity in the Render catamorphism).
+    /// Paragraphs, lists, inline text, links, images, etc. — everything the
+    /// parser library renders correctly without sukr interception.
+    Prose(String),
 }
 
 /// A content tag — validated newtype over String.
@@ -220,8 +212,8 @@ impl PartialOrd for SortKey {
 
 /// An inter-page reference discovered during parsing.
 ///
-/// Placeholder for Phase 2 link extraction. Will be populated by
-/// `extract_links()` when blocks are parsed from markdown.
+/// Populated as a side-channel by `parse_blocks()` during markdown parsing.
+/// Internal links are identified by the absence of a URL scheme.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LinkTarget {
     /// The URL or relative path as written in markdown.
@@ -232,12 +224,16 @@ pub struct LinkTarget {
     pub is_internal: bool,
 }
 
-/// Parse markdown body into structured content blocks.
+/// Parse markdown body into structured content blocks and extracted link targets.
 ///
-/// Walks pulldown-cmark events and maps them to `ContentBlock` variants.
-/// Uses the same parser options as `render::markdown_to_html` to ensure
-/// consistent interpretation of the source.
-pub fn parse_blocks(markdown: &str) -> Vec<ContentBlock> {
+/// Walks pulldown-cmark events and separates intercepted blocks (Code, Math,
+/// Diagram, Heading) from standard-rendered prose. Non-intercepted content is
+/// rendered to HTML during parsing and emitted as `Prose` blocks. Internal link
+/// URLs are extracted as a side-channel for reference validation.
+///
+/// Returns `(blocks, links)` where blocks are the content block sequence and
+/// links are the extracted reference targets.
+pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
     use pulldown_cmark::{CodeBlockKind, Event, Options, Parser, Tag, TagEnd};
 
     let options = Options::ENABLE_TABLES
@@ -248,8 +244,12 @@ pub fn parse_blocks(markdown: &str) -> Vec<ContentBlock> {
 
     let parser = Parser::new_ext(markdown, options);
     let mut blocks = Vec::new();
+    let mut links = Vec::new();
 
-    // Accumulation state for multi-event blocks
+    // Prose accumulator — flushes to a Prose block when an intercepted block starts
+    let mut prose_buf = String::new();
+
+    // Accumulation state for multi-event intercepted blocks
     let mut code_lang: Option<String> = None;
     let mut code_buf = String::new();
     let mut in_code = false;
@@ -257,25 +257,31 @@ pub fn parse_blocks(markdown: &str) -> Vec<ContentBlock> {
     let mut heading_level: Option<u8> = None;
     let mut heading_buf = String::new();
 
-    let mut link_url: Option<String> = None;
-    let mut link_title: Option<String> = None;
-    let mut link_buf = String::new();
+    // Image alt text accumulation (images render to Prose but extract links)
+    let mut image_alt_buf: Option<String> = None;
+    let mut image_attrs: Option<(String, String)> = None; // (src, title)
 
-    let mut image_url: Option<String> = None;
-    let mut image_title: Option<String> = None;
-    let mut image_buf = String::new();
+    /// Flush accumulated prose to a Prose block if non-empty.
+    fn flush_prose(buf: &mut String, blocks: &mut Vec<ContentBlock>) {
+        if !buf.is_empty() {
+            blocks.push(ContentBlock::Prose(std::mem::take(buf)));
+        }
+    }
 
     for event in parser {
         match event {
-            // --- Code blocks ---
+            // =================================================================
+            // Intercepted: Code blocks
+            // =================================================================
             Event::Start(Tag::CodeBlock(kind)) => {
+                flush_prose(&mut prose_buf, &mut blocks);
                 code_lang = match kind {
                     CodeBlockKind::Fenced(lang) => {
-                        let s = lang.split_whitespace().next().unwrap_or("");
-                        if s.is_empty() {
+                        let lang_str = lang.split_whitespace().next().unwrap_or("");
+                        if lang_str.is_empty() {
                             None
                         } else {
-                            Some(s.to_string())
+                            Some(lang_str.to_string())
                         }
                     },
                     CodeBlockKind::Indented => None,
@@ -300,8 +306,11 @@ pub fn parse_blocks(markdown: &str) -> Vec<ContentBlock> {
                 in_code = false;
             },
 
-            // --- Headings ---
+            // =================================================================
+            // Intercepted: Headings
+            // =================================================================
             Event::Start(Tag::Heading { level, .. }) => {
+                flush_prose(&mut prose_buf, &mut blocks);
                 heading_level = Some(level as u8);
                 heading_buf.clear();
             },
@@ -317,118 +326,191 @@ pub fn parse_blocks(markdown: &str) -> Vec<ContentBlock> {
                 }
             },
 
-            // --- Links ---
-            Event::Start(Tag::Link {
-                dest_url, title, ..
-            }) => {
-                link_url = Some(dest_url.to_string());
-                link_title = Some(title.to_string());
-                link_buf.clear();
-            },
-            Event::Text(text) if link_url.is_some() && image_url.is_none() => {
-                link_buf.push_str(&text);
-            },
-            Event::End(TagEnd::Link) => {
-                if let Some(url) = link_url.take() {
-                    let title_str = link_title.take().unwrap_or_default();
-                    blocks.push(ContentBlock::Link {
-                        url,
-                        title: if title_str.is_empty() {
-                            None
-                        } else {
-                            Some(title_str)
-                        },
-                        text: std::mem::take(&mut link_buf),
-                    });
-                }
-            },
-
-            // --- Images ---
-            Event::Start(Tag::Image {
-                dest_url, title, ..
-            }) => {
-                image_url = Some(dest_url.to_string());
-                image_title = Some(title.to_string());
-                image_buf.clear();
-            },
-            Event::Text(text) if image_url.is_some() => image_buf.push_str(&text),
-            Event::End(TagEnd::Image) => {
-                if let Some(url) = image_url.take() {
-                    let title_str = image_title.take().unwrap_or_default();
-                    blocks.push(ContentBlock::Image {
-                        url,
-                        alt: std::mem::take(&mut image_buf),
-                        title: if title_str.is_empty() {
-                            None
-                        } else {
-                            Some(title_str)
-                        },
-                    });
-                }
-            },
-
-            // --- Math ---
+            // =================================================================
+            // Intercepted: Math
+            // =================================================================
             Event::InlineMath(latex) => {
+                flush_prose(&mut prose_buf, &mut blocks);
                 blocks.push(ContentBlock::Math {
                     source: latex.to_string(),
                     display: false,
                 });
             },
             Event::DisplayMath(latex) => {
+                flush_prose(&mut prose_buf, &mut blocks);
                 blocks.push(ContentBlock::Math {
                     source: latex.to_string(),
                     display: true,
                 });
             },
 
-            // --- Plain text (not inside any accumulator) ---
+            // =================================================================
+            // Prose: Images (render to HTML, extract link as side-channel)
+            // =================================================================
+            Event::Start(Tag::Image {
+                dest_url, title, ..
+            }) => {
+                image_alt_buf = Some(String::new());
+                image_attrs = Some((dest_url.to_string(), title.to_string()));
+                // Extract link target
+                let url = dest_url.to_string();
+                if !url.starts_with('#') {
+                    let is_internal = !url.contains("://")
+                        && !url.starts_with("mailto:")
+                        && !url.starts_with("data:");
+                    links.push(LinkTarget {
+                        url,
+                        source_line: None,
+                        is_internal,
+                    });
+                }
+            },
+            Event::Text(text) if image_alt_buf.is_some() => {
+                if let Some(ref mut alt) = image_alt_buf {
+                    alt.push_str(&text);
+                }
+            },
+            Event::End(TagEnd::Image) => {
+                let alt = image_alt_buf.take().unwrap_or_default();
+                if let Some((src, title)) = image_attrs.take() {
+                    if title.is_empty() {
+                        prose_buf.push_str(&format!(
+                            "<img src=\"{}\" alt=\"{}\" />",
+                            crate::escape::html_escape(&src),
+                            crate::escape::html_escape(&alt)
+                        ));
+                    } else {
+                        prose_buf.push_str(&format!(
+                            "<img src=\"{}\" alt=\"{}\" title=\"{}\" />",
+                            crate::escape::html_escape(&src),
+                            crate::escape::html_escape(&alt),
+                            crate::escape::html_escape(&title)
+                        ));
+                    }
+                }
+            },
+
+            // =================================================================
+            // Prose: Links (render to HTML, extract link as side-channel)
+            // =================================================================
+            Event::Start(Tag::Link {
+                dest_url, title, ..
+            }) => {
+                // Extract link target
+                let url = dest_url.to_string();
+                if !url.starts_with('#') {
+                    let is_internal = !url.contains("://")
+                        && !url.starts_with("mailto:")
+                        && !url.starts_with("data:");
+                    links.push(LinkTarget {
+                        url,
+                        source_line: None,
+                        is_internal,
+                    });
+                }
+                // Render opening <a> tag
+                if title.is_empty() {
+                    prose_buf.push_str(&format!(
+                        "<a href=\"{}\">",
+                        crate::escape::html_escape(&dest_url)
+                    ));
+                } else {
+                    prose_buf.push_str(&format!(
+                        "<a href=\"{}\" title=\"{}\">",
+                        crate::escape::html_escape(&dest_url),
+                        crate::escape::html_escape(&title)
+                    ));
+                }
+            },
+            Event::End(TagEnd::Link) => {
+                prose_buf.push_str("</a>");
+            },
+
+            // =================================================================
+            // Prose: Structural HTML (paragraphs, lists, etc.)
+            // =================================================================
+            Event::Start(Tag::Paragraph) => prose_buf.push_str("<p>"),
+            Event::End(TagEnd::Paragraph) => prose_buf.push_str("</p>\n"),
+            Event::Start(Tag::BlockQuote(_)) => prose_buf.push_str("<blockquote>\n"),
+            Event::End(TagEnd::BlockQuote(_)) => prose_buf.push_str("</blockquote>\n"),
+            Event::Start(Tag::List(Some(start))) => {
+                prose_buf.push_str(&format!("<ol start=\"{}\">\n", start));
+            },
+            Event::Start(Tag::List(None)) => prose_buf.push_str("<ul>\n"),
+            Event::End(TagEnd::List(ordered)) => {
+                if ordered {
+                    prose_buf.push_str("</ol>\n");
+                } else {
+                    prose_buf.push_str("</ul>\n");
+                }
+            },
+            Event::Start(Tag::Item) => prose_buf.push_str("<li>"),
+            Event::End(TagEnd::Item) => prose_buf.push_str("</li>\n"),
+            Event::Start(Tag::Table(_)) => prose_buf.push_str("<table>\n"),
+            Event::End(TagEnd::Table) => prose_buf.push_str("</table>\n"),
+            Event::Start(Tag::TableHead) => prose_buf.push_str("<thead>\n<tr>\n"),
+            Event::End(TagEnd::TableHead) => prose_buf.push_str("</tr>\n</thead>\n"),
+            Event::Start(Tag::TableRow) => prose_buf.push_str("<tr>\n"),
+            Event::End(TagEnd::TableRow) => prose_buf.push_str("</tr>\n"),
+            Event::Start(Tag::TableCell) => prose_buf.push_str("<td>"),
+            Event::End(TagEnd::TableCell) => prose_buf.push_str("</td>\n"),
+            Event::Start(Tag::Emphasis) => prose_buf.push_str("<em>"),
+            Event::End(TagEnd::Emphasis) => prose_buf.push_str("</em>"),
+            Event::Start(Tag::Strong) => prose_buf.push_str("<strong>"),
+            Event::End(TagEnd::Strong) => prose_buf.push_str("</strong>"),
+            Event::Start(Tag::Strikethrough) => prose_buf.push_str("<del>"),
+            Event::End(TagEnd::Strikethrough) => prose_buf.push_str("</del>"),
+            Event::Start(Tag::FootnoteDefinition(name)) => {
+                prose_buf.push_str(&format!("<div class=\"footnote\" id=\"fn-{}\">", name));
+            },
+            Event::End(TagEnd::FootnoteDefinition) => prose_buf.push_str("</div>\n"),
+            Event::Start(Tag::DefinitionList) => prose_buf.push_str("<dl>"),
+            Event::End(TagEnd::DefinitionList) => prose_buf.push_str("</dl>\n"),
+            Event::Start(Tag::DefinitionListTitle) => prose_buf.push_str("<dt>"),
+            Event::End(TagEnd::DefinitionListTitle) => prose_buf.push_str("</dt>\n"),
+            Event::Start(Tag::DefinitionListDefinition) => prose_buf.push_str("<dd>"),
+            Event::End(TagEnd::DefinitionListDefinition) => prose_buf.push_str("</dd>\n"),
+            Event::Start(Tag::HtmlBlock) | Event::End(TagEnd::HtmlBlock) => {},
+            Event::Start(Tag::MetadataBlock(_)) | Event::End(TagEnd::MetadataBlock(_)) => {},
+
+            // =================================================================
+            // Prose: Inline content
+            // =================================================================
             Event::Text(text) => {
-                blocks.push(ContentBlock::Text(text.to_string()));
+                prose_buf.push_str(&crate::escape::html_escape(&text));
             },
             Event::Code(text) => {
-                blocks.push(ContentBlock::Text(format!("`{}`", text)));
+                prose_buf.push_str("<code>");
+                prose_buf.push_str(&crate::escape::html_escape(&text));
+                prose_buf.push_str("</code>");
             },
-
-            // --- Raw HTML ---
             Event::Html(html) | Event::InlineHtml(html) => {
-                blocks.push(ContentBlock::Raw(html.to_string()));
+                prose_buf.push_str(&html);
             },
-
-            // Structural events (paragraph, list, etc.) — no block emitted
-            _ => {},
+            Event::SoftBreak => prose_buf.push('\n'),
+            Event::HardBreak => prose_buf.push_str("<br />\n"),
+            Event::Rule => {
+                flush_prose(&mut prose_buf, &mut blocks);
+                blocks.push(ContentBlock::Prose("<hr />\n".to_string()));
+            },
+            Event::FootnoteReference(name) => {
+                prose_buf.push_str(&format!(
+                    "<sup class=\"footnote-ref\"><a href=\"#fn-{}\">{}</a></sup>",
+                    name, name
+                ));
+            },
+            Event::TaskListMarker(checked) => {
+                if checked {
+                    prose_buf.push_str("<input type=\"checkbox\" checked disabled />");
+                } else {
+                    prose_buf.push_str("<input type=\"checkbox\" disabled />");
+                }
+            },
         }
     }
 
-    blocks
-}
-
-/// Extract link targets from parsed content blocks.
-///
-/// Filters `ContentBlock::Link` and `ContentBlock::Image` variants,
-/// producing `LinkTarget` items. Internal links are identified by
-/// the absence of a URL scheme (no `://` or `mailto:` prefix).
-pub fn extract_links(blocks: &[ContentBlock]) -> Vec<LinkTarget> {
-    blocks
-        .iter()
-        .filter_map(|block| {
-            let url = match block {
-                ContentBlock::Link { url, .. } => url,
-                ContentBlock::Image { url, .. } => url,
-                _ => return None,
-            };
-            // Skip fragment-only references (#section)
-            if url.starts_with('#') {
-                return None;
-            }
-            let is_internal =
-                !url.contains("://") && !url.starts_with("mailto:") && !url.starts_with("data:");
-            Some(LinkTarget {
-                url: url.clone(),
-                source_line: None,
-                is_internal,
-            })
-        })
-        .collect()
+    flush_prose(&mut prose_buf, &mut blocks);
+    (blocks, links)
 }
 
 /// Normalize a markdown internal link URL to a canonical output path.
@@ -589,8 +671,7 @@ impl Content {
             }
         };
 
-        let blocks = parse_blocks(&body);
-        let links = extract_links(&blocks);
+        let (blocks, links) = parse_blocks(&body);
 
         Ok(Content {
             kind,
@@ -1421,11 +1502,11 @@ mod tests {
             }
         );
 
-        let text = ContentBlock::Text("hello".to_string());
-        assert_eq!(text, ContentBlock::Text("hello".to_string()));
+        let prose = ContentBlock::Prose("hello".to_string());
+        assert_eq!(prose, ContentBlock::Prose("hello".to_string()));
 
-        let raw = ContentBlock::Raw("<div>html</div>".to_string());
-        assert_ne!(raw, text);
+        let prose2 = ContentBlock::Prose("<div>html</div>".to_string());
+        assert_ne!(prose2, prose);
     }
 
     #[test]
@@ -1664,7 +1745,7 @@ mod tests {
     #[test]
     fn test_parse_blocks_code_block() {
         let md = "```rust\nfn main() {}\n```\n";
-        let blocks = parse_blocks(md);
+        let (blocks, _links) = parse_blocks(md);
         assert!(
             blocks
                 .iter()
@@ -1677,7 +1758,7 @@ mod tests {
     #[test]
     fn test_parse_blocks_mermaid_diagram() {
         let md = "```mermaid\ngraph TD\n  A --> B\n```\n";
-        let blocks = parse_blocks(md);
+        let (blocks, _links) = parse_blocks(md);
         assert!(
             blocks.iter().any(
                 |b| matches!(b, ContentBlock::Diagram { source } if source.contains("graph TD"))
@@ -1690,7 +1771,7 @@ mod tests {
     #[test]
     fn test_parse_blocks_heading() {
         let md = "## Hello World\n";
-        let blocks = parse_blocks(md);
+        let (blocks, _links) = parse_blocks(md);
         assert!(
             blocks
                 .iter()
@@ -1703,33 +1784,39 @@ mod tests {
     #[test]
     fn test_parse_blocks_link() {
         let md = "[click here](https://example.com \"A title\")\n";
-        let blocks = parse_blocks(md);
-        assert!(
-            blocks.iter().any(
-                |b| matches!(b, ContentBlock::Link { url, title: Some(t), text } if url == "https://example.com" && t == "A title" && text == "click here")
-            ),
-            "expected Link block, got: {:?}",
-            blocks
-        );
+        let (blocks, links) = parse_blocks(md);
+        // Link renders to Prose HTML
+        let prose = blocks.iter().any(|b| match b {
+            ContentBlock::Prose(html) => html.contains("<a href=") && html.contains("click here"),
+            _ => false,
+        });
+        assert!(prose, "expected Prose with <a> tag, got: {:?}", blocks);
+        // Link extracted as side-channel
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "https://example.com");
+        assert!(!links[0].is_internal);
     }
 
     #[test]
     fn test_parse_blocks_image() {
         let md = "![alt text](/img/photo.png)\n";
-        let blocks = parse_blocks(md);
-        assert!(
-            blocks.iter().any(
-                |b| matches!(b, ContentBlock::Image { url, alt, title: None } if url == "/img/photo.png" && alt == "alt text")
-            ),
-            "expected Image block, got: {:?}",
-            blocks
-        );
+        let (blocks, links) = parse_blocks(md);
+        // Image renders to Prose HTML
+        let prose = blocks.iter().any(|b| match b {
+            ContentBlock::Prose(html) => html.contains("<img src=") && html.contains("alt text"),
+            _ => false,
+        });
+        assert!(prose, "expected Prose with <img> tag, got: {:?}", blocks);
+        // Image URL extracted as side-channel
+        assert_eq!(links.len(), 1);
+        assert!(links[0].is_internal);
+        assert_eq!(links[0].url, "/img/photo.png");
     }
 
     #[test]
     fn test_parse_blocks_inline_math() {
         let md = "The formula $E = mc^2$ is famous.\n";
-        let blocks = parse_blocks(md);
+        let (blocks, _links) = parse_blocks(md);
         assert!(
             blocks.iter().any(
                 |b| matches!(b, ContentBlock::Math { source, display: false } if source == "E = mc^2")
@@ -1742,7 +1829,7 @@ mod tests {
     #[test]
     fn test_parse_blocks_display_math() {
         let md = "$$\n\\int_0^1 x^2 dx\n$$\n";
-        let blocks = parse_blocks(md);
+        let (blocks, _links) = parse_blocks(md);
         assert!(
             blocks
                 .iter()
@@ -1755,80 +1842,48 @@ mod tests {
     #[test]
     fn test_parse_blocks_text() {
         let md = "Hello world\n";
-        let blocks = parse_blocks(md);
-        assert!(
-            blocks
-                .iter()
-                .any(|b| matches!(b, ContentBlock::Text(t) if t == "Hello world")),
-            "expected Text block, got: {:?}",
-            blocks
-        );
+        let (blocks, _links) = parse_blocks(md);
+        // Plain text now renders as Prose with html_escape applied
+        let prose = blocks.iter().any(|b| match b {
+            ContentBlock::Prose(html) => html.contains("Hello world"),
+            _ => false,
+        });
+        assert!(prose, "expected Prose block with text, got: {:?}", blocks);
     }
 
     // =========================================================================
-    // extract_links tests
+    // Link extraction (side-channel) tests
     // =========================================================================
 
     #[test]
-    fn test_extract_links_internal_and_external() {
-        let blocks = vec![
-            ContentBlock::Link {
-                url: "/about.html".to_string(),
-                title: None,
-                text: "About".to_string(),
-            },
-            ContentBlock::Link {
-                url: "https://example.com".to_string(),
-                title: None,
-                text: "Example".to_string(),
-            },
-            ContentBlock::Text("filler".to_string()),
-        ];
-        let links = extract_links(&blocks);
+    fn test_parse_blocks_extracts_internal_and_external_links() {
+        let md = "[About](/about.html) and [Example](https://example.com)\n";
+        let (_blocks, links) = parse_blocks(md);
         assert_eq!(links.len(), 2);
         assert!(links[0].is_internal);
         assert!(!links[1].is_internal);
     }
 
     #[test]
-    fn test_extract_links_skips_fragments() {
-        let blocks = vec![ContentBlock::Link {
-            url: "#section".to_string(),
-            title: None,
-            text: "jump".to_string(),
-        }];
-        let links = extract_links(&blocks);
+    fn test_parse_blocks_skips_fragment_links() {
+        let md = "[jump](#section)\n";
+        let (_blocks, links) = parse_blocks(md);
         assert!(links.is_empty(), "fragment-only links should be skipped");
     }
 
     #[test]
-    fn test_extract_links_excludes_mailto_and_data() {
-        let blocks = vec![
-            ContentBlock::Link {
-                url: "mailto:user@example.com".to_string(),
-                title: None,
-                text: "email".to_string(),
-            },
-            ContentBlock::Link {
-                url: "data:text/plain;base64,SGVsbG8=".to_string(),
-                title: None,
-                text: "data".to_string(),
-            },
-        ];
-        let links = extract_links(&blocks);
+    fn test_parse_blocks_excludes_mailto_and_data_from_internal() {
+        let md = "[email](mailto:user@example.com) and [data](data:text/plain;base64,SGVsbG8=)\n";
+        let (_blocks, links) = parse_blocks(md);
         assert_eq!(links.len(), 2);
         assert!(!links[0].is_internal, "mailto should not be internal");
         assert!(!links[1].is_internal, "data: should not be internal");
     }
 
     #[test]
-    fn test_extract_links_from_images() {
-        let blocks = vec![ContentBlock::Image {
-            url: "/img/photo.png".to_string(),
-            alt: "photo".to_string(),
-            title: None,
-        }];
-        let links = extract_links(&blocks);
+    fn test_parse_blocks_extracts_image_links() {
+        let md = "![photo](/img/photo.png)\n";
+        let (_blocks, links) = parse_blocks(md);
         assert_eq!(links.len(), 1);
         assert!(links[0].is_internal);
         assert_eq!(links[0].url, "/img/photo.png");

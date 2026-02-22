@@ -195,9 +195,9 @@ minimum documented as an explicit convention rather than buried in code.
 3. **Phase 3: Compile Functor** — Rendering dispatches intercepted blocks, passes through Prose
 
    **Model refinement (pre-execution):**
-   - [ ] Remove `ContentBlock::Text` — absorbed into `Prose` (sukr doesn't intercept plain text)
-   - [ ] Rename `ContentBlock::Raw` → `ContentBlock::Prose` (structural honesty: standard rendering, not "raw")
-   - [ ] Remove `ContentBlock::Link` and `ContentBlock::Image` from the coproduct — reference extraction is a Parse side-channel via `extract_links`, not a block type. Rework `extract_links` to operate on pulldown-cmark events directly during `parse_blocks`.
+   - [x] Remove `ContentBlock::Text` — absorbed into `Prose` (sukr doesn't intercept plain text)
+   - [x] Rename `ContentBlock::Raw` → `ContentBlock::Prose` (structural honesty: standard rendering, not "raw")
+   - [x] Remove `ContentBlock::Link` and `ContentBlock::Image` from the coproduct — reference extraction is a Parse side-channel via `extract_links`, not a block type. Rework `extract_links` to operate on pulldown-cmark events directly during `parse_blocks`.
 
    **Catamorphism:**
    - [ ] Add `render_blocks(blocks: &[ContentBlock]) -> (String, Vec<Anchor>)` to `render.rs`
