@@ -9,60 +9,66 @@ sukr is a 13-module static site compiler. Every feature that would typically req
 
 ## Pipeline Overview
 
+The compiler runs in two phases:
+
+1. **Discover** — walk the filesystem, parse frontmatter and markdown, extract typed content blocks and link references, build the navigation tree
+2. **Render** — dispatch each content block to its renderer, apply templates, write output files
+
 ```mermaid
 flowchart LR
     A[Walk content/] --> B[Parse frontmatter]
-    B --> C[Stream markdown]
-    C --> D{Code block?}
-    D -->|Yes| E[Intercept]
-    D -->|No| F[Pass through]
-    E --> G[Render HTML]
-    F --> G
+    B --> C[Parse markdown]
+    C --> D[Content blocks]
+    C --> E[Link references]
+    E --> F{Valid?}
+    D --> G[Render blocks]
     G --> H[Apply template]
     H --> I[Write public/]
 ```
 
+The discover phase also validates internal links — any `[link](../page.md)` pointing to a nonexistent page is reported as an error before rendering begins.
+
 ## Module Responsibilities
 
-| Module               | Purpose                                             |
-| :------------------- | :-------------------------------------------------- |
-| `main.rs`            | Pipeline orchestrator — wires everything together   |
-| `config.rs`          | Loads `site.toml` configuration                     |
-| `content.rs`         | Discovers sections, pages, and navigation structure |
-| `render.rs`          | Markdown→HTML with code block interception          |
-| `highlight.rs`       | Tree-sitter syntax highlighting (14 languages)      |
-| `math.rs`            | KaTeX rendering to MathML                           |
-| `mermaid.rs`         | Mermaid diagrams to inline SVG                      |
-| `css.rs`             | CSS minification via lightningcss                   |
-| `template_engine.rs` | Tera template loading and rendering                 |
-| `feed.rs`            | Atom feed generation                                |
-| `sitemap.rs`         | XML sitemap generation                              |
-| `escape.rs`          | HTML/XML text escaping utilities                    |
-| `error.rs`           | Structured error types with source chaining         |
+| Module               | Purpose                                                                  |
+| :------------------- | :----------------------------------------------------------------------- |
+| `main.rs`            | Pipeline orchestrator — wires discover and render phases together        |
+| `config.rs`          | Loads `site.toml` configuration                                          |
+| `content.rs`         | Content type system, section/page discovery, navigation, link validation |
+| `render.rs`          | Block-by-block rendering — dispatches each content block to its renderer |
+| `highlight.rs`       | Tree-sitter syntax highlighting (14 languages)                           |
+| `math.rs`            | KaTeX rendering to MathML                                                |
+| `mermaid.rs`         | Mermaid diagrams to inline SVG                                           |
+| `css.rs`             | CSS bundling and minification via lightningcss                           |
+| `template_engine.rs` | Tera template loading and rendering                                      |
+| `feed.rs`            | Atom feed generation                                                     |
+| `sitemap.rs`         | XML sitemap generation                                                   |
+| `escape.rs`          | HTML/XML text escaping utilities                                         |
+| `error.rs`           | Phase-split error types — parse errors vs compile errors                 |
 
 ## The Interception Pattern
 
-The core innovation is **event-based interception**. Rather than parsing markdown into an AST and walking it twice, sukr streams `pulldown-cmark` events and intercepts specific patterns:
+The core innovation is **event-based interception**. Rather than parsing markdown into an AST and walking it twice, sukr streams `pulldown-cmark` events and intercepts specific patterns into typed content blocks:
 
 ```mermaid
 flowchart TD
-    A[pulldown-cmark event stream] --> B{Event type?}
-    B -->|Start CodeBlock| C[Buffer content]
-    C --> D{Language tag?}
-    D -->|rust, python, etc.| E[Tree-sitter highlighting]
-    D -->|mermaid| F[Mermaid SVG rendering]
-    D -->|math delimiters| G[KaTeX MathML]
-    D -->|unknown| H[HTML escape only]
-    E --> I[Emit highlighted spans]
-    F --> I
-    G --> I
-    H --> I
-    B -->|Other events| J[Pass through]
-    I --> K[Continue stream]
-    J --> K
+    A[pulldown-cmark events] --> B{Event type?}
+
+    B -->|CodeBlock| C{Language tag?}
+    C -->|"rust, nix, etc."| D[Code block]
+    C -->|mermaid| E[Diagram block]
+
+    B -->|"Math ($ / $$)"| F[Math block]
+    B -->|Heading| G[Heading block]
+    B -->|Link / Image| H[Extract reference]
+    B -->|Other| I[Prose block]
+
+    D & E & F & G & I --> J[ContentBlock sequence]
 ```
 
-This pattern avoids buffering the entire document. Each code block is processed in isolation as it streams through.
+Each content block carries its own data — language, math expression, diagram source, heading level + slug, or pre-rendered HTML prose. During the render phase, each block type is dispatched to its renderer independently.
+
+Non-intercepted content (paragraphs, lists, emphasis, inline code) is rendered to HTML during parsing and emitted as prose blocks. Link URLs are extracted as a side-channel for reference validation.
 
 ## Why Zero-JS
 
@@ -108,16 +114,17 @@ if let Ok(grammar) = Grammar::try_from(tree_sitter_rust::LANGUAGE)
 
 This pattern ensures O(1) lookup per language regardless of how many code blocks exist in the site.
 
-## Single-Pass Content Discovery
+## Content Discovery
 
 The `SiteManifest` struct aggregates all content in one filesystem traversal:
 
 - Homepage (`_index.md` at root)
-- Sections (directories with `_index.md`)
-- Section items (posts, projects, pages)
-- Navigation tree (derived from structure + frontmatter weights)
+- Sections (directories with `_index.md`) — items sorted at discovery time
+- Standalone pages (top-level `.md` files)
+- Navigation tree (derived from sections and pages, ordered by weight)
+- Internal link references (validated against known output paths)
 
-This avoids repeated directory scans during template rendering.
+This avoids repeated directory scans during template rendering. Broken internal links are caught before any rendering begins.
 
 ## Implementation Notes
 

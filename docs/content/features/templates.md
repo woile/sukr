@@ -17,9 +17,11 @@ templates/
 │   ├── default.html        # Fallback section index
 │   ├── blog.html           # Blog section index
 │   └── projects.html       # Projects section index
-└── content/
-    ├── default.html        # Fallback content page
-    └── post.html           # Blog post
+├── content/
+│   ├── default.html        # Fallback content page
+│   └── post.html           # Blog post
+└── tags/
+    └── default.html        # Tag listing page
 ```
 
 ## Template Inheritance
@@ -35,6 +37,8 @@ All templates extend `base.html`:
 {% endblock content %}
 ```
 
+`base.html` defines two overridable blocks: `{% block title %}` for the HTML `<title>` tag, and `{% block content %}` for the page body.
+
 ## Available Context Variables
 
 ### All Templates
@@ -43,7 +47,7 @@ All templates extend `base.html`:
 | ------------------- | ----------------------------------- |
 | `config.title`      | Site title                          |
 | `config.author`     | Site author                         |
-| `config.nested_nav` | Whether hierarchical nav is enabled |
+| `config.nav.nested` | Whether hierarchical nav is enabled |
 | `nav`               | Array of navigation items           |
 | `page_path`         | Current page path                   |
 | `prefix`            | Relative path prefix for assets     |
