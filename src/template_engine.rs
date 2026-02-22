@@ -19,8 +19,6 @@ const TEMPLATE_CONTENT_DEFAULT: &str = "content/default.html";
 const TEMPLATE_SECTION_DEFAULT: &str = "section/default.html";
 /// Default template for tag listing pages.
 const TEMPLATE_TAG_DEFAULT: &str = "tags/default.html";
-/// Title prefix for tag listing pages.
-const TAG_PAGE_TITLE_PREFIX: &str = "Tagged";
 
 /// Wrapper around Tera for site-specific template rendering.
 pub struct TemplateEngine {
@@ -146,7 +144,7 @@ impl TemplateEngine {
         nav: &[NavItem],
     ) -> CompileResult<String> {
         let mut ctx = self.base_context(page_path, config, nav);
-        ctx.insert("title", &format!("{}: {}", TAG_PAGE_TITLE_PREFIX, tag));
+        ctx.insert("title", tag);
         ctx.insert("tag", tag);
         ctx.insert("items", items);
         self.render(TEMPLATE_TAG_DEFAULT, &ctx)
