@@ -3,7 +3,6 @@
 use crate::config::SiteConfig;
 use crate::content::SiteManifest;
 use crate::escape::xml_escape;
-use std::path::Path;
 
 /// A URL entry for the sitemap.
 pub(crate) struct SitemapEntry {
@@ -23,7 +22,6 @@ pub(crate) struct SitemapEntry {
 pub fn generate_sitemap(
     manifest: &SiteManifest,
     config: &SiteConfig,
-    content_root: &Path,
     tag_names: &[String],
 ) -> String {
     let base_url = config.base_url.trim_end_matches('/');

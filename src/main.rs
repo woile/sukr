@@ -15,7 +15,7 @@ mod render;
 mod sitemap;
 mod template_engine;
 
-use crate::content::{Content, ContentKind, NavItem, PAGE_404, SECTION_INDEX};
+use crate::content::{Content, NavItem};
 use crate::error::{Error, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
 use std::collections::BTreeMap;
@@ -127,14 +127,14 @@ fn run(config_path: &Path) -> Result<()> {
                 &manifest.nav,
                 &anchors,
             )?;
-            write_output(&output_dir, &content_dir, item, html)?;
+            write_output(&output_dir, item, html)?;
         }
 
         // Render section index
         let page_path = format!("/{}/index.html", section.name);
         let item_contexts: Vec<_> = items
             .iter()
-            .map(|c| ContentContext::from_content(c, &content_dir, &config))
+            .map(|c| ContentContext::from_content(c, &config))
             .collect();
         let html = engine.render_section(
             &section.index,
@@ -159,11 +159,24 @@ fn run(config_path: &Path) -> Result<()> {
 
     // 2. Generate Atom feed (blog posts only, if enabled)
     if config.feed.enabled && !manifest.posts.is_empty() {
-        generate_feed(&output_dir, &manifest, &config, &content_dir)?;
+        generate_feed(&output_dir, &manifest, &config)?;
     }
 
     // 3. Process standalone pages
-    process_pages(&content_dir, &output_dir, &config, &manifest.nav, &engine)?;
+    for page in &manifest.pages {
+        eprintln!("processing: {}", page.slug);
+        let (html_body, anchors) = render::render_blocks(&page.blocks);
+        let page_path = format!("/{}", page.output_path.display());
+        let html = engine.render_page(
+            page,
+            &html_body,
+            &page_path,
+            &config,
+            &manifest.nav,
+            &anchors,
+        )?;
+        write_output(&output_dir, page, html)?;
+    }
 
     // 4. Generate homepage
     generate_homepage(&manifest, &output_dir, &config, &engine)?;
@@ -174,7 +187,7 @@ fn run(config_path: &Path) -> Result<()> {
     }
 
     // 6. Collect tags and generate tag listing pages
-    let tags = collect_tags(&manifest.sections, &manifest.pages, &content_dir, &config);
+    let tags = collect_tags(&manifest.sections, &manifest.pages, &config);
     if !tags.is_empty() {
         write_tag_pages(&output_dir, &tags, &config, &manifest.nav, &engine)?;
     }
@@ -182,11 +195,11 @@ fn run(config_path: &Path) -> Result<()> {
     // 7. Generate sitemap (if enabled)
     let tag_names: Vec<String> = tags.keys().cloned().collect();
     if config.sitemap.enabled {
-        generate_sitemap_file(&output_dir, &manifest, &config, &content_dir, &tag_names)?;
+        generate_sitemap_file(&output_dir, &manifest, &config, &tag_names)?;
     }
 
     // 8. Generate alias redirects
-    generate_aliases(&output_dir, &content_dir, &manifest, &config)?;
+    generate_aliases(&output_dir, &manifest, &config)?;
 
     eprintln!("done!");
     Ok(())
@@ -197,12 +210,11 @@ fn generate_feed(
     output_dir: &Path,
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
-    content_dir: &Path,
 ) -> Result<()> {
     let out_path = output_dir.join("feed.xml");
     eprintln!("generating: {}", out_path.display());
 
-    let feed_xml = feed::generate_atom_feed(manifest, config, content_dir);
+    let feed_xml = feed::generate_atom_feed(manifest, config);
 
     fs::write(&out_path, feed_xml).map_err(|e| Error::WriteFile {
         path: out_path.clone(),
@@ -218,13 +230,12 @@ fn generate_sitemap_file(
     output_dir: &Path,
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
-    content_dir: &Path,
     tag_names: &[String],
 ) -> Result<()> {
     let out_path = output_dir.join("sitemap.xml");
     eprintln!("generating: {}", out_path.display());
 
-    let sitemap_xml = sitemap::generate_sitemap(manifest, config, content_dir, tag_names);
+    let sitemap_xml = sitemap::generate_sitemap(manifest, config, tag_names);
 
     fs::write(&out_path, sitemap_xml).map_err(|e| Error::WriteFile {
         path: out_path.clone(),
@@ -232,42 +243,6 @@ fn generate_sitemap_file(
     })?;
 
     eprintln!("  → {}", out_path.display());
-    Ok(())
-}
-
-/// Process standalone pages in content/ (top-level .md files excluding _index.md)
-fn process_pages(
-    content_dir: &Path,
-    output_dir: &Path,
-    config: &config::SiteConfig,
-    nav: &[NavItem],
-    engine: &TemplateEngine,
-) -> Result<()> {
-    // Dynamically discover top-level .md files (except _index.md)
-    let entries = fs::read_dir(content_dir).map_err(|e| Error::ReadFile {
-        path: content_dir.to_path_buf(),
-        source: e,
-    })?;
-
-    for entry in entries.filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if path.is_file()
-            && path.extension().is_some_and(|ext| ext == "md")
-            && path
-                .file_name()
-                .is_some_and(|n| n != SECTION_INDEX && n != PAGE_404)
-        {
-            eprintln!("processing: {}", path.display());
-
-            let content = Content::from_path(&path, ContentKind::Page, content_dir)?;
-            let (html_body, anchors) = render::render_blocks(&content.blocks);
-            let page_path = format!("/{}", content.output_path.display());
-            let html =
-                engine.render_page(&content, &html_body, &page_path, config, nav, &anchors)?;
-
-            write_output(output_dir, content_dir, &content, html)?;
-        }
-    }
     Ok(())
 }
 
@@ -335,7 +310,6 @@ fn generate_404(
 fn collect_tags(
     sections: &[content::Section],
     pages: &[Content],
-    content_dir: &Path,
     config: &config::SiteConfig,
 ) -> BTreeMap<String, Vec<ContentContext>> {
     let mut tags: BTreeMap<String, Vec<ContentContext>> = BTreeMap::new();
@@ -346,7 +320,7 @@ fn collect_tags(
             for tag in &item.frontmatter.tags {
                 tags.entry(tag.to_string())
                     .or_default()
-                    .push(ContentContext::from_content(item, content_dir, config));
+                    .push(ContentContext::from_content(item, config));
             }
         }
     }
@@ -356,7 +330,7 @@ fn collect_tags(
         for tag in &page.frontmatter.tags {
             tags.entry(tag.to_string())
                 .or_default()
-                .push(ContentContext::from_content(page, content_dir, config));
+                .push(ContentContext::from_content(page, config));
         }
     }
 
@@ -399,12 +373,7 @@ fn write_tag_pages(
 }
 
 /// Write a content item to its output path
-fn write_output(
-    output_dir: &Path,
-    content_dir: &Path,
-    content: &Content,
-    html: String,
-) -> Result<()> {
+fn write_output(output_dir: &Path, content: &Content, html: String) -> Result<()> {
     let out_path = output_dir.join(&content.output_path);
     let out_dir = out_path.parent().unwrap();
 
@@ -428,7 +397,6 @@ fn write_output(
 /// writes a minimal HTML file at the alias path that redirects to the canonical URL.
 fn generate_aliases(
     output_dir: &Path,
-    content_dir: &Path,
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
 ) -> Result<()> {
@@ -437,25 +405,20 @@ fn generate_aliases(
     // Process section items
     for section in &manifest.sections {
         for item in &section.items {
-            write_aliases(output_dir, content_dir, item, base_url)?;
+            write_aliases(output_dir, item, base_url)?;
         }
     }
 
     // Process standalone pages
     for page in &manifest.pages {
-        write_aliases(output_dir, content_dir, page, base_url)?;
+        write_aliases(output_dir, page, base_url)?;
     }
 
     Ok(())
 }
 
 /// Write redirect stubs for a single content item's aliases.
-fn write_aliases(
-    output_dir: &Path,
-    content_dir: &Path,
-    content: &Content,
-    base_url: &str,
-) -> Result<()> {
+fn write_aliases(output_dir: &Path, content: &Content, base_url: &str) -> Result<()> {
     if content.frontmatter.aliases.is_empty() {
         return Ok(());
     }
@@ -647,7 +610,7 @@ mod tests {
             sitemap: Default::default(),
         };
 
-        let tags = collect_tags(&sections, &pages, content_dir, &config);
+        let tags = collect_tags(&sections, &pages, &config);
         assert_eq!(tags.len(), 2, "should have 2 unique tags");
         assert_eq!(tags["rust"].len(), 2, "rust tag should have 2 items");
         assert_eq!(tags["web"].len(), 1, "web tag should have 1 item");
@@ -684,7 +647,7 @@ mod tests {
             sitemap: Default::default(),
         };
 
-        let tags = collect_tags(&sections, &pages, content_dir, &config);
+        let tags = collect_tags(&sections, &pages, &config);
         assert!(tags.is_empty(), "should have no tags");
     }
 }

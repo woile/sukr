@@ -3,14 +3,9 @@
 use crate::config::SiteConfig;
 use crate::content::SiteManifest;
 use crate::escape::xml_escape;
-use std::path::Path;
 
 /// Generate an Atom 1.0 feed from blog posts in the manifest.
-pub fn generate_atom_feed(
-    manifest: &SiteManifest,
-    config: &SiteConfig,
-    content_root: &Path,
-) -> String {
+pub fn generate_atom_feed(manifest: &SiteManifest, config: &SiteConfig) -> String {
     let posts = &manifest.posts;
     let base_url = config.base_url.trim_end_matches('/');
 

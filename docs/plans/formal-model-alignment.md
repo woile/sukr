@@ -240,10 +240,10 @@ minimum documented as an explicit convention rather than buried in code.
    - [ ] `generate_feed` / `generate_sitemap_file`: update to `CompileError` returns
 
    **Cruft resolution (C2, C4-parameter, C5, C6):**
-   - [ ] Replace `process_pages()` with iteration over `manifest.pages` — **resolves C2**
-   - [ ] Remove `content_dir` parameter from `write_output()` — use `content.output_path` field — **resolves C5**
-   - [ ] Remove `content_dir` parameter from `ContentContext::from_content()` — use `content.output_path` field — **resolves C6**
-   - [ ] Remove `content_dir` parameter from `collect_tags()`, `generate_aliases()`, `generate_feed()`, `generate_sitemap_file()` where only used for `output_path` — **completes C4**
+   - [x] Replace `process_pages()` with iteration over `manifest.pages` — **resolves C2**
+   - [x] Remove `content_dir` parameter from `write_output()` — use `content.output_path` field — **resolves C5**
+   - [x] Remove `content_dir` parameter from `ContentContext::from_content()` — use `content.output_path` field — **resolves C6**
+   - [x] Remove `content_dir` parameter from `collect_tags()`, `generate_aliases()`, `generate_feed()`, `generate_sitemap_file()` where only used for `output_path` — **completes C4**
 
    **Hardcoded assumptions (H3-H6, H12-H17):**
    - [ ] Evaluate template name hardcoding (H3-H6): extract `"page.html"`, `"content/default.html"`, `"section/default.html"`, `"tags/default.html"` to named constants or make configurable via `site.toml`. At minimum extract to module-level constants.
@@ -280,7 +280,7 @@ minimum documented as an explicit convention rather than buried in code.
 | Item                                                                    | Severity | Why Introduced                                                                                              | Follow-Up                    | Resolved |
 | :---------------------------------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------- | :------: |
 | `NavItem::PartialEq` ignores `path` and `children`                      | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only        | Add doc comment on the impl  |          |
-| Unused `content_dir`/`content_root` params in 5 functions               | LOW      | `output_path` is now a field, but removing the params is a multi-file signature change                      | Phase 4 (C4 completion)      |          |
+| ~~Unused `content_dir`/`content_root` params in 5 functions~~           | ~~LOW~~  | ~~`output_path` is now a field, but removing the params is a multi-file signature change~~                  | ~~Phase 4 (C4 completion)~~  |   C11    |
 | Magic literal `99` in Projects sort branch                              | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                                   | Phase 2 (SortKey adoption)   |          |
 | ~~`ContentBlock` variants never constructed~~                           | ~~LOW~~  | ~~Category C types defined in Commit 1; construction deferred to Phase 2 parse functor~~                    | ~~Phase 2~~                  |  C5, C9  |
 | `SortKey::DateDesc`/`WeightTitle` never constructed                     | LOW      | SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them      | Phase 2                      |          |

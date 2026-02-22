@@ -235,7 +235,7 @@ pub struct ContentContext {
 }
 
 impl ContentContext {
-    pub fn from_content(content: &Content, content_dir: &Path, config: &SiteConfig) -> Self {
+    pub fn from_content(content: &Content, config: &SiteConfig) -> Self {
         Self {
             frontmatter: FrontmatterContext::new(&content.frontmatter, config),
             body: content.body.clone(),
