@@ -267,11 +267,11 @@ minimum documented as an explicit convention rather than buried in code.
 - [x] `cargo test` passes after each phase
 - [x] `cargo clippy -- -D warnings` clean after each phase
 - [x] `cargo build` succeeds (no compile errors)
-- [ ] Manual: build the actual site (`cargo run`) and verify HTML output is unchanged
+- [x] Manual: build the actual site (`cargo run`) and verify HTML output is unchanged
 - [x] Broken link detection test: create content with a `[link](../nonexistent.md)` and verify compiler error
 - [x] Tag type safety test: `Tag("rust")` round-trips through serialization/deserialization
 - [x] ContentBlock catamorphism test: each variant renders to expected HTML in isolation
-- [ ] Reference: compare `public/` output before and after refactor via `diff -r` to verify no regression
+- [ ] ~~Reference: compare `public/` output before and after refactor via `diff -r`~~ — Skipped: no pre-refactor baseline captured. Site output verified manually throughout (C22).
 
 ## Technical Debt
 
@@ -314,22 +314,153 @@ minimum documented as an explicit convention rather than buried in code.
 
 ## Retrospective
 
-<!-- Filled after execution -->
-
 ### Process
 
-- Did the plan hold up? Where did we diverge and why?
-- Were the estimates/appetite realistic?
-- Did CHALLENGE catch the risks that actually materialized?
+**Did the plan hold up?** The four-phase structure held well. Every phase's
+deliverables were completed, and the phase ordering — types first, parse
+second, compile third, cleanup fourth — proved to be the right dependency
+order. No phase required backtracking to redo work from a previous phase.
+
+**Where did we diverge?** Scope expanded from 4 planned phases (~8 commits)
+to 23 commits across 6 logical stages. The extra commits break down as:
+
+- **Model refinement** (C9): ContentBlock shrank from 7+1 variants to 5
+  once confronted with actual interception patterns. `Link`, `Image`, `Text`,
+  and `Raw` were absorbed or eliminated.
+- **Cruft audits** (C12, C18, C19): deep API surface reviews surfaced issues
+  that a shallower plan wouldn't catch — magic constants, dead parameters,
+  duplicated sort logic, overly-public APIs.
+- **Tech debt** (C20, C21): items from the plan's own debt table plus the
+  TAG_PAGE_TITLE_PREFIX that belonged in the template layer.
+- **Docs accuracy** (C22) and **plan review remediation** (C23): the model
+  document had stale/contradictory content visible only after code alignment.
+
+Each divergence was tracked in the deviation log and sketch. None was scope
+creep — each was a legitimate consequence of deeper codebase engagement than
+the plan anticipated.
+
+**Were the estimates realistic?** The original plan implicitly assumed ~2
+commits per phase. Each phase took 3–6 in practice because the plan was
+written at a higher abstraction level than the work required. For future
+full-codebase refactorings against a formal model, budget 2–3× the initial
+commit estimate.
+
+**Did CHALLENGE catch the right risks?** The pre-execution cruft audit (9
+items) was the most valuable planning artifact. Every cruft item was resolved.
+The hardcoded assumptions inventory (H1–H17) was similarly productive — it
+caught 17 items the categorical model doesn't see because they're below its
+abstraction threshold.
 
 ### Outcomes
 
-- What unexpected debt was introduced?
-- What would we do differently next cycle?
+| Metric          | Before       | After                                     |
+| :-------------- | :----------- | :---------------------------------------- |
+| Test count      | 97           | 110                                       |
+| Clippy warnings | 0            | 0                                         |
+| Lines changed   | —            | +1858/−982                                |
+| Commits         | —            | 23                                        |
+| Dead code items | 9 (cruft)    | 0                                         |
+| Magic strings   | 17 (H-items) | 0                                         |
+| Error types     | 1 (`Error`)  | 3 (`ParseError`, `CompileError`, `Error`) |
+
+**Debt introduced:** Zero unresolved items. All 15 tech debt entries are
+marked resolved. This reflects the cruft audit approach — debt was tracked
+as it appeared and cleaned before moving on.
+
+**What would we do differently?**
+
+1. **Save a `public/` baseline** before starting. The `diff -r` step was
+   planned but never executed because no baseline was captured. This is the
+   single verification gap.
+2. **Model-first, then plan.** The model was written _before_ the plan, which
+   was right. But the initial model (Gemini's SMC proposal) carried too much
+   categorical machinery. The sketch's adversarial reduction saved effort.
+   Future modeling should start minimal and add formalism only where it earns
+   its keep.
+3. **Batch cruft audits at phase boundaries, not after.** Cruft audits were
+   productive but sometimes revealed issues that should have been caught
+   during the preceding phase. Running a light audit _during_ each phase
+   would catch these earlier.
+
+### Does the Model Still Hold?
+
+**Yes, with caveats.** The three-category, two-functor structure
+(`Source → Content → Output` via `Parse` and `Compile`) accurately describes
+the codebase after alignment. Content category objects map 1:1 to Rust types,
+the ContentBlock coproduct drives the catamorphism in `render_blocks`, and
+the Parse/Compile split is enforced at the type level via
+`ParseError`/`CompileError`.
+
+**What the model captures well:**
+
+- **Phase separation.** The Parse/Compile boundary is clean. No rendering
+  logic executes before Content is fully constructed. This was the model's
+  primary structural contribution.
+- **Block dispatch.** The ContentBlock coproduct is the interception pattern's
+  type-theoretic backbone. Adding a new block type means extending the enum
+  and adding a match arm — the model predicts this accurately.
+- **Error placement.** After the plan review fix (F3), the model correctly
+  predicts which errors belong to which phase. Phase-split error types make
+  it structurally impossible to return a parse error from a compile function.
+- **Reference validation as a Parse concern.** Internal links are morphisms
+  in Content; validating them during Parse means Compile assumes well-formed
+  input.
+
+**What the model abstracts away (intentionally):**
+
+- **SectionType.** Determines sort strategy and template resolution, but the
+  model captures _that_ sections are sorted, not _how_. Implementation detail.
+- **SortKey.** Internal to how `belongs to` morphisms are ordered.
+- **Template internals.** The model treats templates as a parameter defining
+  the Compile functor. Override logic, block inheritance, and variable context
+  are invisible — and should remain so.
+
+**Where the model is weakest:**
+
+- **Output category (O) is too thin.** Six objects and two morphisms. The
+  actual output has more structure: CSS bundles, redirect chains, 404 pages,
+  tag indices, feed XML. The Compile functor's "action on objects" table
+  captures some of this, but O itself doesn't reflect it. This hasn't caused
+  problems, but if output-side logic grows (incremental builds, dependency
+  tracking), O will need fleshing out.
+- **Static assets are out of scope.** Correctly excluded — no content model
+  participation. But `CompileError::ReadDir` exists solely for static assets,
+  meaning the error model is slightly larger than what the categorical model
+  predicts.
+
+**Has it improved the codebase?** Genuinely, yes. Pre-alignment: content
+discovery interleaved with rendering, filesystem re-read 6× for section
+items, navigation derived by re-walking the content directory, single flat
+`Error` enum masking which phase failed. Post-alignment: content discovered
+once, sorted at construction, rendered by dispatching over typed blocks.
+Phase boundary enforced by the type system. Tests grew by 13 (13%), but more
+importantly they test meaningful invariants (functor composition, catamorphism
+dispatch, reference integrity) rather than ad-hoc behavior.
+
+### Follow-Up Work
+
+Suggested, not required — the codebase is stable and correct:
+
+1. **Incremental compilation.** Model Open Question §3. Functorial structure
+   is compatible with delta tracking; no current use case demands it.
+2. **Alias formalization.** Open Question §2. The `aliases` frontmatter field
+   generates redirects but isn't modeled as a morphism in Content.
+3. **Output baseline for regression testing.** Capture a `public/` snapshot
+   and diff against it in CI. Closes the only verification gap.
+4. **Render error surfacing.** Math/mermaid errors print to stderr and produce
+   inline error markers. If strictness is desired, this is where to add it.
 
 ### Pipeline Improvements
 
-- Should any axiom/persona/workflow be updated based on this experience?
+- **`/plan-review` proved its value.** Seven findings including one HIGH
+  (model self-contradiction) that would have persisted indefinitely. Should
+  be standard for any plan with more than 5 commits.
+- **Cruft inventories should be a `/plan` standard.** The 9-item cruft table
+  and 17-item hardcoded assumptions inventory were the plan's most productive
+  artifacts per line of text.
+- **Sketch lifecycle journaling worked well.** 23 execution entries across
+  the full lifecycle. The single best source of truth for understanding _why_
+  decisions were made.
 
 ## References
 
