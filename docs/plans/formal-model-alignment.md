@@ -249,7 +249,7 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Evaluate template name hardcoding (H3-H6): extract `"page.html"`, `"content/default.html"`, `"section/default.html"`, `"tags/default.html"` to named constants or make configurable via `site.toml`. At minimum extract to module-level constants.
    - [x] Move `"Tagged: {}"` format string (H12) to template or `site.toml` config — display text should not be in Rust code
    - [x] Extract output filename constants: `"feed.xml"` (H13), `"sitemap.xml"` (H14), `"404.html"` (H15), `"index.html"` (H16) — at minimum named constants
-   - [ ] Unify template override pattern (H17): `render_page` should support `frontmatter.template.unwrap_or("page.html")` like `render_content` does — consistent behavior for a generic compiler
+   - [x] Unify template override pattern (H17): `render_page` should support `frontmatter.template.unwrap_or("page.html")` like `render_content` does — consistent behavior for a generic compiler
 
    **Pipeline clarity:**
    - [x] Audit `main.rs::run()` to ensure Parse completes fully before any Compile begins

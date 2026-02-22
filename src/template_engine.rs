@@ -50,6 +50,9 @@ impl TemplateEngine {
     }
 
     /// Render a standalone page (about, collab, etc.).
+    ///
+    /// Supports per-page template override via `frontmatter.template`,
+    /// falling back to `TEMPLATE_PAGE` if not specified.
     pub fn render_page(
         &self,
         content: &Content,
@@ -59,6 +62,11 @@ impl TemplateEngine {
         nav: &[NavItem],
         anchors: &[Anchor],
     ) -> Result<String> {
+        let template = content
+            .frontmatter
+            .template
+            .as_deref()
+            .unwrap_or(TEMPLATE_PAGE);
         let mut ctx = self.base_context(page_path, config, nav);
         ctx.insert("title", &content.frontmatter.title);
         ctx.insert(
@@ -67,7 +75,7 @@ impl TemplateEngine {
         );
         ctx.insert("content", html_body);
         ctx.insert("anchors", anchors);
-        self.render(TEMPLATE_PAGE, &ctx)
+        self.render(template, &ctx)
     }
 
     /// Render a content item (blog post, project, etc.).
