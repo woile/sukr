@@ -1,4 +1,8 @@
-//! Content discovery and frontmatter parsing.
+//! Parse functor: S → C.
+//!
+//! Discovers site structure from the filesystem and parses markdown
+//! frontmatter into typed content values. This module implements the
+//! Parse phase of the compiler pipeline.
 
 use crate::error::{Error, Result};
 use chrono::NaiveDate;
@@ -64,13 +68,14 @@ pub enum ContentBlock {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Tag(String);
 
+#[cfg(test)]
 impl Tag {
-    /// Create a new tag from any string-like value.
+    /// Create a new tag from any string-like value (test-only).
     pub fn new(s: impl Into<String>) -> Self {
         Self(s.into())
     }
 
-    /// Borrow the inner string.
+    /// Borrow the inner string (test-only).
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -152,6 +157,7 @@ impl<'de> Deserialize<'de> for SectionType {
 /// sorted-by-construction section items. The variant is determined
 /// by `SectionType` at construction time.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)] // Variants constructed only in tests (via for_content); Ord impl uses both
 pub enum SortKey {
     /// Blog-style: sort by date, newest first. Falls back to weight
     /// for undated items.
@@ -166,7 +172,8 @@ impl SortKey {
     pub const DEFAULT_WEIGHT: i64 = 50;
 
     /// Construct the appropriate sort key for a content item based on
-    /// its section type and frontmatter.
+    /// its section type and frontmatter (test-only).
+    #[cfg(test)]
     pub fn for_content(section_type: &SectionType, frontmatter: &Frontmatter) -> Self {
         match section_type {
             SectionType::Blog => {

@@ -84,10 +84,10 @@ fn parse_args() -> std::result::Result<Option<PathBuf>, String> {
 }
 
 fn run(config_path: &Path) -> Result<()> {
-    // Load site configuration
+    // ── Bootstrap ─────────────────────────────────────────────────────
+    // Load configuration and resolve paths.
     let config = config::SiteConfig::load(config_path)?;
 
-    // Resolve paths relative to config file location
     let base_dir = config_path.parent().unwrap_or(Path::new("."));
     let content_dir = base_dir.join(&config.paths.content);
     let output_dir = base_dir.join(&config.paths.output);
@@ -98,11 +98,14 @@ fn run(config_path: &Path) -> Result<()> {
         return Err(Error::ContentDirNotFound(content_dir.to_path_buf()));
     }
 
-    // Load Tera templates
     let engine = TemplateEngine::new(&template_dir)?;
 
-    // Discover all site content in a single pass
+    // ── Parse phase (S → C) ──────────────────────────────────────────
+    // Discover site structure and parse all content in a single pass.
     let manifest = content::SiteManifest::discover(&content_dir)?;
+
+    // ── Compile phase (C → O) ────────────────────────────────────────
+    // Render content blocks, apply templates, and write output.
 
     // 0. Copy static assets
     copy_static_assets(&static_dir, &output_dir)?;

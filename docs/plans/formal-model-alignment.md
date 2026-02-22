@@ -252,9 +252,9 @@ minimum documented as an explicit convention rather than buried in code.
    - [ ] Unify template override pattern (H17): `render_page` should support `frontmatter.template.unwrap_or("page.html")` like `render_content` does — consistent behavior for a generic compiler
 
    **Pipeline clarity:**
-   - [ ] Audit `main.rs::run()` to ensure Parse completes fully before any Compile begins
+   - [x] Audit `main.rs::run()` to ensure Parse completes fully before any Compile begins
    - [ ] Ensure `collect_tags` uses `section.items` (stored field) instead of re-calling `collect_items()`
-   - [ ] Add module-level doc comments to `content.rs` ("Parse functor: S → C") and `render.rs` ("Compile functor: C → O, Render sub-functor")
+   - [x] Add module-level doc comments to `content.rs` ("Parse functor: S → C") and `render.rs` ("Compile functor: C → O, Render sub-functor")
    - [ ] Add **Type Mapping table** to `docs/models/sukr-compiler.md` Implementation Guidance section
    - [ ] Evaluate `ContentKind` type split — if Phases 1-3 revealed friction from runtime kind checks, design the type split; otherwise document decision to defer — **resolves H11 fully if split happens**
 
@@ -277,19 +277,20 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Item                                                                    | Severity | Why Introduced                                                                                              | Follow-Up                    | Resolved |
-| :---------------------------------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------- | :------: |
-| `NavItem::PartialEq` ignores `path` and `children`                      | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only        | Add doc comment on the impl  |          |
-| ~~Unused `content_dir`/`content_root` params in 5 functions~~           | ~~LOW~~  | ~~`output_path` is now a field, but removing the params is a multi-file signature change~~                  | ~~Phase 4 (C4 completion)~~  |   C11    |
-| Magic literal `99` in Projects sort branch                              | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                                   | Phase 2 (SortKey adoption)   |          |
-| ~~`ContentBlock` variants never constructed~~                           | ~~LOW~~  | ~~Category C types defined in Commit 1; construction deferred to Phase 2 parse functor~~                    | ~~Phase 2~~                  |  C5, C9  |
-| `SortKey::DateDesc`/`WeightTitle` never constructed                     | LOW      | SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them      | Phase 2                      |          |
-| `SortKey::for_content` never used (non-test)                            | LOW      | Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4                | Phase 2 or remove if unused  |          |
-| `Tag::new`/`as_str` never used (non-test)                               | LOW      | API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests           | Phase 2 or remove if unused  |          |
-| `Content.kind` never read                                               | LOW      | Field added in Commit 2 for Category C; `blocks` now consumed by `render_blocks` (C10); `kind` still unused | Phase 4                      |   C10    |
-| ~~`Event::Code` mapped to `Text` — loses inline code semantic~~         | ~~LOW~~  | ~~Resolved: inline code now renders as `<code>` in Prose blocks (C9), no separate variant needed~~          | ~~N/A~~                      |    C9    |
-| `LinkTarget.source_line` always `None`                                  | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                                  | Phase 2 reference validation |          |
-| ~~Duplicated `Options` flags in `parse_blocks` and `markdown_to_html`~~ | ~~LOW~~  | ~~Resolved: `markdown_to_html` removed (C10), only `parse_blocks` uses Options now~~                        | ~~N/A~~                      |   C10    |
+| Item                                                                    | Severity | Why Introduced                                                                                                                | Follow-Up                                  | Resolved |
+| :---------------------------------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------- | :------: |
+| `NavItem::PartialEq` ignores `path` and `children`                      | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only                          | Add doc comment on the impl                |          |
+| ~~Unused `content_dir`/`content_root` params in 5 functions~~           | ~~LOW~~  | ~~`output_path` is now a field, but removing the params is a multi-file signature change~~                                    | ~~Phase 4 (C4 completion)~~                |   C11    |
+| Magic literal `99` in Projects sort branch                              | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                                                     | Phase 2 (SortKey adoption)                 |          |
+| ~~`ContentBlock` variants never constructed~~                           | ~~LOW~~  | ~~Category C types defined in Commit 1; construction deferred to Phase 2 parse functor~~                                      | ~~Phase 2~~                                |  C5, C9  |
+| ~~`SortKey::DateDesc`/`WeightTitle` never constructed~~                 | ~~LOW~~  | ~~SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them~~                    | ~~Phase 2~~                                |   C12    |
+| ~~`SortKey::for_content` never used (non-test)~~                        | ~~LOW~~  | ~~Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4~~                              | ~~Phase 2 or remove if unused~~            |   C12    |
+| ~~`Tag::new`/`as_str` never used (non-test)~~                           | ~~LOW~~  | ~~API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests~~                         | ~~Phase 2 or remove if unused~~            |   C12    |
+| `Content.kind` never read                                               | LOW      | Field added in Commit 2 for Category C; `blocks` consumed by `render_blocks` (C10); `kind` still unused                       | Phase 4b (ContentKind split)               |          |
+| ~~`Event::Code` mapped to `Text` — loses inline code semantic~~         | ~~LOW~~  | ~~Resolved: inline code now renders as `<code>` in Prose blocks (C9), no separate variant needed~~                            | ~~N/A~~                                    |    C9    |
+| `LinkTarget.source_line` always `None`                                  | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                                                    | Phase 2 reference validation               |          |
+| ~~Duplicated `Options` flags in `parse_blocks` and `markdown_to_html`~~ | ~~LOW~~  | ~~Resolved: `markdown_to_html` removed (C10), only `parse_blocks` uses Options now~~                                          | ~~N/A~~                                    |   C10    |
+| `SortKey` variants suppressed with `#[allow(dead_code)]`                | LOW      | Variants used by `Ord` impl but only constructed in `#[cfg(test)]` via `for_content`; production uses inline key construction | Adopt `for_content` in `discover_sections` |          |
 
 ## Deviation Log
 
