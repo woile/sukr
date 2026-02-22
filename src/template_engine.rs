@@ -179,7 +179,7 @@ fn relative_prefix(page_path: &str) -> String {
 
 /// Site config context for templates.
 #[derive(Serialize)]
-pub struct ConfigContext {
+pub(crate) struct ConfigContext {
     pub title: String,
     pub author: String,
     pub base_url: String,
@@ -189,7 +189,7 @@ pub struct ConfigContext {
 
 /// Navigation context for templates.
 #[derive(Serialize)]
-pub struct NavContext {
+pub(crate) struct NavContext {
     /// Whether to display nested navigation.
     pub nested: bool,
     /// Whether table of contents is globally enabled.

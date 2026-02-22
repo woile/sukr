@@ -77,7 +77,7 @@ impl Tag {
         Self(s.into())
     }
 
-    /// Borrow the inner string (test-only).
+    /// Access the inner tag string (test-only).
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -159,7 +159,6 @@ impl<'de> Deserialize<'de> for SectionType {
 /// sorted-by-construction section items. The variant is determined
 /// by `SectionType` at construction time.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)] // Variants constructed only in tests (via for_content); Ord impl uses both
 pub enum SortKey {
     /// Blog-style: sort by date, newest first. Falls back to weight
     /// for undated items.
@@ -174,8 +173,7 @@ impl SortKey {
     pub const DEFAULT_WEIGHT: i64 = 50;
 
     /// Construct the appropriate sort key for a content item based on
-    /// its section type and frontmatter (test-only).
-    #[cfg(test)]
+    /// its section type and frontmatter.
     pub fn for_content(section_type: &SectionType, frontmatter: &Frontmatter) -> Self {
         match section_type {
             SectionType::Blog => {
@@ -751,7 +749,7 @@ where
 /// Replaces the filesystem-based `discover_nav` — derives nav from typed
 /// objects that were already parsed by `discover_sections`/`discover_pages`.
 /// Result is sorted by weight (ascending), then label (alphabetic).
-pub fn derive_nav(sections: &[Section], pages: &[Content]) -> Vec<NavItem> {
+fn derive_nav(sections: &[Section], pages: &[Content]) -> Vec<NavItem> {
     let mut nav_items = Vec::new();
 
     // Sections → nav items with children
@@ -824,7 +822,7 @@ pub struct Section {
 ///
 /// Section items are collected and sorted at construction time based on
 /// section type. Callers access `section.items` directly.
-pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
+pub(crate) fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
     let mut sections = Vec::new();
 
     let entries = fs::read_dir(content_dir).map_err(|e| ParseError::ReadFile {
@@ -879,29 +877,12 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
                     }
                 }
 
-                // Sort items by section type
-                match &section_type {
-                    SectionType::Blog => {
-                        items.sort_by(|a, b| b.frontmatter.date.cmp(&a.frontmatter.date));
-                    },
-                    SectionType::Projects => {
-                        items.sort_by(|a, b| {
-                            a.frontmatter
-                                .weight
-                                .unwrap_or(99)
-                                .cmp(&b.frontmatter.weight.unwrap_or(99))
-                        });
-                    },
-                    SectionType::Custom(_) => {
-                        items.sort_by(|a, b| {
-                            a.frontmatter
-                                .weight
-                                .unwrap_or(SortKey::DEFAULT_WEIGHT)
-                                .cmp(&b.frontmatter.weight.unwrap_or(SortKey::DEFAULT_WEIGHT))
-                                .then_with(|| a.frontmatter.title.cmp(&b.frontmatter.title))
-                        });
-                    },
-                }
+                // Sort items using typed SortKey abstraction
+                items.sort_by(|a, b| {
+                    let key_a = SortKey::for_content(&section_type, &a.frontmatter);
+                    let key_b = SortKey::for_content(&section_type, &b.frontmatter);
+                    key_a.cmp(&key_b)
+                });
 
                 sections.push(Section {
                     index,
@@ -932,7 +913,7 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
 }
 
 /// Discover standalone pages (top-level .md files except _index.md and _404.md).
-pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
+fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
     let mut pages = Vec::new();
 
     let entries = fs::read_dir(content_dir).map_err(|e| ParseError::ReadFile {
