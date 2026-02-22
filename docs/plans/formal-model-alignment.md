@@ -186,7 +186,7 @@ minimum documented as an explicit convention rather than buried in code.
    **Reference validation:**
    - [x] Add reference integrity validation to `SiteManifest::discover`: validate every `LinkTarget` pointing to an internal path — broken links produce non-fatal warnings
    - [x] ~~Define `ValidatedRef` newtype~~ — N/A: no downstream consumer. `validate_internal_links` returns broken links as errors; valid links don't need a wrapper type since nothing consumes them post-validation
-   - [x] Add `Error::BrokenLink { source_page, target, line }` error variant
+   - [x] Add `Error::BrokenLink { source_page, target }` error variant
 
    **Cruft + verification:**
    - [x] **Cruft audit:** Removed `discover_nav()` after `derive_nav()` migration (8 tests removed, 1 added) _(Note: `DEFAULT_WEIGHT`/`DEFAULT_WEIGHT_HIGH` already removed in Phase 1 C3, `collect_items()` already removed in Phase 1 C4)_
@@ -235,7 +235,7 @@ minimum documented as an explicit convention rather than buried in code.
 
    **Out-of-model code integration:**
    - [x] `generate_aliases` / `write_aliases`: consume `Content.frontmatter.aliases` (typed input from C), return `CompileResult<()>`
-   - [x] `copy_static_assets` / `walk_dir`: kept at `Result<()>` — `walk_dir_inner` uses `ParseError::ReadFile` for directory listing (cross-phase)
+   - [x] `copy_static_assets` / `walk_dir`: narrowed to `CompileResult<()>` — `CompileError::ReadDir` added for directory listing failures
    - [x] `bundle_css`: refactored from `Result<String, String>` to `CompileResult<String>` with `CompileError::CssBundle`
    - [x] `generate_feed` / `generate_sitemap_file`: narrowed to `CompileResult<()>` — underlying `generate_atom_feed`/`generate_sitemap` return `String` (infallible)
 
@@ -310,6 +310,7 @@ minimum documented as an explicit convention rather than buried in code.
 | C20    | — (not in original plan)                                                                                  | Tech debt resolution: source_line removal + ReadDir + NavItem doc | source_line was dead (always None, not in model). CompileError::ReadDir eliminates cross-phase dependency. NavItem::PartialEq documented. Magic 99 already fixed by C19.                                         |
 | C21    | — (not in original plan)                                                                                  | Move TAG_PAGE_TITLE_PREFIX to Tera template                       | Display text belongs in template layer, not compiled code. Added title block to base.html for override capability.                                                                                               |
 | C22    | — (not in original plan)                                                                                  | Docs site accuracy pass: architecture.md + templates.md           | Internal refactoring made architecture page stale. Rewrote with accurate pipeline, module descriptions, typed blocks. Fixed templates.md variable name and added tags template.                                  |
+| C23    | — (not in original plan)                                                                                  | Plan-review remediation: model + plan + docs fixes                | Post-execution review found 7 findings. Fixed: YAML→TOML label, BrokenLink moved to Parse errors, aspirational Compile errors replaced with actual variants, stale plan refs, templates.md variable name.        |
 
 ## Retrospective
 

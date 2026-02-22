@@ -51,7 +51,7 @@ All templates extend `base.html`:
 | `nav`               | Array of navigation items           |
 | `page_path`         | Current page path                   |
 | `prefix`            | Relative path prefix for assets     |
-| `base_url`          | Canonical base URL                  |
+| `config.base_url`   | Canonical base URL                  |
 | `title`             | Current page title                  |
 
 Each nav item has:

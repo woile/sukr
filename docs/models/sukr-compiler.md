@@ -259,12 +259,13 @@ The Parse functor discovers content structure from the filesystem.
 
 Parse is a partial functor, undefined on invalid inputs. Failure modes:
 
-| Failure                                                | Formal meaning                                        | Error                                      |
-| :----------------------------------------------------- | :---------------------------------------------------- | :----------------------------------------- |
-| Missing `_index.md` in a directory with `.md` children | Directory containment morphism in S has no image in C | "Section directory `X` has no `_index.md`" |
-| Invalid TOML frontmatter                               | File object in S has no valid Page image in C         | "Failed to parse frontmatter in `X`"       |
-| Missing `---` delimiters                               | File is not a valid content file                      | "No frontmatter found in `X`"              |
-| Non-UTF-8 content                                      | File object has no string representation              | "File `X` is not valid UTF-8"              |
+| Failure                                                | Formal meaning                                             | Error                                        |
+| :----------------------------------------------------- | :--------------------------------------------------------- | :------------------------------------------- |
+| Missing `_index.md` in a directory with `.md` children | Directory containment morphism in S has no image in C      | "Section directory `X` has no `_index.md`"   |
+| Invalid TOML frontmatter                               | File object in S has no valid Page image in C              | "Failed to parse frontmatter in `X`"         |
+| Missing `---` delimiters                               | File is not a valid content file                           | "No frontmatter found in `X`"                |
+| Non-UTF-8 content                                      | File object has no string representation                   | "File `X` is not valid UTF-8"                |
+| Broken inter-page link                                 | `references` morphism target does not exist as object in C | "Page `X` links to `Y` which does not exist" |
 
 ---
 
@@ -321,14 +322,20 @@ Where:
 
 **Compile errors (functor failure):**
 
-Compile is a partial functor. It fails when cross-dependencies are invalid.
+Compile is a partial functor. It fails on I/O and template errors during
+output generation.
 
-| Failure                | Formal meaning                                                                                       | Error                                        |
-| :--------------------- | :--------------------------------------------------------------------------------------------------- | :------------------------------------------- |
-| Broken inter-page link | `references` morphism in C has no `links to` image in O (target page doesn't produce an output file) | "Page `X` links to `Y` which does not exist" |
-| Orphaned nav entry     | `nav child` morphism points to non-existent section                                                  | "Navigation references missing section `X`"  |
-| Invalid tag reference  | `tagged with` morphism points to non-existent tag object                                             | "Tag `X` referenced but never defined"       |
-| Render failure         | Catamorphism sub-function fails (e.g., invalid LaTeX, broken Mermaid)                                | "Failed to render math block in `X`"         |
+| Failure              | Formal meaning                               | Error                            |
+| :------------------- | :------------------------------------------- | :------------------------------- |
+| Write failure        | Object in O cannot be materialized on disk   | "Failed to write `X`"            |
+| Directory creation   | Output directory structure cannot be created | "Failed to create directory `X`" |
+| Template load error  | Template parameter is malformed              | "Failed to load templates"       |
+| Template render      | Template application fails for a given page  | "Failed to render template `X`"  |
+| CSS bundling error   | Static asset processing fails                | "CSS bundle error: `X`"          |
+| Directory read error | Static asset source directory unreadable     | "Failed to read directory `X`"   |
+
+Note: Reference validation (broken links) is handled during Parse, not
+Compile. By the time Compile runs, Content is known to be well-formed.
 
 ---
 
@@ -400,7 +407,7 @@ morphism in S maps to a morphism in O, and composition is preserved.
    | SiteManifest    | `SiteManifest`           | `content` | Root of Category C — discovered site           |
    | Section         | `Section`                | `content` | Directory with sorted items                    |
    | Page / Post     | `Content`                | `content` | Single content item (kind-agnostic)            |
-   | Frontmatter     | `Frontmatter`            | `content` | Parsed YAML metadata                           |
+   | Frontmatter     | `Frontmatter`            | `content` | Parsed TOML metadata                           |
    | ContentBlock    | `ContentBlock`           | `content` | Coproduct: Code, Math, Diagram, Heading, Prose |
    | NavItem         | `NavItem`                | `content` | Navigation entry with weight ordering          |
    | Tag             | `Tag`                    | `content` | Typed newtype over String                      |
