@@ -15,12 +15,19 @@ mod render;
 mod sitemap;
 mod template_engine;
 
-use crate::content::{Content, NavItem};
+use crate::content::{Content, NavItem, OUTPUT_INDEX};
 use crate::error::{Error, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+/// Output filename for the Atom feed.
+const OUTPUT_FEED: &str = "feed.xml";
+/// Output filename for the XML sitemap.
+const OUTPUT_SITEMAP: &str = "sitemap.xml";
+/// Output filename for the 404 error page.
+const OUTPUT_404: &str = "404.html";
 
 const USAGE: &str = "\
 sukr - Minimal static site compiler
@@ -148,7 +155,7 @@ fn run(config_path: &Path) -> Result<()> {
             &manifest.nav,
         );
 
-        let out_path = output_dir.join(&section.name).join("index.html");
+        let out_path = output_dir.join(&section.name).join(OUTPUT_INDEX);
         fs::create_dir_all(out_path.parent().unwrap()).map_err(|e| Error::CreateDir {
             path: out_path.parent().unwrap().to_path_buf(),
             source: e,
@@ -214,7 +221,7 @@ fn generate_feed(
     manifest: &content::SiteManifest,
     config: &config::SiteConfig,
 ) -> Result<()> {
-    let out_path = output_dir.join("feed.xml");
+    let out_path = output_dir.join(OUTPUT_FEED);
     eprintln!("generating: {}", out_path.display());
 
     let feed_xml = feed::generate_atom_feed(manifest, config);
@@ -235,7 +242,7 @@ fn generate_sitemap_file(
     config: &config::SiteConfig,
     tag_names: &[String],
 ) -> Result<()> {
-    let out_path = output_dir.join("sitemap.xml");
+    let out_path = output_dir.join(OUTPUT_SITEMAP);
     eprintln!("generating: {}", out_path.display());
 
     let sitemap_xml = sitemap::generate_sitemap(manifest, config, tag_names);
@@ -262,13 +269,13 @@ fn generate_homepage(
     let html = engine.render_page(
         &manifest.homepage,
         &html_body,
-        "/index.html",
+        &format!("/{OUTPUT_INDEX}"),
         config,
         &manifest.nav,
         &anchors,
     )?;
 
-    let out_path = output_dir.join("index.html");
+    let out_path = output_dir.join(OUTPUT_INDEX);
 
     fs::create_dir_all(output_dir).map_err(|e| Error::CreateDir {
         path: output_dir.to_path_buf(),
@@ -295,9 +302,16 @@ fn generate_404(
     eprintln!("generating: 404 page");
 
     let (html_body, anchors) = render::render_blocks(&page_404.blocks);
-    let html = engine.render_page(page_404, &html_body, "/404.html", config, nav, &anchors)?;
+    let html = engine.render_page(
+        page_404,
+        &html_body,
+        &format!("/{OUTPUT_404}"),
+        config,
+        nav,
+        &anchors,
+    )?;
 
-    let out_path = output_dir.join("404.html");
+    let out_path = output_dir.join(OUTPUT_404);
     fs::write(&out_path, html).map_err(|e| Error::WriteFile {
         path: out_path.clone(),
         source: e,

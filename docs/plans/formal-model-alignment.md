@@ -246,14 +246,14 @@ minimum documented as an explicit convention rather than buried in code.
    - [x] Remove `content_dir` parameter from `collect_tags()`, `generate_aliases()`, `generate_feed()`, `generate_sitemap_file()` where only used for `output_path` — **completes C4**
 
    **Hardcoded assumptions (H3-H6, H12-H17):**
-   - [ ] Evaluate template name hardcoding (H3-H6): extract `"page.html"`, `"content/default.html"`, `"section/default.html"`, `"tags/default.html"` to named constants or make configurable via `site.toml`. At minimum extract to module-level constants.
-   - [ ] Move `"Tagged: {}"` format string (H12) to template or `site.toml` config — display text should not be in Rust code
-   - [ ] Extract output filename constants: `"feed.xml"` (H13), `"sitemap.xml"` (H14), `"404.html"` (H15), `"index.html"` (H16) — at minimum named constants
+   - [x] Evaluate template name hardcoding (H3-H6): extract `"page.html"`, `"content/default.html"`, `"section/default.html"`, `"tags/default.html"` to named constants or make configurable via `site.toml`. At minimum extract to module-level constants.
+   - [x] Move `"Tagged: {}"` format string (H12) to template or `site.toml` config — display text should not be in Rust code
+   - [x] Extract output filename constants: `"feed.xml"` (H13), `"sitemap.xml"` (H14), `"404.html"` (H15), `"index.html"` (H16) — at minimum named constants
    - [ ] Unify template override pattern (H17): `render_page` should support `frontmatter.template.unwrap_or("page.html")` like `render_content` does — consistent behavior for a generic compiler
 
    **Pipeline clarity:**
    - [x] Audit `main.rs::run()` to ensure Parse completes fully before any Compile begins
-   - [ ] Ensure `collect_tags` uses `section.items` (stored field) instead of re-calling `collect_items()`
+   - [x] Ensure `collect_tags` uses `section.items` (stored field) instead of re-calling `collect_items()` _(already resolved in Phase 1 C4)_
    - [x] Add module-level doc comments to `content.rs` ("Parse functor: S → C") and `render.rs` ("Compile functor: C → O, Render sub-functor")
    - [ ] Add **Type Mapping table** to `docs/models/sukr-compiler.md` Implementation Guidance section
    - [ ] Evaluate `ContentKind` type split — if Phases 1-3 revealed friction from runtime kind checks, design the type split; otherwise document decision to defer — **resolves H11 fully if split happens**
@@ -291,6 +291,7 @@ minimum documented as an explicit convention rather than buried in code.
 | `LinkTarget.source_line` always `None`                                  | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                                                    | Phase 2 reference validation               |          |
 | ~~Duplicated `Options` flags in `parse_blocks` and `markdown_to_html`~~ | ~~LOW~~  | ~~Resolved: `markdown_to_html` removed (C10), only `parse_blocks` uses Options now~~                                          | ~~N/A~~                                    |   C10    |
 | `SortKey` variants suppressed with `#[allow(dead_code)]`                | LOW      | Variants used by `Ord` impl but only constructed in `#[cfg(test)]` via `for_content`; production uses inline key construction | Adopt `for_content` in `discover_sections` |          |
+| `TAG_PAGE_TITLE_PREFIX` still in Rust code                              | LOW      | Extracted to constant (C13) but display text ideally belongs in template, not compiled code                                   | Move tag page title into Tera template     |          |
 
 ## Deviation Log
 

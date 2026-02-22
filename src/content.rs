@@ -16,6 +16,8 @@ use std::path::{Path, PathBuf};
 pub const SECTION_INDEX: &str = "_index.md";
 /// Conventional filename for the custom 404 page.
 pub const PAGE_404: &str = "_404.md";
+/// Output filename for directory index pages.
+pub const OUTPUT_INDEX: &str = "index.html";
 
 /// The type of content being processed.
 #[derive(Debug, Clone, PartialEq)]
@@ -668,7 +670,7 @@ impl Content {
                 ContentKind::Section => {
                     // _index.md → parent/index.html
                     let parent = relative.parent().unwrap_or(Path::new(""));
-                    parent.join("index.html")
+                    parent.join(OUTPUT_INDEX)
                 },
                 _ => {
                     // Regular content → parent/slug.html

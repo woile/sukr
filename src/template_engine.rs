@@ -11,6 +11,17 @@ use crate::content::{Content, NavItem};
 use crate::error::{Error, Result};
 use crate::render::Anchor;
 
+/// Default template for standalone pages.
+const TEMPLATE_PAGE: &str = "page.html";
+/// Default template for content items (blog posts, projects, etc.).
+const TEMPLATE_CONTENT_DEFAULT: &str = "content/default.html";
+/// Fallback template for section index pages.
+const TEMPLATE_SECTION_DEFAULT: &str = "section/default.html";
+/// Default template for tag listing pages.
+const TEMPLATE_TAG_DEFAULT: &str = "tags/default.html";
+/// Title prefix for tag listing pages.
+const TAG_PAGE_TITLE_PREFIX: &str = "Tagged";
+
 /// Runtime template engine wrapping Tera.
 pub struct TemplateEngine {
     tera: Tera,
@@ -56,7 +67,7 @@ impl TemplateEngine {
         );
         ctx.insert("content", html_body);
         ctx.insert("anchors", anchors);
-        self.render("page.html", &ctx)
+        self.render(TEMPLATE_PAGE, &ctx)
     }
 
     /// Render a content item (blog post, project, etc.).
@@ -73,7 +84,7 @@ impl TemplateEngine {
             .frontmatter
             .template
             .as_deref()
-            .unwrap_or("content/default.html");
+            .unwrap_or(TEMPLATE_CONTENT_DEFAULT);
         let mut ctx = self.base_context(page_path, config, nav);
         ctx.insert("title", &content.frontmatter.title);
         ctx.insert(
@@ -102,7 +113,7 @@ impl TemplateEngine {
         let template = if self.tera.get_template_names().any(|n| n == preferred) {
             preferred
         } else {
-            "section/default.html".to_string()
+            TEMPLATE_SECTION_DEFAULT.to_string()
         };
 
         let mut ctx = self.base_context(page_path, config, nav);
@@ -127,10 +138,10 @@ impl TemplateEngine {
         nav: &[NavItem],
     ) -> Result<String> {
         let mut ctx = self.base_context(page_path, config, nav);
-        ctx.insert("title", &format!("Tagged: {}", tag));
+        ctx.insert("title", &format!("{}: {}", TAG_PAGE_TITLE_PREFIX, tag));
         ctx.insert("tag", tag);
         ctx.insert("items", items);
-        self.render("tags/default.html", &ctx)
+        self.render(TEMPLATE_TAG_DEFAULT, &ctx)
     }
 
     /// Build base context with common variables.
