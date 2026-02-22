@@ -392,6 +392,25 @@ morphism in S maps to a morphism in O, and composition is preserved.
    means extending this coproduct: add the variant, add the renderer. `Prose`
    absorbs everything that does not require interception.
 
+5. **Type mapping.** The following table maps model objects to their Rust
+   implementations:
+
+   | Model Object    | Rust Type                | Module    | Role                                           |
+   | :-------------- | :----------------------- | :-------- | :--------------------------------------------- |
+   | SiteManifest    | `SiteManifest`           | `content` | Root of Category C — discovered site           |
+   | Section         | `Section`                | `content` | Directory with sorted items                    |
+   | Page / Post     | `Content`                | `content` | Single content item (kind-agnostic)            |
+   | Frontmatter     | `Frontmatter`            | `content` | Parsed YAML metadata                           |
+   | ContentBlock    | `ContentBlock`           | `content` | Coproduct: Code, Math, Diagram, Heading, Prose |
+   | NavItem         | `NavItem`                | `content` | Navigation entry with weight ordering          |
+   | Tag             | `Tag`                    | `content` | Typed newtype over String                      |
+   | SortKey         | `SortKey`                | `content` | Ordering discriminant for section items        |
+   | LinkTarget      | `LinkTarget`             | `content` | Internal/external reference for validation     |
+   | Parse functor   | `SiteManifest::discover` | `content` | S → C transformation                           |
+   | Compile functor | `render_blocks`          | `render`  | C → O block rendering (catamorphism)           |
+   | Error (Parse)   | `ParseError`             | `error`   | Parse-phase failure modes                      |
+   | Error (Compile) | `CompileError`           | `error`   | Compile-phase failure modes                    |
+
 ### Testing Strategy
 
 1. **Functor law tests:** Verify that composition is preserved. If a file is

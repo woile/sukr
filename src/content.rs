@@ -623,7 +623,6 @@ pub struct Frontmatter {
 /// A content item ready for rendering.
 #[derive(Debug, Clone)]
 pub struct Content {
-    pub kind: ContentKind,
     pub frontmatter: Frontmatter,
     pub body: String,
     pub source_path: PathBuf,
@@ -683,7 +682,6 @@ impl Content {
         let (blocks, links) = parse_blocks(&body);
 
         Ok(Content {
-            kind,
             frontmatter,
             body,
             source_path: path.to_path_buf(),
