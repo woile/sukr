@@ -225,8 +225,6 @@ impl PartialOrd for SortKey {
 pub struct LinkTarget {
     /// The URL or relative path as written in markdown.
     pub url: String,
-    /// Source line number for error reporting.
-    pub source_line: Option<usize>,
     /// Whether this is an internal (relative) reference vs external URL.
     pub is_internal: bool,
 }
@@ -365,11 +363,7 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
                     let is_internal = !url.contains("://")
                         && !url.starts_with("mailto:")
                         && !url.starts_with("data:");
-                    links.push(LinkTarget {
-                        url,
-                        source_line: None,
-                        is_internal,
-                    });
+                    links.push(LinkTarget { url, is_internal });
                 }
             },
             Event::Text(text) if image_alt_buf.is_some() => {
@@ -409,11 +403,7 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
                     let is_internal = !url.contains("://")
                         && !url.starts_with("mailto:")
                         && !url.starts_with("data:");
-                    links.push(LinkTarget {
-                        url,
-                        source_line: None,
-                        is_internal,
-                    });
+                    links.push(LinkTarget { url, is_internal });
                 }
                 // Render opening <a> tag
                 if title.is_empty() {
@@ -562,6 +552,10 @@ pub struct NavItem {
 
 impl Eq for NavItem {}
 
+/// Equality compares sort discriminants only (`weight`, `label`).
+/// `path` and `children` are excluded intentionally — two nav items at the
+/// same position with the same label are considered duplicates regardless
+/// of their subtree or target path.
 impl PartialEq for NavItem {
     fn eq(&self, other: &Self) -> bool {
         self.weight == other.weight && self.label == other.label
@@ -1074,7 +1068,6 @@ impl SiteManifest {
                     broken.push(ParseError::BrokenLink {
                         source_page: content.source_path.clone(),
                         target: link.url.clone(),
-                        line: link.source_line,
                     });
                 }
             }
@@ -1711,13 +1704,11 @@ mod tests {
     #[test]
     fn test_link_target_construction() {
         let internal = LinkTarget {
-            url: "/blog/post.html".to_string(),
-            source_line: Some(42),
+            url: "../other-page.md".to_string(),
             is_internal: true,
         };
         let external = LinkTarget {
             url: "https://example.com".to_string(),
-            source_line: None,
             is_internal: false,
         };
 

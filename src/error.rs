@@ -29,7 +29,6 @@ pub enum ParseError {
     BrokenLink {
         source_page: PathBuf,
         target: String,
-        line: Option<usize>,
     },
 
     /// Failed to parse configuration file.
@@ -51,19 +50,8 @@ impl fmt::Display for ParseError {
             ParseError::BrokenLink {
                 source_page,
                 target,
-                line,
             } => {
-                if let Some(ln) = line {
-                    write!(
-                        f,
-                        "broken link in {} (line {}): {}",
-                        source_page.display(),
-                        ln,
-                        target
-                    )
-                } else {
-                    write!(f, "broken link in {}: {}", source_page.display(), target)
-                }
+                write!(f, "broken link in {}: {}", source_page.display(), target)
             },
             ParseError::Config { path, message } => {
                 write!(f, "invalid config in {}: {}", path.display(), message)
@@ -109,6 +97,12 @@ pub enum CompileError {
 
     /// Failed to bundle CSS.
     CssBundle(String),
+
+    /// Failed to read directory during static asset copy.
+    ReadDir {
+        path: PathBuf,
+        source: std::io::Error,
+    },
 }
 
 impl fmt::Display for CompileError {
@@ -130,6 +124,9 @@ impl fmt::Display for CompileError {
                 write!(f, "failed to render template '{}'", template)
             },
             CompileError::CssBundle(msg) => write!(f, "CSS bundle error: {}", msg),
+            CompileError::ReadDir { path, source } => {
+                write!(f, "failed to read directory {}: {}", path.display(), source)
+            },
         }
     }
 }
@@ -141,6 +138,7 @@ impl StdError for CompileError {
             CompileError::CreateDir { source, .. } => Some(source),
             CompileError::TemplateLoad(e) => Some(e),
             CompileError::TemplateRender { source, .. } => Some(source),
+            CompileError::ReadDir { source, .. } => Some(source),
             _ => None,
         }
     }

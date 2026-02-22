@@ -493,7 +493,7 @@ fn redirect_html(target_url: &str) -> String {
 
 /// Copy static assets (CSS, images, etc.) to output directory.
 /// CSS files are minified before writing.
-fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
+fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> CompileResult<()> {
     use crate::css::bundle_css;
 
     if !static_dir.exists() {
@@ -544,14 +544,14 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
 }
 
 /// Recursively walk a directory, returning all file paths.
-fn walk_dir(dir: &Path) -> Result<Vec<PathBuf>> {
+fn walk_dir(dir: &Path) -> CompileResult<Vec<PathBuf>> {
     let mut files = Vec::new();
     walk_dir_inner(dir, &mut files)?;
     Ok(files)
 }
 
-fn walk_dir_inner(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
-    let entries = fs::read_dir(dir).map_err(|e| ParseError::ReadFile {
+fn walk_dir_inner(dir: &Path, files: &mut Vec<PathBuf>) -> CompileResult<()> {
+    let entries = fs::read_dir(dir).map_err(|e| CompileError::ReadDir {
         path: dir.to_path_buf(),
         source: e,
     })?;
