@@ -4,7 +4,7 @@
 //! frontmatter into typed content values. This module implements the
 //! Parse phase of the compiler pipeline.
 
-use crate::error::{Error, Result};
+use crate::error::{ParseError, ParseResult, Result};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -646,7 +646,7 @@ impl Content {
     }
 
     fn from_path_inner(path: &Path, kind: ContentKind, content_root: &Path) -> Result<Self> {
-        let raw = fs::read_to_string(path).map_err(|e| Error::ReadFile {
+        let raw = fs::read_to_string(path).map_err(|e| ParseError::ReadFile {
             path: path.to_path_buf(),
             source: e,
         })?;
@@ -695,11 +695,11 @@ impl Content {
 
 /// Extract TOML frontmatter block and body from raw content.
 /// Frontmatter must be delimited by `+++` at start and end.
-fn extract_frontmatter(raw: &str, path: &Path) -> Result<(String, String)> {
+fn extract_frontmatter(raw: &str, path: &Path) -> ParseResult<(String, String)> {
     let trimmed = raw.trim_start();
 
     if !trimmed.starts_with("+++") {
-        return Err(Error::Frontmatter {
+        return Err(ParseError::Frontmatter {
             path: path.to_path_buf(),
             message: "missing frontmatter delimiter".to_string(),
         });
@@ -709,7 +709,7 @@ fn extract_frontmatter(raw: &str, path: &Path) -> Result<(String, String)> {
     let after_first = &trimmed[3..].trim_start_matches(['\r', '\n']);
     let end_idx = after_first
         .find("\n+++")
-        .ok_or_else(|| Error::Frontmatter {
+        .ok_or_else(|| ParseError::Frontmatter {
             path: path.to_path_buf(),
             message: "missing closing frontmatter delimiter".to_string(),
         })?;
@@ -721,8 +721,8 @@ fn extract_frontmatter(raw: &str, path: &Path) -> Result<(String, String)> {
 }
 
 /// Parse TOML frontmatter into structured fields.
-fn parse_frontmatter(path: &Path, toml_str: &str) -> Result<Frontmatter> {
-    toml::from_str(toml_str).map_err(|e| Error::Frontmatter {
+fn parse_frontmatter(path: &Path, toml_str: &str) -> ParseResult<Frontmatter> {
+    toml::from_str(toml_str).map_err(|e| ParseError::Frontmatter {
         path: path.to_path_buf(),
         message: e.to_string(),
     })
@@ -827,7 +827,7 @@ pub struct Section {
 pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
     let mut sections = Vec::new();
 
-    let entries = fs::read_dir(content_dir).map_err(|e| Error::ReadFile {
+    let entries = fs::read_dir(content_dir).map_err(|e| ParseError::ReadFile {
         path: content_dir.to_path_buf(),
         source: e,
     })?;
@@ -861,7 +861,7 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
 
                 let mut items = Vec::new();
                 for child in fs::read_dir(&path)
-                    .map_err(|e| Error::ReadFile {
+                    .map_err(|e| ParseError::ReadFile {
                         path: path.clone(),
                         source: e,
                     })?
@@ -935,7 +935,7 @@ pub fn discover_sections(content_dir: &Path) -> Result<Vec<Section>> {
 pub fn discover_pages(content_dir: &Path) -> Result<Vec<Content>> {
     let mut pages = Vec::new();
 
-    let entries = fs::read_dir(content_dir).map_err(|e| Error::ReadFile {
+    let entries = fs::read_dir(content_dir).map_err(|e| ParseError::ReadFile {
         path: content_dir.to_path_buf(),
         source: e,
     })?;
@@ -1040,7 +1040,7 @@ impl SiteManifest {
     /// Returns a list of `BrokenLink` errors for any internal link
     /// that doesn't resolve to a known page. This is non-fatal —
     /// callers decide whether to treat these as warnings or errors.
-    pub fn validate_internal_links(&self) -> Vec<Error> {
+    pub fn validate_internal_links(&self) -> Vec<ParseError> {
         use std::collections::HashSet;
 
         // Build set of all known canonical output paths (with leading /)
@@ -1090,7 +1090,7 @@ impl SiteManifest {
                     continue;
                 }
                 if !known_paths.contains(&normalized) {
-                    broken.push(Error::BrokenLink {
+                    broken.push(ParseError::BrokenLink {
                         source_page: content.source_path.clone(),
                         target: link.url.clone(),
                         line: link.source_line,
@@ -1955,7 +1955,7 @@ mod tests {
         let broken = manifest.validate_internal_links();
         assert_eq!(broken.len(), 1, "expected 1 broken link, got: {:?}", broken);
         match &broken[0] {
-            Error::BrokenLink { target, .. } => {
+            ParseError::BrokenLink { target, .. } => {
                 assert_eq!(target, "/nonexistent");
             },
             other => panic!("expected BrokenLink, got: {:?}", other),

@@ -16,7 +16,7 @@ mod sitemap;
 mod template_engine;
 
 use crate::content::{Content, NavItem, OUTPUT_INDEX};
-use crate::error::{Error, Result};
+use crate::error::{CompileError, ParseError, Result};
 use crate::template_engine::{ContentContext, TemplateEngine};
 use std::collections::BTreeMap;
 use std::fs;
@@ -102,7 +102,7 @@ fn run(config_path: &Path) -> Result<()> {
     let template_dir = base_dir.join(&config.paths.templates);
 
     if !content_dir.exists() {
-        return Err(Error::ContentDirNotFound(content_dir.to_path_buf()));
+        return Err(ParseError::ContentDirNotFound(content_dir.to_path_buf()).into());
     }
 
     let engine = TemplateEngine::new(&template_dir)?;
@@ -156,11 +156,11 @@ fn run(config_path: &Path) -> Result<()> {
         );
 
         let out_path = output_dir.join(&section.name).join(OUTPUT_INDEX);
-        fs::create_dir_all(out_path.parent().unwrap()).map_err(|e| Error::CreateDir {
+        fs::create_dir_all(out_path.parent().unwrap()).map_err(|e| CompileError::CreateDir {
             path: out_path.parent().unwrap().to_path_buf(),
             source: e,
         })?;
-        fs::write(&out_path, html?).map_err(|e| Error::WriteFile {
+        fs::write(&out_path, html?).map_err(|e| CompileError::WriteFile {
             path: out_path.clone(),
             source: e,
         })?;
@@ -226,7 +226,7 @@ fn generate_feed(
 
     let feed_xml = feed::generate_atom_feed(manifest, config);
 
-    fs::write(&out_path, feed_xml).map_err(|e| Error::WriteFile {
+    fs::write(&out_path, feed_xml).map_err(|e| CompileError::WriteFile {
         path: out_path.clone(),
         source: e,
     })?;
@@ -247,7 +247,7 @@ fn generate_sitemap_file(
 
     let sitemap_xml = sitemap::generate_sitemap(manifest, config, tag_names);
 
-    fs::write(&out_path, sitemap_xml).map_err(|e| Error::WriteFile {
+    fs::write(&out_path, sitemap_xml).map_err(|e| CompileError::WriteFile {
         path: out_path.clone(),
         source: e,
     })?;
@@ -277,12 +277,12 @@ fn generate_homepage(
 
     let out_path = output_dir.join(OUTPUT_INDEX);
 
-    fs::create_dir_all(output_dir).map_err(|e| Error::CreateDir {
+    fs::create_dir_all(output_dir).map_err(|e| CompileError::CreateDir {
         path: output_dir.to_path_buf(),
         source: e,
     })?;
 
-    fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+    fs::write(&out_path, html).map_err(|e| CompileError::WriteFile {
         path: out_path.clone(),
         source: e,
     })?;
@@ -312,7 +312,7 @@ fn generate_404(
     )?;
 
     let out_path = output_dir.join(OUTPUT_404);
-    fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+    fs::write(&out_path, html).map_err(|e| CompileError::WriteFile {
         path: out_path.clone(),
         source: e,
     })?;
@@ -363,7 +363,7 @@ fn write_tag_pages(
     engine: &TemplateEngine,
 ) -> Result<()> {
     let tags_dir = output_dir.join("tags");
-    fs::create_dir_all(&tags_dir).map_err(|e| Error::CreateDir {
+    fs::create_dir_all(&tags_dir).map_err(|e| CompileError::CreateDir {
         path: tags_dir.clone(),
         source: e,
     })?;
@@ -373,7 +373,7 @@ fn write_tag_pages(
         let html = engine.render_tag_page(tag, items, &page_path, config, nav)?;
 
         let out_path = tags_dir.join(format!("{}.html", tag));
-        fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+        fs::write(&out_path, html).map_err(|e| CompileError::WriteFile {
             path: out_path.clone(),
             source: e,
         })?;
@@ -394,12 +394,12 @@ fn write_output(output_dir: &Path, content: &Content, html: String) -> Result<()
     let out_path = output_dir.join(&content.output_path);
     let out_dir = out_path.parent().unwrap();
 
-    fs::create_dir_all(out_dir).map_err(|e| Error::CreateDir {
+    fs::create_dir_all(out_dir).map_err(|e| CompileError::CreateDir {
         path: out_dir.to_path_buf(),
         source: e,
     })?;
 
-    fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+    fs::write(&out_path, html).map_err(|e| CompileError::WriteFile {
         path: out_path.clone(),
         source: e,
     })?;
@@ -455,13 +455,13 @@ fn write_aliases(output_dir: &Path, content: &Content, base_url: &str) -> Result
         let out_path = output_dir.join(&alias_file);
         let out_dir = out_path.parent().unwrap();
 
-        fs::create_dir_all(out_dir).map_err(|e| Error::CreateDir {
+        fs::create_dir_all(out_dir).map_err(|e| CompileError::CreateDir {
             path: out_dir.to_path_buf(),
             source: e,
         })?;
 
         let html = redirect_html(&canonical_url);
-        fs::write(&out_path, html).map_err(|e| Error::WriteFile {
+        fs::write(&out_path, html).map_err(|e| CompileError::WriteFile {
             path: out_path.clone(),
             source: e,
         })?;
@@ -500,7 +500,7 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
         return Ok(()); // No static dir is fine
     }
 
-    fs::create_dir_all(output_dir).map_err(|e| Error::CreateDir {
+    fs::create_dir_all(output_dir).map_err(|e| CompileError::CreateDir {
         path: output_dir.to_path_buf(),
         source: e,
     })?;
@@ -510,7 +510,7 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
         let dest = output_dir.join(relative);
 
         if let Some(parent) = dest.parent() {
-            fs::create_dir_all(parent).map_err(|e| Error::CreateDir {
+            fs::create_dir_all(parent).map_err(|e| CompileError::CreateDir {
                 path: parent.to_path_buf(),
                 source: e,
             })?;
@@ -519,8 +519,8 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
         // Bundle CSS files (resolves @imports), copy others directly
         if src.extension().is_some_and(|ext| ext == "css") {
             let original_size = fs::metadata(&src).map(|m| m.len()).unwrap_or(0);
-            let bundled = bundle_css(&src).map_err(Error::CssBundle)?;
-            fs::write(&dest, &bundled).map_err(|e| Error::WriteFile {
+            let bundled = bundle_css(&src).map_err(CompileError::CssBundle)?;
+            fs::write(&dest, &bundled).map_err(|e| CompileError::WriteFile {
                 path: dest.clone(),
                 source: e,
             })?;
@@ -532,7 +532,7 @@ fn copy_static_assets(static_dir: &Path, output_dir: &Path) -> Result<()> {
                 bundled.len()
             );
         } else {
-            fs::copy(&src, &dest).map_err(|e| Error::WriteFile {
+            fs::copy(&src, &dest).map_err(|e| CompileError::WriteFile {
                 path: dest.clone(),
                 source: e,
             })?;
@@ -551,7 +551,7 @@ fn walk_dir(dir: &Path) -> Result<Vec<PathBuf>> {
 }
 
 fn walk_dir_inner(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
-    let entries = fs::read_dir(dir).map_err(|e| Error::ReadFile {
+    let entries = fs::read_dir(dir).map_err(|e| ParseError::ReadFile {
         path: dir.to_path_buf(),
         source: e,
     })?;

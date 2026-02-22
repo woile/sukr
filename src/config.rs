@@ -1,6 +1,6 @@
 //! Site configuration loading.
 
-use crate::error::{Error, Result};
+use crate::error::{ParseError, ParseResult};
 use serde::Deserialize;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -95,13 +95,13 @@ impl Default for PathsConfig {
 
 impl SiteConfig {
     /// Load configuration from a TOML file.
-    pub fn load(path: &Path) -> Result<Self> {
-        let content = fs::read_to_string(path).map_err(|e| Error::ReadFile {
+    pub fn load(path: &Path) -> ParseResult<Self> {
+        let content = fs::read_to_string(path).map_err(|e| ParseError::ReadFile {
             path: path.to_path_buf(),
             source: e,
         })?;
 
-        toml::from_str(&content).map_err(|e| Error::Config {
+        toml::from_str(&content).map_err(|e| ParseError::Config {
             path: path.to_path_buf(),
             message: e.to_string(),
         })

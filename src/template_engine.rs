@@ -8,7 +8,7 @@ use tera::{Context, Tera, Value};
 
 use crate::config::SiteConfig;
 use crate::content::{Content, NavItem};
-use crate::error::{Error, Result};
+use crate::error::{CompileError, CompileResult};
 use crate::render::Anchor;
 
 /// Default template for standalone pages.
@@ -22,16 +22,16 @@ const TEMPLATE_TAG_DEFAULT: &str = "tags/default.html";
 /// Title prefix for tag listing pages.
 const TAG_PAGE_TITLE_PREFIX: &str = "Tagged";
 
-/// Runtime template engine wrapping Tera.
+/// Wrapper around Tera for site-specific template rendering.
 pub struct TemplateEngine {
     tera: Tera,
 }
 
 impl TemplateEngine {
     /// Load templates from a directory (glob pattern: `templates/**/*`).
-    pub fn new(template_dir: &Path) -> Result<Self> {
+    pub fn new(template_dir: &Path) -> CompileResult<Self> {
         let pattern = template_dir.join("**/*").display().to_string();
-        let mut tera = Tera::new(&pattern).map_err(Error::TemplateLoad)?;
+        let mut tera = Tera::new(&pattern).map_err(CompileError::TemplateLoad)?;
 
         // Register custom filters
         tera.register_filter("strip_parens", strip_parens_filter);
@@ -40,10 +40,10 @@ impl TemplateEngine {
     }
 
     /// Render a template by name with the given context.
-    pub fn render(&self, template_name: &str, context: &Context) -> Result<String> {
+    pub fn render(&self, template_name: &str, context: &Context) -> CompileResult<String> {
         self.tera
             .render(template_name, context)
-            .map_err(|e| Error::TemplateRender {
+            .map_err(|e| CompileError::TemplateRender {
                 template: template_name.to_string(),
                 source: e,
             })
@@ -61,7 +61,7 @@ impl TemplateEngine {
         config: &SiteConfig,
         nav: &[NavItem],
         anchors: &[Anchor],
-    ) -> Result<String> {
+    ) -> CompileResult<String> {
         let template = content
             .frontmatter
             .template
@@ -87,7 +87,7 @@ impl TemplateEngine {
         config: &SiteConfig,
         nav: &[NavItem],
         anchors: &[Anchor],
-    ) -> Result<String> {
+    ) -> CompileResult<String> {
         let template = content
             .frontmatter
             .template
@@ -116,7 +116,7 @@ impl TemplateEngine {
         page_path: &str,
         config: &SiteConfig,
         nav: &[NavItem],
-    ) -> Result<String> {
+    ) -> CompileResult<String> {
         let preferred = format!("section/{}.html", section_type);
         let template = if self.tera.get_template_names().any(|n| n == preferred) {
             preferred
@@ -144,7 +144,7 @@ impl TemplateEngine {
         page_path: &str,
         config: &SiteConfig,
         nav: &[NavItem],
-    ) -> Result<String> {
+    ) -> CompileResult<String> {
         let mut ctx = self.base_context(page_path, config, nav);
         ctx.insert("title", &format!("{}: {}", TAG_PAGE_TITLE_PREFIX, tag));
         ctx.insert("tag", tag);

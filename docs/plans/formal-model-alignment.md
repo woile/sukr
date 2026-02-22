@@ -219,19 +219,19 @@ minimum documented as an explicit convention rather than buried in code.
 4. **Phase 4: Pipeline Clarity & Error Model** — Clean module boundaries, functor failure modes, and type-level phase separation
 
    **Error split:**
-   - [ ] Split `Error` enum into `ParseError` and `CompileError`:
-     - [ ] `ParseError::MissingSectionIndex` (directory with .md children but no \_index.md)
-     - [ ] `ParseError::BrokenLink` (from Phase 2, via `ValidatedRef` construction failure)
-     - [ ] `ParseError::InvalidFrontmatter` (existing, moved from `Error`)
-     - [ ] `ParseError::ReadFile` (existing, moved from `Error`)
-     - [ ] `CompileError::OrphanedNavEntry` (nav references missing section)
-     - [ ] `CompileError::RenderFailure { block_type, source_page, detail }` (catamorphism sub-function failure)
-     - [ ] `CompileError::TemplateRender` (existing, moved from `Error`)
-     - [ ] `CompileError::WriteFile` (existing, moved from `Error`)
-     - [ ] `CompileError::StaticAssetCopy` (for `copy_static_assets` failures)
-     - [ ] `CompileError::CssBundleFailure` (for `bundle_css` failures — currently returns `Result<String, String>`)
-   - [ ] Implement `From<ParseError> for Error` and `From<CompileError> for Error` for top-level `run()` boundary
-   - [ ] Update `content.rs` functions to return `Result<T, ParseError>`, `render.rs` functions to return `Result<T, CompileError>`
+   - [x] Split `Error` enum into `ParseError` and `CompileError`:
+     - [x] `ParseError::ReadFile`
+     - [x] `ParseError::Frontmatter` (was `InvalidFrontmatter`)
+     - [x] `ParseError::ContentDirNotFound`
+     - [x] `ParseError::BrokenLink`
+     - [x] `ParseError::Config`
+     - [x] `CompileError::WriteFile`
+     - [x] `CompileError::CreateDir`
+     - [x] `CompileError::TemplateLoad`
+     - [x] `CompileError::TemplateRender`
+     - [x] `CompileError::CssBundle`
+   - [x] Implement `From<ParseError> for Error` and `From<CompileError> for Error` for top-level `run()` boundary
+   - [x] Update `content.rs` functions to return `ParseResult<T>`, `template_engine.rs` and `config.rs` functions to return `CompileResult<T>` / `ParseResult<T>`
 
    **Out-of-model code integration:**
    - [ ] `generate_aliases` / `write_aliases`: consume `Content.frontmatter.aliases` (typed input from C), return `Result<(), CompileError>`
@@ -277,32 +277,34 @@ minimum documented as an explicit convention rather than buried in code.
 
 <!-- Populated during execution -->
 
-| Item                                                                    | Severity | Why Introduced                                                                                                                | Follow-Up                                  | Resolved |
-| :---------------------------------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------- | :------: |
-| `NavItem::PartialEq` ignores `path` and `children`                      | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only                          | Add doc comment on the impl                |          |
-| ~~Unused `content_dir`/`content_root` params in 5 functions~~           | ~~LOW~~  | ~~`output_path` is now a field, but removing the params is a multi-file signature change~~                                    | ~~Phase 4 (C4 completion)~~                |   C11    |
-| Magic literal `99` in Projects sort branch                              | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                                                     | Phase 2 (SortKey adoption)                 |          |
-| ~~`ContentBlock` variants never constructed~~                           | ~~LOW~~  | ~~Category C types defined in Commit 1; construction deferred to Phase 2 parse functor~~                                      | ~~Phase 2~~                                |  C5, C9  |
-| ~~`SortKey::DateDesc`/`WeightTitle` never constructed~~                 | ~~LOW~~  | ~~SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them~~                    | ~~Phase 2~~                                |   C12    |
-| ~~`SortKey::for_content` never used (non-test)~~                        | ~~LOW~~  | ~~Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4~~                              | ~~Phase 2 or remove if unused~~            |   C12    |
-| ~~`Tag::new`/`as_str` never used (non-test)~~                           | ~~LOW~~  | ~~API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests~~                         | ~~Phase 2 or remove if unused~~            |   C12    |
-| ~~`Content.kind` never read~~                                           | ~~LOW~~  | ~~Field added in Commit 2 for Category C; `blocks` consumed by `render_blocks` (C10); `kind` still unused~~                   | ~~Phase 4b (ContentKind split)~~           |   C15    |
-| ~~`Event::Code` mapped to `Text` — loses inline code semantic~~         | ~~LOW~~  | ~~Resolved: inline code now renders as `<code>` in Prose blocks (C9), no separate variant needed~~                            | ~~N/A~~                                    |    C9    |
-| `LinkTarget.source_line` always `None`                                  | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                                                    | Phase 2 reference validation               |          |
-| ~~Duplicated `Options` flags in `parse_blocks` and `markdown_to_html`~~ | ~~LOW~~  | ~~Resolved: `markdown_to_html` removed (C10), only `parse_blocks` uses Options now~~                                          | ~~N/A~~                                    |   C10    |
-| `SortKey` variants suppressed with `#[allow(dead_code)]`                | LOW      | Variants used by `Ord` impl but only constructed in `#[cfg(test)]` via `for_content`; production uses inline key construction | Adopt `for_content` in `discover_sections` |          |
-| `TAG_PAGE_TITLE_PREFIX` still in Rust code                              | LOW      | Extracted to constant (C13) but display text ideally belongs in template, not compiled code                                   | Move tag page title into Tera template     |          |
+| Item                                                                    | Severity | Why Introduced                                                                                                                   | Follow-Up                                  | Resolved |
+| :---------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------- | :------: |
+| `NavItem::PartialEq` ignores `path` and `children`                      | LOW      | Intentional for sort ordering in `BTreeSet` — equality based on `(weight, label)` discriminants only                             | Add doc comment on the impl                |          |
+| ~~Unused `content_dir`/`content_root` params in 5 functions~~           | ~~LOW~~  | ~~`output_path` is now a field, but removing the params is a multi-file signature change~~                                       | ~~Phase 4 (C4 completion)~~                |   C11    |
+| Magic literal `99` in Projects sort branch                              | LOW      | `DEFAULT_WEIGHT_HIGH` removed; value inlined pending sort logic migration                                                        | Phase 2 (SortKey adoption)                 |          |
+| ~~`ContentBlock` variants never constructed~~                           | ~~LOW~~  | ~~Category C types defined in Commit 1; construction deferred to Phase 2 parse functor~~                                         | ~~Phase 2~~                                |  C5, C9  |
+| ~~`SortKey::DateDesc`/`WeightTitle` never constructed~~                 | ~~LOW~~  | ~~SortKey enum defined in Commit 1; construction deferred to Phase 2 when sort-by-construction uses them~~                       | ~~Phase 2~~                                |   C12    |
+| ~~`SortKey::for_content` never used (non-test)~~                        | ~~LOW~~  | ~~Constructor defined in Commit 1; sort logic was inlined into `discover_sections` in Commit 4~~                                 | ~~Phase 2 or remove if unused~~            |   C12    |
+| ~~`Tag::new`/`as_str` never used (non-test)~~                           | ~~LOW~~  | ~~API defined in Commit 1; `Display` trait is what consumers use; `new`/`as_str` used only in tests~~                            | ~~Phase 2 or remove if unused~~            |   C12    |
+| ~~`Content.kind` never read~~                                           | ~~LOW~~  | ~~Field added in Commit 2 for Category C; `blocks` consumed by `render_blocks` (C10); `kind` still unused~~                      | ~~Phase 4b (ContentKind split)~~           |   C15    |
+| ~~`Event::Code` mapped to `Text` — loses inline code semantic~~         | ~~LOW~~  | ~~Resolved: inline code now renders as `<code>` in Prose blocks (C9), no separate variant needed~~                               | ~~N/A~~                                    |    C9    |
+| `LinkTarget.source_line` always `None`                                  | LOW      | `Parser::new_ext` doesn't provide offsets; would need `into_offset_iter()`                                                       | Phase 2 reference validation               |          |
+| ~~Duplicated `Options` flags in `parse_blocks` and `markdown_to_html`~~ | ~~LOW~~  | ~~Resolved: `markdown_to_html` removed (C10), only `parse_blocks` uses Options now~~                                             | ~~N/A~~                                    |   C10    |
+| `SortKey` variants suppressed with `#[allow(dead_code)]`                | LOW      | Variants used by `Ord` impl but only constructed in `#[cfg(test)]` via `for_content`; production uses inline key construction    | Adopt `for_content` in `discover_sections` |          |
+| `TAG_PAGE_TITLE_PREFIX` still in Rust code                              | LOW      | Extracted to constant (C13) but display text ideally belongs in template, not compiled code                                      | Move tag page title into Tera template     |          |
+| Planned error variants not yet implemented                              | LOW      | Plan specified MissingSectionIndex, OrphanedNavEntry, RenderFailure, StaticAssetCopy — these error modes don't exist in code yet | Add when error conditions are implemented  |          |
 
 ## Deviation Log
 
 <!-- Populated during execution -->
 
-| Commit | Planned                                       | Actual                                                   | Rationale                                                                                                                                                                                                        |
-| :----- | :-------------------------------------------- | :------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C4     | `Section.items: BTreeMap<SortKey, Content>`   | `Section.items: Vec<Content>` sorted at construction     | Vec is simpler and sufficient — items are immutable after construction, BTreeMap adds overhead without benefit                                                                                                   |
-| C4     | — (not planned)                               | Removed `Section.path` and `Section.content_root`        | Discovered as vestigial after `collect_items()` removal — 0 external readers remained                                                                                                                            |
-| C7     | `SiteManifest.nav: BTreeSet<NavItem>`         | `SiteManifest.nav: Vec<NavItem>` sorted at construction  | NavItem's PartialEq ignores path/children — BTreeSet would silently deduplicate items sharing (weight, label)                                                                                                    |
-| P3     | Render catamorphism dispatches all 7 variants | 5-variant coproduct: Code, Math, Diagram, Heading, Prose | Model refined: Text, Link, Image removed. Text subsumed by Prose. Link/Image were overengineered — reference extraction is a Parse side-channel (`Content.links`), not a block type. Prose is the identity case. |
+| Commit | Planned                                                                                                   | Actual                                                   | Rationale                                                                                                                                                                                                        |
+| :----- | :-------------------------------------------------------------------------------------------------------- | :------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C4     | `Section.items: BTreeMap<SortKey, Content>`                                                               | `Section.items: Vec<Content>` sorted at construction     | Vec is simpler and sufficient — items are immutable after construction, BTreeMap adds overhead without benefit                                                                                                   |
+| C4     | — (not planned)                                                                                           | Removed `Section.path` and `Section.content_root`        | Discovered as vestigial after `collect_items()` removal — 0 external readers remained                                                                                                                            |
+| C7     | `SiteManifest.nav: BTreeSet<NavItem>`                                                                     | `SiteManifest.nav: Vec<NavItem>` sorted at construction  | NavItem's PartialEq ignores path/children — BTreeSet would silently deduplicate items sharing (weight, label)                                                                                                    |
+| P3     | Render catamorphism dispatches all 7 variants                                                             | 5-variant coproduct: Code, Math, Diagram, Heading, Prose | Model refined: Text, Link, Image removed. Text subsumed by Prose. Link/Image were overengineered — reference extraction is a Parse side-channel (`Content.links`), not a block type. Prose is the identity case. |
+| C16    | Error split includes new variants (MissingSectionIndex, OrphanedNavEntry, RenderFailure, StaticAssetCopy) | Split existing 10 variants only — no new variants added  | New variants are aspirational: they represent error modes that currently don't exist in code. Adding empty variants would be dead code. Deferred to when the error conditions are actually implemented.          |
 
 ## Retrospective
 
