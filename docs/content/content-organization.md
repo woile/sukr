@@ -21,6 +21,7 @@ That's it. Paths mirror exactly, with `.md` becoming `.html`.
 ```text
 content/
 ├── _index.md           # Homepage (required)
+├── _404.md             # → /404.html (custom error page, optional)
 ├── about.md            # → /about.html
 ├── contact.md          # → /contact.html
 ├── blog/               # Section directory
@@ -41,6 +42,26 @@ A section is any directory containing `_index.md`. This file:
 3. Appears in the navigation
 
 Directories without `_index.md` are ignored.
+
+## Custom 404 Page
+
+To add a custom "not found" page, create `content/_404.md`:
+
+```markdown
++++
+title = "Page Not Found"
++++
+
+# Page Not Found
+
+The page you're looking for doesn't exist or has been moved.
+
+[Return to the homepage](/)
+```
+
+sukr renders this to `404.html` in the output root. The file is **optional** — if you don't create `_404.md`, no 404 page is generated.
+
+Most static hosts (Cloudflare Pages, Netlify, GitHub Pages, Vercel) automatically serve `/404.html` when a visitor hits an unmatched route. No host-side configuration is needed beyond having the file present.
 
 ## Section Discovery
 
@@ -95,6 +116,7 @@ Without nested navigation (the default), only top-level items appear in the nav.
 | Source Path              | Output Path              | URL                |
 | ------------------------ | ------------------------ | ------------------ |
 | `content/_index.md`      | `public/index.html`      | `/`                |
+| `content/_404.md`        | `public/404.html`        | `/404.html`        |
 | `content/about.md`       | `public/about.html`      | `/about.html`      |
 | `content/blog/_index.md` | `public/blog/index.html` | `/blog/`           |
 | `content/blog/hello.md`  | `public/blog/hello.html` | `/blog/hello.html` |
@@ -104,4 +126,5 @@ Without nested navigation (the default), only top-level items appear in the nav.
 - No config files for routing
 - Directory names become URL segments
 - `_index.md` = section index, not a regular page
+- `_404.md` = custom error page, rendered to `404.html` at output root
 - Flat output structure (no nested `index.html` per page)
