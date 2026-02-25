@@ -33,6 +33,17 @@ Feed generation happens automatically when any content exists in a section with 
 
 Posts are sorted by date (newest first), matching the blog section ordering.
 
+## Disabling Feeds
+
+To suppress feed generation entirely, add to `site.toml`:
+
+```toml
+[feed]
+enabled = false
+```
+
+Feeds are enabled by default.
+
 ## Linking to the Feed
 
 Add a link in your `base.html` template:

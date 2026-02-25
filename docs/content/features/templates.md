@@ -11,8 +11,7 @@ sukr uses [Tera](https://keats.github.io/tera/), a Jinja2-like templating engine
 ```text
 templates/
 ├── base.html               # Shared layout (required)
-├── page.html               # Standalone pages
-├── homepage.html           # Site homepage
+├── page.html               # Standalone pages and homepage
 ├── section/
 │   ├── default.html        # Fallback section index
 │   ├── blog.html           # Blog section index
@@ -59,7 +58,7 @@ Each nav item has:
 - `label` — Display text
 - `path` — URL path
 - `weight` — Sort order
-- `children` — Child nav items (when `nested_nav` is true)
+- `children` — Child nav items (when `config.nav.nested` is true)
 
 ### Page Templates
 
@@ -94,6 +93,13 @@ Each anchor in `anchors` has:
 | `item.date`        | Publication date    |
 | `item.path`        | URL path            |
 | `item.slug`        | URL slug            |
+
+### Tag Templates
+
+| Variable | Description                          |
+| -------- | ------------------------------------ |
+| `tag`    | The tag name                         |
+| `items`  | Array of content items with this tag |
 
 ## Template Override
 

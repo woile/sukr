@@ -41,4 +41,4 @@ weight = 1             # Nav order
 3. Add content: `content/recipes/pasta.md`
 4. Optionally create template: `templates/section/recipes.html`
 
-That's it. sukr handles the rest.
+If no `section/recipes.html` template exists, sukr falls back to `section/default.html`. A custom template is only needed when you want a different layout for that section.

@@ -63,6 +63,32 @@ sukr renders this to `404.html` in the output root. The file is **optional** —
 
 Most static hosts (Cloudflare Pages, Netlify, GitHub Pages, Vercel) automatically serve `/404.html` when a visitor hits an unmatched route. No host-side configuration is needed beyond having the file present.
 
+## Draft Mode
+
+Set `draft = true` in frontmatter to exclude content from the build:
+
+```toml
++++
+title = "Work in Progress"
+draft = true
++++
+```
+
+Drafts are filtered from **all output** — page rendering, navigation, section listings, feeds, and the sitemap. The file stays in your content directory but produces no HTML. Remove the field (or set `draft = false`) to publish.
+
+## Aliases (Redirects)
+
+Aliases let you redirect old URLs to a page's current location. Set `aliases` in frontmatter:
+
+```toml
++++
+title = "New Location"
+aliases = ["/old/path", "/another/old/path"]
++++
+```
+
+For each alias, sukr generates an HTML redirect stub using `<meta http-equiv="refresh">`. Bare paths like `/old/path` produce `/old/path/index.html`; paths with extensions like `/old/page.html` are used as-is.
+
 ## Section Discovery
 
 sukr automatically discovers sections during the build:

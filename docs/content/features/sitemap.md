@@ -27,12 +27,24 @@ The sitemap includes URLs for:
 - Section index pages (`/blog/index.html`, etc.)
 - All content items within sections
 - Standalone pages (top-level `.md` files)
+- Tag listing pages (`/tags/<tag>.html`), if any tags exist
 
 ## Auto-generation
 
 Sitemap generation happens automatically during every build. No configuration required.
 
 URLs use the `base_url` from `site.toml` to construct absolute URLs as required by the sitemap protocol.
+
+## Disabling the Sitemap
+
+To suppress sitemap generation, add to `site.toml`:
+
+```toml
+[sitemap]
+enabled = false
+```
+
+The sitemap is enabled by default.
 
 ## Last Modified Dates
 
