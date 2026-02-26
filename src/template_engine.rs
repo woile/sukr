@@ -59,13 +59,14 @@ impl TemplateEngine {
         config: &SiteConfig,
         nav: &[NavItem],
         anchors: &[Anchor],
+        absolute: bool,
     ) -> CompileResult<String> {
         let template = content
             .frontmatter
             .template
             .as_deref()
             .unwrap_or(TEMPLATE_PAGE);
-        let mut ctx = self.base_context(page_path, config, nav);
+        let mut ctx = self.base_context(page_path, config, nav, absolute);
         ctx.insert("title", &content.frontmatter.title);
         ctx.insert(
             "page",
@@ -91,7 +92,7 @@ impl TemplateEngine {
             .template
             .as_deref()
             .unwrap_or(TEMPLATE_CONTENT_DEFAULT);
-        let mut ctx = self.base_context(page_path, config, nav);
+        let mut ctx = self.base_context(page_path, config, nav, false);
         ctx.insert("title", &content.frontmatter.title);
         ctx.insert(
             "page",
@@ -122,7 +123,7 @@ impl TemplateEngine {
             TEMPLATE_SECTION_DEFAULT.to_string()
         };
 
-        let mut ctx = self.base_context(page_path, config, nav);
+        let mut ctx = self.base_context(page_path, config, nav, false);
         ctx.insert("title", &section.frontmatter.title);
         ctx.insert(
             "section",
@@ -143,7 +144,7 @@ impl TemplateEngine {
         config: &SiteConfig,
         nav: &[NavItem],
     ) -> CompileResult<String> {
-        let mut ctx = self.base_context(page_path, config, nav);
+        let mut ctx = self.base_context(page_path, config, nav, false);
         ctx.insert("title", tag);
         ctx.insert("tag", tag);
         ctx.insert("items", items);
@@ -151,12 +152,28 @@ impl TemplateEngine {
     }
 
     /// Build base context with common variables.
-    fn base_context(&self, page_path: &str, config: &SiteConfig, nav: &[NavItem]) -> Context {
+    ///
+    /// When `absolute` is true, `prefix` is set to the empty string so that
+    /// template asset references (`{{ prefix }}/style.css`) produce absolute
+    /// root paths (`/style.css`). This is required for pages whose serving
+    /// location is unknown at build time (e.g., the 404 page).
+    fn base_context(
+        &self,
+        page_path: &str,
+        config: &SiteConfig,
+        nav: &[NavItem],
+        absolute: bool,
+    ) -> Context {
         let mut ctx = Context::new();
         ctx.insert("config", &ConfigContext::from(config));
         ctx.insert("nav", nav);
         ctx.insert("page_path", page_path);
-        ctx.insert("prefix", &relative_prefix(page_path));
+        let prefix = if absolute {
+            String::new()
+        } else {
+            relative_prefix(page_path)
+        };
+        ctx.insert("prefix", &prefix);
         ctx
     }
 }
@@ -296,6 +313,31 @@ mod tests {
     #[test]
     fn test_relative_prefix_depth_2() {
         assert_eq!(relative_prefix("/blog/posts/foo.html"), "../..");
+    }
+
+    #[test]
+    fn test_absolute_prefix_produces_empty_string() {
+        // The 404 page (and any future pages with unknown serving location)
+        // must use absolute asset paths. Verify that base_context with
+        // absolute=true produces an empty prefix.
+        let engine = TemplateEngine {
+            tera: Tera::default(),
+        };
+        let config = SiteConfig {
+            title: "Test".to_string(),
+            author: "Author".to_string(),
+            base_url: "https://example.com".to_string(),
+            paths: crate::config::PathsConfig::default(),
+            nav: crate::config::NavConfig::default(),
+            feed: crate::config::FeedConfig::default(),
+            sitemap: crate::config::SitemapConfig::default(),
+        };
+        let nav: Vec<NavItem> = vec![];
+
+        let ctx = engine.base_context("/404.html", &config, &nav, true);
+        // Tera Context doesn't expose get(), so verify via JSON serialization
+        let json = ctx.into_json();
+        assert_eq!(json["prefix"], "", "absolute prefix must be empty string");
     }
 
     #[test]

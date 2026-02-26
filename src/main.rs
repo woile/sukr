@@ -184,6 +184,7 @@ fn run(config_path: &Path) -> Result<()> {
             &config,
             &manifest.nav,
             &anchors,
+            false,
         )?;
         write_output(&output_dir, page, html)?;
     }
@@ -273,6 +274,7 @@ fn generate_homepage(
         config,
         &manifest.nav,
         &anchors,
+        false,
     )?;
 
     let out_path = output_dir.join(OUTPUT_INDEX);
@@ -309,6 +311,7 @@ fn generate_404(
         config,
         nav,
         &anchors,
+        true, // 404 needs absolute paths — serving location is unknown
     )?;
 
     let out_path = output_dir.join(OUTPUT_404);
