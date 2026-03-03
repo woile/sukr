@@ -266,6 +266,14 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
     let mut image_alt_buf: Option<String> = None;
     let mut image_attrs: Option<(String, String)> = None; // (src, title)
 
+    // Footnote numbering: GitHub-style sequential numbers regardless of label
+    let mut footnote_counter: usize = 0;
+    let mut footnote_numbers: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
+    let mut footnote_name: Option<String> = None;
+    let mut footnote_buf = String::new(); // accumulates HTML inside a definition
+    let mut footnote_defs: Vec<(String, String)> = Vec::new(); // (label, html)
+
     /// Flush accumulated prose to a Prose block if non-empty.
     fn flush_prose(buf: &mut String, blocks: &mut Vec<ContentBlock>) {
         if !buf.is_empty() {
@@ -458,9 +466,22 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
             Event::Start(Tag::Strikethrough) => prose_buf.push_str("<del>"),
             Event::End(TagEnd::Strikethrough) => prose_buf.push_str("</del>"),
             Event::Start(Tag::FootnoteDefinition(name)) => {
-                prose_buf.push_str(&format!("<div class=\"footnote\" id=\"fn-{}\">", name));
+                // Flush any pending prose before switching to footnote buffer
+                flush_prose(&mut prose_buf, &mut blocks);
+                // Swap: prose_buf becomes the footnote accumulator
+                std::mem::swap(&mut prose_buf, &mut footnote_buf);
+                prose_buf.clear();
+                footnote_name = Some(name.to_string());
             },
-            Event::End(TagEnd::FootnoteDefinition) => prose_buf.push_str("</div>\n"),
+            Event::End(TagEnd::FootnoteDefinition) => {
+                if let Some(name) = footnote_name.take() {
+                    // prose_buf currently holds the footnote content
+                    let content = std::mem::take(&mut prose_buf);
+                    // Swap back: restore the real prose_buf
+                    std::mem::swap(&mut prose_buf, &mut footnote_buf);
+                    footnote_defs.push((name, content));
+                }
+            },
             Event::Start(Tag::DefinitionList) => prose_buf.push_str("<dl>"),
             Event::End(TagEnd::DefinitionList) => prose_buf.push_str("</dl>\n"),
             Event::Start(Tag::DefinitionListTitle) => prose_buf.push_str("<dt>"),
@@ -491,9 +512,17 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
                 blocks.push(ContentBlock::Prose("<hr />\n".to_string()));
             },
             Event::FootnoteReference(name) => {
+                let num = footnote_numbers
+                    .get(name.as_ref())
+                    .copied()
+                    .unwrap_or_else(|| {
+                        footnote_counter += 1;
+                        footnote_numbers.insert(name.to_string(), footnote_counter);
+                        footnote_counter
+                    });
                 prose_buf.push_str(&format!(
-                    "<sup class=\"footnote-ref\"><a href=\"#fn-{}\">{}</a></sup>",
-                    name, name
+                    "<sup class=\"footnote-ref\" id=\"fn-ref-{}\"><a href=\"#fn-{}\">{}</a></sup>",
+                    num, num, num
                 ));
             },
             Event::TaskListMarker(checked) => {
@@ -507,6 +536,31 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
     }
 
     flush_prose(&mut prose_buf, &mut blocks);
+
+    // Emit footnotes sorted by reference order (assigned number)
+    if !footnote_defs.is_empty() {
+        let mut sorted_fns: Vec<(usize, String, String)> = footnote_defs
+            .into_iter()
+            .map(|(label, html)| {
+                let num = footnote_numbers.get(&label).copied().unwrap_or(0);
+                (num, label, html)
+            })
+            .collect();
+        sorted_fns.sort_by_key(|(num, _, _)| *num);
+
+        let mut fn_html = String::new();
+        for (num, _label, content) in &sorted_fns {
+            fn_html.push_str(&format!(
+                "<div class=\"footnote\" id=\"fn-{}\"><span class=\"footnote-num\">[{}]</span> {}",
+                num, num, content
+            ));
+            fn_html.push_str(&format!(
+                " <a href=\"#fn-ref-{}\" class=\"footnote-backref\" title=\"Back to text\">↩</a></div>\n",
+                num
+            ));
+        }
+        blocks.push(ContentBlock::Prose(fn_html));
+    }
     (blocks, links)
 }
 
