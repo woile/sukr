@@ -103,6 +103,9 @@ pub enum CompileError {
         path: PathBuf,
         source: std::io::Error,
     },
+
+    /// Failed to render content (e.g., invalid LaTeX math).
+    Render(String),
 }
 
 impl fmt::Display for CompileError {
@@ -127,6 +130,7 @@ impl fmt::Display for CompileError {
             CompileError::ReadDir { path, source } => {
                 write!(f, "failed to read directory {}: {}", path.display(), source)
             },
+            CompileError::Render(msg) => write!(f, "render error: {}", msg),
         }
     }
 }
@@ -185,6 +189,12 @@ impl From<ParseError> for Error {
 impl From<CompileError> for Error {
     fn from(e: CompileError) -> Self {
         Error::Compile(e)
+    }
+}
+
+impl From<String> for CompileError {
+    fn from(e: String) -> Self {
+        CompileError::Render(e)
     }
 }
 

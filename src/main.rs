@@ -127,7 +127,8 @@ fn run(config_path: &Path) -> Result<()> {
         // Render individual content pages for all sections
         for item in items {
             eprintln!("  processing: {}", item.slug);
-            let (html_body, anchors) = render::render_blocks(&item.blocks);
+            let (html_body, anchors) =
+                render::render_blocks(&item.blocks).map_err(CompileError::Render)?;
             let page_path = format!("/{}", item.output_path.display());
             let html = engine.render_content(
                 item,
@@ -175,7 +176,8 @@ fn run(config_path: &Path) -> Result<()> {
     // 3. Process standalone pages
     for page in &manifest.pages {
         eprintln!("processing: {}", page.slug);
-        let (html_body, anchors) = render::render_blocks(&page.blocks);
+        let (html_body, anchors) =
+            render::render_blocks(&page.blocks).map_err(CompileError::Render)?;
         let page_path = format!("/{}", page.output_path.display());
         let html = engine.render_page(
             page,
@@ -266,7 +268,8 @@ fn generate_homepage(
 ) -> CompileResult<()> {
     eprintln!("generating: homepage");
 
-    let (html_body, anchors) = render::render_blocks(&manifest.homepage.blocks);
+    let (html_body, anchors) =
+        render::render_blocks(&manifest.homepage.blocks).map_err(CompileError::Render)?;
     let html = engine.render_page(
         &manifest.homepage,
         &html_body,
@@ -303,7 +306,8 @@ fn generate_404(
 ) -> CompileResult<()> {
     eprintln!("generating: 404 page");
 
-    let (html_body, anchors) = render::render_blocks(&page_404.blocks);
+    let (html_body, anchors) =
+        render::render_blocks(&page_404.blocks).map_err(CompileError::Render)?;
     let html = engine.render_page(
         page_404,
         &html_body,

@@ -51,7 +51,7 @@ pub enum ContentBlock {
         language: Option<String>,
         source: String,
     },
-    /// Mathematical expression (latex2mathml). `display` = block vs inline.
+    /// Mathematical expression (pulldown-latex). `display` = block vs inline.
     Math { source: String, display: bool },
     /// Diagram source (Mermaid).
     Diagram { source: String },

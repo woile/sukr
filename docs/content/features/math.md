@@ -36,7 +36,7 @@ Or fence with `math` language:
 
 ## Supported Features
 
-latex2mathml supports a broad subset of LaTeX math:
+pulldown-latex supports a broad subset of LaTeX math:
 
 | Feature                 | Syntax                                         | Rendered                                       |
 | ----------------------- | ---------------------------------------------- | ---------------------------------------------- |
@@ -65,7 +65,7 @@ $$i\hbar\frac{\partial}{\partial t}\Psi = \hat{H}\Psi$$
 ## How It Works
 
 1. Math delimiters (`$...$`, `$$...$$`) are detected during parsing
-2. latex2mathml converts the expression to MathML
+2. pulldown-latex converts the expression to MathML
 3. Browsers render MathML natively — no fonts or JavaScript needed
 4. Output is pure HTML with embedded `<math>` elements
 

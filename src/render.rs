@@ -25,8 +25,11 @@ pub struct Anchor {
 /// the `ContentBlock` coproduct, applying build-time interception to the four
 /// intercepted variants and passing Prose through as identity.
 ///
-/// Returns the HTML output and a list of extracted heading anchors.
-pub fn render_blocks(blocks: &[crate::content::ContentBlock]) -> (String, Vec<Anchor>) {
+/// Returns the HTML output and a list of extracted heading anchors, or an
+/// error if math rendering fails.
+pub fn render_blocks(
+    blocks: &[crate::content::ContentBlock],
+) -> Result<(String, Vec<Anchor>), String> {
     use crate::content::ContentBlock;
 
     let mut html_output = String::new();
@@ -71,29 +74,11 @@ pub fn render_blocks(blocks: &[crate::content::ContentBlock]) -> (String, Vec<An
 
             // --- Intercepted: Math (LaTeX → MathML) ---
             ContentBlock::Math { source, display } => {
+                let rendered = crate::math::render_math(source, *display)
+                    .map_err(|e| format!("math render error in `{source}`: {e}"))?;
+                html_output.push_str(&rendered);
                 if *display {
-                    match crate::math::render_math(source, true) {
-                        Ok(rendered) => {
-                            html_output.push_str(&rendered);
-                            html_output.push('\n');
-                        },
-                        Err(e) => {
-                            eprintln!("math render error: {e}");
-                            html_output.push_str("<pre class=\"math-error\">");
-                            html_output.push_str(&html_escape(source));
-                            html_output.push_str("</pre>\n");
-                        },
-                    }
-                } else {
-                    match crate::math::render_math(source, false) {
-                        Ok(rendered) => html_output.push_str(&rendered),
-                        Err(e) => {
-                            eprintln!("math render error: {e}");
-                            html_output.push_str("<code class=\"math-error\">");
-                            html_output.push_str(&html_escape(source));
-                            html_output.push_str("</code>");
-                        },
-                    }
+                    html_output.push('\n');
                 }
             },
 
@@ -123,7 +108,7 @@ pub fn render_blocks(blocks: &[crate::content::ContentBlock]) -> (String, Vec<An
         }
     }
 
-    (html_output, anchors)
+    Ok((html_output, anchors))
 }
 
 /// Convert heading text to a URL-friendly slug ID.
@@ -146,7 +131,7 @@ mod tests {
     /// Helper: parse markdown and render via the full pipeline.
     fn render_md(md: &str) -> (String, Vec<Anchor>) {
         let (blocks, _links) = parse_blocks(md);
-        render_blocks(&blocks)
+        render_blocks(&blocks).unwrap()
     }
 
     #[test]

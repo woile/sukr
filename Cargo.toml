@@ -49,8 +49,8 @@ tree-sitter-yaml       = "0.7"
 # These crates compile rich content to static HTML/SVG at build time, avoiding
 # the 300KB+ JavaScript bundles typical of client-side rendering.
 # ─────────────────────────────────────────────────────────────────────────────
-latex2mathml        = "0.2"                                         # LaTeX math → MathML
 mermaid-rs-renderer = { version = "0.1", default-features = false } # Diagrams → SVG
+pulldown-latex      = "0.7"                                         # LaTeX math → MathML
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CSS Processing
@@ -68,6 +68,7 @@ chrono = { version = "0.4", default-features = false, features = ["serde"] }
 serde  = { version = "1", features = ["derive"] }
 tera   = "1"
 toml   = "0.8"
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Patches

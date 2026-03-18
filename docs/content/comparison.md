@@ -34,7 +34,7 @@ This page provides a factual comparison of sukr with other popular static site g
 
 ## Math Rendering
 
-**sukr** renders LaTeX math to MathML at build time using latex2mathml. The output is browser-native — no JavaScript required in the browser. Modern browsers render MathML directly.
+**sukr** renders LaTeX math to MathML at build time using pulldown-latex. The output is browser-native — no JavaScript required in the browser. Modern browsers render MathML directly.
 
 **Zola, Hugo, Eleventy** typically require client-side JavaScript (MathJax or KaTeX.js) to render math, or external tooling pipelines.
 
