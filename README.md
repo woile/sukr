@@ -13,7 +13,7 @@ sukr transforms Markdown content into high-performance static HTML. No bloated r
 Most static site generators punt rich content to the browser. sukr doesn't.
 
 - **Tree-sitter syntax highlighting** — Proper parsing, not regex. Supports language injection (Nix shells, HTML scripts).
-- **Build-time math** — KaTeX renders LaTeX to static HTML. No 300KB JavaScript bundle.
+- **Build-time math** — LaTeX renders to native MathML. No 300KB JavaScript bundle.
 - **Build-time diagrams** — Mermaid compiles to inline SVG. Diagrams load instantly.
 - **Tera templates** — Customize layouts without recompiling.
 - **Monorepo support** — Multiple sites via `-c` flag.

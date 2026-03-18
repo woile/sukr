@@ -18,7 +18,14 @@ use std::path::Path;
 /// Returns minified CSS string on success.
 pub fn bundle_css(path: &Path) -> CompileResult<String> {
     let fs = FileProvider::new();
-    let mut bundler = Bundler::new(&fs, None, ParserOptions::default());
+    let mut bundler = Bundler::new(
+        &fs,
+        None,
+        ParserOptions {
+            error_recovery: true,
+            ..ParserOptions::default()
+        },
+    );
 
     let mut stylesheet = bundler
         .bundle(path)

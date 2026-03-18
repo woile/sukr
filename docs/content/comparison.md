@@ -8,15 +8,15 @@ This page provides a factual comparison of sukr with other popular static site g
 
 ## Feature Matrix
 
-| Feature                   |      sukr       |  Zola   |     Hugo     |    Eleventy     |
-| :------------------------ | :-------------: | :-----: | :----------: | :-------------: |
-| **Language**              |      Rust       |  Rust   |      Go      |     Node.js     |
-| **Single Binary**         |       ✅        |   ✅    |      ✅      |       ❌        |
-| **Syntax Highlighting**   |   Tree-sitter   | syntect |    Chroma    |  Plugin-based   |
-| **Build-time Math**       | ✅ KaTeX→MathML |   ❌    |      ❌      | Plugin required |
-| **Build-time Diagrams**   | ✅ Mermaid→SVG  |   ❌    |      ❌      | Plugin required |
-| **JS-Free Rich Content**¹ |       ✅        |   ❌    |      ❌      |  Configurable   |
-| **Template Engine**       |      Tera       |  Tera   | Go templates |    Multiple     |
+| Feature                   |      sukr      |  Zola   |     Hugo     |    Eleventy     |
+| :------------------------ | :------------: | :-----: | :----------: | :-------------: |
+| **Language**              |      Rust      |  Rust   |      Go      |     Node.js     |
+| **Single Binary**         |       ✅       |   ✅    |      ✅      |       ❌        |
+| **Syntax Highlighting**   |  Tree-sitter   | syntect |    Chroma    |  Plugin-based   |
+| **Build-time Math**       |   ✅ MathML    |   ❌    |      ❌      | Plugin required |
+| **Build-time Diagrams**   | ✅ Mermaid→SVG |   ❌    |      ❌      | Plugin required |
+| **JS-Free Rich Content**¹ |       ✅       |   ❌    |      ❌      |  Configurable   |
+| **Template Engine**       |      Tera      |  Tera   | Go templates |    Multiple     |
 
 ¹ _All generators can produce JS-free HTML for basic content. This row refers to built-in math and diagram rendering without client-side JavaScript. Zola and Hugo require external JS libraries (MathJax, Mermaid.js) for these features._
 
@@ -34,7 +34,7 @@ This page provides a factual comparison of sukr with other popular static site g
 
 ## Math Rendering
 
-**sukr** renders LaTeX math to MathML at build time using KaTeX. The output is browser-native — no JavaScript required in the browser. Modern browsers render MathML directly.
+**sukr** renders LaTeX math to MathML at build time using latex2mathml. The output is browser-native — no JavaScript required in the browser. Modern browsers render MathML directly.
 
 **Zola, Hugo, Eleventy** typically require client-side JavaScript (MathJax or KaTeX.js) to render math, or external tooling pipelines.
 

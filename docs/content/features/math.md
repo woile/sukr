@@ -1,10 +1,10 @@
 +++
 title = "Math Rendering"
-description = "Build-time LaTeX math with KaTeX"
+description = "Build-time LaTeX math to MathML"
 weight = 5
 +++
 
-sukr renders LaTeX math expressions at build time using KaTeX, producing static HTML and CSS. No client-side JavaScript required.
+sukr renders LaTeX math expressions at build time to MathML. The output is browser-native — no client-side JavaScript required.
 
 ## Inline Math
 
@@ -36,7 +36,7 @@ Or fence with `math` language:
 
 ## Supported Features
 
-KaTeX supports a large subset of LaTeX math:
+latex2mathml supports a broad subset of LaTeX math:
 
 | Feature                 | Syntax                                         | Rendered                                       |
 | ----------------------- | ---------------------------------------------- | ---------------------------------------------- |
@@ -65,24 +65,9 @@ $$i\hbar\frac{\partial}{\partial t}\Psi = \hat{H}\Psi$$
 ## How It Works
 
 1. Math delimiters (`$...$`, `$$...$$`) are detected during parsing
-2. KaTeX renders the expression to HTML + CSS
-3. Required fonts are embedded inline
-4. Output is pure HTML—no JavaScript
-
-## Styling
-
-KaTeX output uses semantic classes. Customize appearance:
-
-```css
-.katex {
-  font-size: 1.1em;
-}
-
-.katex-display {
-  margin: 1.5em 0;
-  overflow-x: auto;
-}
-```
+2. latex2mathml converts the expression to MathML
+3. Browsers render MathML natively — no fonts or JavaScript needed
+4. Output is pure HTML with embedded `<math>` elements
 
 ## Error Handling
 
@@ -92,4 +77,4 @@ Invalid LaTeX produces an error message inline rather than breaking the build:
 $\invalid{command}$
 ```
 
-Renders with a red error indicator showing what went wrong.
+Renders with an error indicator showing what went wrong.

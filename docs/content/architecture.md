@@ -37,7 +37,7 @@ The discover phase also validates internal links — any `[link](../page.md)` po
 | `content.rs`         | Content type system, section/page discovery, navigation, link validation |
 | `render.rs`          | Block-by-block rendering — dispatches each content block to its renderer |
 | `highlight.rs`       | Tree-sitter syntax highlighting (14 languages)                           |
-| `math.rs`            | KaTeX rendering to MathML                                                |
+| `math.rs`            | latex2mathml rendering to MathML                                         |
 | `mermaid.rs`         | Mermaid diagrams to inline SVG                                           |
 | `css.rs`             | CSS bundling and minification via lightningcss                           |
 | `template_engine.rs` | Tera template loading and rendering                                      |
@@ -74,12 +74,12 @@ Non-intercepted content (paragraphs, lists, emphasis, inline code) is rendered t
 
 Traditional SSGs ship JavaScript for:
 
-| Feature                                                  | Typical Approach       | sukr Approach                                     |
-| :------------------------------------------------------- | :--------------------- | :------------------------------------------------ |
-| [Syntax highlighting](features/syntax-highlighting.html) | Prism.js, Highlight.js | Tree-sitter at build-time → `<span class="hl-*">` |
-| [Math rendering](features/math.html)                     | MathJax, KaTeX.js      | KaTeX at build-time → MathML (browser-native)     |
-| [Diagrams](features/mermaid.html)                        | Mermaid.js             | mermaid-rs at build-time → inline SVG             |
-| Mobile nav                                               | JavaScript toggle      | CSS `:has()` + checkbox hack                      |
+| Feature                                                  | Typical Approach       | sukr Approach                                        |
+| :------------------------------------------------------- | :--------------------- | :--------------------------------------------------- |
+| [Syntax highlighting](features/syntax-highlighting.html) | Prism.js, Highlight.js | Tree-sitter at build-time → `<span class="hl-*">`    |
+| [Math rendering](features/math.html)                     | MathJax, KaTeX.js      | latex2mathml at build-time → MathML (browser-native) |
+| [Diagrams](features/mermaid.html)                        | Mermaid.js             | mermaid-rs at build-time → inline SVG                |
+| Mobile nav                                               | JavaScript toggle      | CSS `:has()` + checkbox hack                         |
 
 The result: **zero bytes of JavaScript** in the output. Pages load instantly, work without JS enabled, and avoid the complexity of client-side hydration.
 
@@ -130,9 +130,9 @@ This avoids repeated directory scans during template rendering. Broken internal 
 
 sukr prioritizes **output quality** over minimal build-time footprint. Current dependency choices reflect this:
 
-| Feature  | Library    | Trade-off                                                                |
-| :------- | :--------- | :----------------------------------------------------------------------- |
-| Math     | KaTeX      | Full LaTeX coverage; heavier than minimal alternatives like latex2mathml |
-| Diagrams | mermaid-rs | High-fidelity SVG; uses headless rendering under the hood                |
+| Feature  | Library      | Trade-off                                                 |
+| :------- | :----------- | :-------------------------------------------------------- |
+| Math     | latex2mathml | Zero-dependency pure Rust; outputs native MathML          |
+| Diagrams | mermaid-rs   | High-fidelity SVG; uses headless rendering under the hood |
 
 Lighter alternatives exist and may be evaluated as they mature. The goal is browser-native output with zero client-side JavaScript—build-time weight is a secondary concern.

@@ -49,7 +49,7 @@ tree-sitter-yaml       = "0.7"
 # These crates compile rich content to static HTML/SVG at build time, avoiding
 # the 300KB+ JavaScript bundles typical of client-side rendering.
 # ─────────────────────────────────────────────────────────────────────────────
-katex-rs            = "0.2.3"                                       # LaTeX math → static HTML
+latex2mathml        = "0.2"                                         # LaTeX math → MathML
 mermaid-rs-renderer = { version = "0.1", default-features = false } # Diagrams → SVG
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -79,3 +79,9 @@ dagre_rust = { path = "patches/dagre_rust" }
 
 [dev-dependencies]
 tempfile = "3.24.0" # Test fixtures only
+
+
+[profile.release]
+lto       = true
+opt-level = "z"
+strip     = true

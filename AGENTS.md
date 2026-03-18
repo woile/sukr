@@ -31,7 +31,7 @@ The compiler implements an **Interceptor Pipeline**:
 
 1. **Ingest:** Walk `content/`, parse TOML frontmatter
 2. **Stream:** Feed Markdown to `pulldown-cmark` event parser
-3. **Intercept:** Route code blocks to Tree-sitter, Mermaid, KaTeX
+3. **Intercept:** Route code blocks to Tree-sitter, Mermaid, latex2mathml
 4. **Render:** Push modified events to HTML writer
 5. **Layout:** Wrap in Tera templates (runtime, user-customizable)
 6. **Write:** Output to `public/`

@@ -14,7 +14,7 @@
   --success: #3fb950;
 }
 
-* {
+*:not(math, math *) {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -279,16 +279,10 @@ a:hover {
 }
 
 /* Math (native MathML rendering) */
-.math-display {
-  display: block;
+math[display="block"] {
   margin: 1rem 0;
   overflow-x: auto;
   text-align: center;
-}
-
-/* Hide KaTeX HTML layer, use browser's native MathML instead */
-.katex-html {
-  display: none;
 }
 
 /* Code */

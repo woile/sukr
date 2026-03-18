@@ -1,7 +1,7 @@
 //! Content block rendering — the Render catamorphism.
 //!
 //! Dispatches over `ContentBlock` variants: Code → tree-sitter highlighting,
-//! Math → KaTeX MathML, Diagram → Mermaid SVG, Heading → slug/anchor/pilcrow,
+//! Math → MathML, Diagram → Mermaid SVG, Heading → slug/anchor/pilcrow,
 //! Prose → identity passthrough.
 
 use crate::escape::{code_escape, html_escape};
@@ -69,14 +69,13 @@ pub fn render_blocks(blocks: &[crate::content::ContentBlock]) -> (String, Vec<An
                 },
             },
 
-            // --- Intercepted: Math (KaTeX → MathML) ---
+            // --- Intercepted: Math (LaTeX → MathML) ---
             ContentBlock::Math { source, display } => {
                 if *display {
                     match crate::math::render_math(source, true) {
                         Ok(rendered) => {
-                            html_output.push_str("<div class=\"math-display\">\n");
                             html_output.push_str(&rendered);
-                            html_output.push_str("\n</div>\n");
+                            html_output.push('\n');
                         },
                         Err(e) => {
                             eprintln!("math render error: {e}");
