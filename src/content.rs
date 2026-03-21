@@ -11,6 +11,7 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
+use whatlang;
 
 /// Conventional filename for section index pages.
 pub const SECTION_INDEX: &str = "_index.md";
@@ -629,6 +630,7 @@ impl PartialOrd for NavItem {
         Some(self.cmp(other))
     }
 }
+pub type Lang = String;
 
 /// Parsed frontmatter from a content file.
 #[derive(Debug, Clone, Deserialize)]
@@ -664,6 +666,9 @@ pub struct Frontmatter {
     /// Alternative URL paths that redirect to this content
     #[serde(default)]
     pub aliases: Vec<String>,
+    /// Language set by user
+    #[serde(default)]
+    pub lang: Option<Lang>,
 }
 
 /// A content item ready for rendering.
@@ -679,6 +684,8 @@ pub struct Content {
     pub blocks: Vec<ContentBlock>,
     /// Inter-page references (populated in Phase 2).
     pub links: Vec<LinkTarget>,
+    /// Resolved language, explicit or detected (ISO 639-3)
+    pub lang: Option<Lang>,
 }
 
 impl Content {
@@ -726,6 +733,7 @@ impl Content {
         };
 
         let (blocks, links) = parse_blocks(&body);
+        let lang = resolve_lang(&frontmatter.lang, &body);
 
         Ok(Content {
             frontmatter,
@@ -735,7 +743,23 @@ impl Content {
             output_path,
             blocks,
             links,
+            lang,
         })
+    }
+}
+
+/// Resolve the language
+fn resolve_lang(user_provided: &Option<Lang>, body: &str) -> Option<Lang> {
+    match user_provided {
+        Some(lang) => Some(lang.to_owned()),
+        None => {
+            let info = whatlang::detect(body)?;
+            let lang = info.lang();
+            if info.is_reliable() {
+                return Some(lang.code().to_owned());
+            }
+            None
+        },
     }
 }
 
@@ -1677,6 +1701,7 @@ mod tests {
             toc: None,
             draft: false,
             aliases: vec![],
+            lang: None,
         };
 
         let key = SortKey::for_content(&SectionType::Blog, &fm);
@@ -1701,6 +1726,7 @@ mod tests {
             toc: None,
             draft: false,
             aliases: vec![],
+            lang: None,
         };
 
         let key = SortKey::for_content(&SectionType::Blog, &fm);
@@ -1722,6 +1748,7 @@ mod tests {
             toc: None,
             draft: false,
             aliases: vec![],
+            lang: None,
         };
 
         // Projects always use WeightTitle, even if dated
@@ -1769,6 +1796,53 @@ mod tests {
         assert_ne!(internal, external);
         assert!(internal.is_internal);
         assert!(!external.is_internal);
+    }
+
+    // =========================================================================
+    // resolve_lang
+    // =========================================================================
+
+    #[test]
+    fn test_resolve_lang() {
+        // ISO 639-1 (2 letter code)
+        let lang = resolve_lang(&Some("en".to_owned()), "");
+        assert_eq!(lang, Some("en".to_owned()));
+
+        // detection ISO 639-3 (3 letter code)
+        let english_lang = resolve_lang(
+            &None,
+            r#"sukr uses [Tera](https://keats.github.io/tera/), a Jinja2-like templating engine. Templates are loaded at runtime, so you can modify them without recompiling sukr. See the [Tera documentation](https://keats.github.io/tera/docs/) for template authoring syntax (filters, blocks, inheritance).
+
+        ## Template Directory Structure
+
+
+        `base.html` defines two overridable blocks: `{% block title %}` for the HTML `<title>` tag, and `{% block content %}` for the page body.
+
+        ## Available Context Variables
+
+        This uses `templates/content/special.html` instead of the default.
+        "#,
+        );
+        assert_eq!(english_lang, Some("eng".to_owned()));
+
+        // testing that spanish is detected, spite of using some english lingo from computer science
+        let spanish_lang = resolve_lang(
+            &None,
+            r#"sukr usa [Tera](https://keats.github.io/tera/), un motor de templates similar a Jinja2.
+        Los Templates son cargados en runtime, lo que permite modificarlos sin tener que recompilar sukr.
+        Mira la [documentación de Tera](https://keats.github.io/tera/docs/) para mas información.
+
+        ## Estructura del directorio de los templates
+
+
+        `base.html` define dos bloques para sobreescribir: `{% block title %}` para el HTML atributo `<title>`, y `{% block content %}` para el cuerpo de la pagina.
+
+        ## Variables de context disponibles
+
+        Esto utiliza `templates/content/special.html` en vez del default.
+        "#,
+        );
+        assert_eq!(spanish_lang, Some("spa".to_owned()));
     }
 
     // =========================================================================

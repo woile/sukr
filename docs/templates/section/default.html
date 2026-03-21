@@ -6,7 +6,7 @@
   {% endif %}
   <nav class="section-nav">
     {% for item in items %}
-    <a href="{{ prefix }}{{ item.path }}" class="section-link">
+    <a href="{{ prefix }}{{ item.path }}" class="section-link" lang="{{ item.frontmatter.lang | default(value="en") }}">
       <strong>{{ item.frontmatter.title }}</strong>
       {% if item.frontmatter.description %}
       <span>{{ item.frontmatter.description }}</span>

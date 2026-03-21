@@ -68,6 +68,7 @@ chrono = { version = "0.4", default-features = false, features = ["serde"] }
 serde  = { version = "1", features = ["derive"] }
 tera   = "1"
 toml   = "1"
+whatlang = "0.18"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Patches

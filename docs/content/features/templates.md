@@ -62,13 +62,24 @@ Each nav item has:
 
 ### Page Templates
 
-| Variable           | Description                          |
-| ------------------ | ------------------------------------ |
-| `page.title`       | Page title                           |
-| `page.description` | Page description                     |
-| `page.toc`         | Whether TOC is enabled for this page |
-| `content`          | Rendered HTML content                |
-| `anchors`          | Array of heading anchors for TOC     |
+| Variable           | Description                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| `page.title`       | Page title                                                      |
+| `page.description` | Page description                                                |
+| `page.lang`        | Resolved document language from frontmatter or auto-detection   |
+| `page.toc`         | Whether TOC is enabled for this page                            |
+| `content`          | Rendered HTML content                                           |
+| `anchors`          | Array of heading anchors for TOC                                |
+
+Use `page.lang` when you want the current rendered document's language in templates. In multilingual sites, it is often better to keep a fixed site language on `<html>` for shared chrome and apply `page.lang` to the content container instead:
+
+```/dev/null/example.html#L1-5
+<html lang="en">
+  <body>
+    <article lang="{{ page.lang | default(value="en") }}">
+```
+
+This lets the layout remain in English, for example, while an individual page or post can still declare Spanish or another language.
 
 Each anchor in `anchors` has:
 
@@ -78,21 +89,27 @@ Each anchor in `anchors` has:
 
 ### Section Templates
 
-| Variable              | Description                       |
-| --------------------- | --------------------------------- |
-| `section.title`       | Section title                     |
-| `section.description` | Section description               |
-| `items`               | Array of content items in section |
+| Variable              | Description                                                   |
+| --------------------- | ------------------------------------------------------------- |
+| `section.title`       | Section title                                                 |
+| `section.description` | Section description                                           |
+| `section.lang`        | Resolved language for the section index document              |
+| `items`               | Array of content items in section                             |
 
 ### Content Item Fields (in `items`)
 
-| Variable           | Description         |
-| ------------------ | ------------------- |
-| `item.title`       | Content title       |
-| `item.description` | Content description |
-| `item.date`        | Publication date    |
-| `item.path`        | URL path            |
-| `item.slug`        | URL slug            |
+Items expose path and slug directly, and document metadata under `item.frontmatter`.
+
+| Variable                     | Description                                               |
+| ---------------------------- | --------------------------------------------------------- |
+| `item.path`                  | URL path                                                  |
+| `item.slug`                  | URL slug                                                  |
+| `item.frontmatter.title`     | Content title                                             |
+| `item.frontmatter.description` | Content description                                     |
+| `item.frontmatter.date`      | Publication date                                          |
+| `item.frontmatter.lang`      | Resolved item language from frontmatter or auto-detection |
+
+If you want listing cards to expose language, use `item.frontmatter.lang`. You do not need a separate `item.lang` unless you want a flatter API surface for convenience.
 
 ### Tag Templates
 
