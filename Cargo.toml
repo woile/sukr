@@ -57,7 +57,7 @@ pulldown-latex      = "0.7"                                         # LaTeX math
 # lightningcss handles @import resolution and minification. Alpha version used
 # for latest features; the API is stable enough for our use case.
 # ─────────────────────────────────────────────────────────────────────────────
-lightningcss = "1.0.0-alpha.70"
+lightningcss = "1.0.0-alpha.71"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Templating & Configuration
@@ -67,7 +67,7 @@ lightningcss = "1.0.0-alpha.70"
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 serde  = { version = "1", features = ["derive"] }
 tera   = "1"
-toml   = "0.8"
+toml   = "1"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
