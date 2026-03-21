@@ -1,11 +1,20 @@
-{% extends "base.html" %}
-{% block title %}Tagged: {{ tag }} | {{ config.title }}{% endblock title %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Tagged: {{ tag }} | {{ config.title
+}}{% endblock title %} {% block content %}
 <article class="section-index">
     <h1>Tagged: {{ tag }}</h1>
     <nav class="section-nav">
         {% for item in items %}
-        <a href="{{ prefix }}{{ item.path }}" class="section-link">
+        <a
+            href="{{ prefix }}{{ item.path }}"
+            class="section-link"
+            {%
+            if
+            item.frontmatter.lang
+            %}lang="{{ item.frontmatter.lang }}"
+            {%
+            endif
+            %}
+        >
             <strong>{{ item.frontmatter.title }}</strong>
             {% if item.frontmatter.description %}
             <span>{{ item.frontmatter.description }}</span>

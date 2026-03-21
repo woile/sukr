@@ -86,25 +86,52 @@ link_to = "https://..."        # External link (for project cards)
 tags = ["rust", "tutorial"]    # Tags for categorization
 draft = true                   # Exclude from output
 aliases = ["/old/path"]        # Redirect old URLs here
+lang = "en"                    # Optional explicit document language
 +++
 ```
 
 ### Frontmatter Fields
 
-| Field          | Type    | Default        | Description                                     |
-| -------------- | ------- | -------------- | ----------------------------------------------- |
-| `title`        | string  | _(required)_   | Page title                                      |
-| `description`  | string  | _(none)_       | Meta description                                |
-| `date`         | date    | _(none)_       | Publication date (YYYY-MM-DD, native TOML date) |
-| `weight`       | integer | `50`           | Sort order (lower = first)                      |
-| `nav_label`    | string  | title          | Override navigation label                       |
-| `section_type` | string  | directory name | Template dispatch (e.g., "blog", "projects")    |
-| `template`     | string  | _(none)_       | Custom template name                            |
-| `toc`          | boolean | global setting | Enable/disable table of contents for this page  |
-| `link_to`      | string  | _(none)_       | External URL (renders as link instead of page)  |
-| `tags`         | list    | `[]`           | Tags for categorization                         |
-| `draft`        | boolean | `false`        | Exclude content from output                     |
-| `aliases`      | list    | `[]`           | Old URL paths that redirect here                |
+| Field          | Type    | Default        | Description                                        |
+| -------------- | ------- | -------------- | -------------------------------------------------- |
+| `title`        | string  | _(required)_   | Page title                                         |
+| `description`  | string  | _(none)_       | Meta description                                   |
+| `date`         | date    | _(none)_       | Publication date (YYYY-MM-DD, native TOML date)    |
+| `weight`       | integer | `50`           | Sort order (lower = first)                         |
+| `nav_label`    | string  | title          | Override navigation label                          |
+| `section_type` | string  | directory name | Template dispatch (e.g., "blog", "projects")       |
+| `template`     | string  | _(none)_       | Custom template name                               |
+| `toc`          | boolean | global setting | Enable/disable table of contents for this page     |
+| `link_to`      | string  | _(none)_       | External URL (renders as link instead of page)     |
+| `tags`         | list    | `[]`           | Tags for categorization                            |
+| `draft`        | boolean | `false`        | Exclude content from output                        |
+| `aliases`      | list    | `[]`           | Old URL paths that redirect here                   |
+| `lang`         | string  | auto-detected  | Explicit document language; overrides detection    |
+
+### Language Resolution
+
+`sukr` resolves a document language in this order:
+
+1. If frontmatter sets `lang`, that value is used as-is.
+2. Otherwise, `sukr` attempts to detect the language from the Markdown body.
+3. If detection is not reliable, no language is exposed.
+
+This resolved value is available in templates:
+
+- `page.lang` for the current page or content document
+- `section.lang` for the current section index document
+- `item.frontmatter.lang` for items in section and tag listings
+
+`sukr` does not apply the resolved document language to `<html lang>` automatically. This lets you keep a site-level template language such as English while still marking individual documents or content regions with `page.lang` when needed.
+
+Use `lang` when you want to set document metadata explicitly, for example:
+
+```toml
++++
+title = "Hola"
+lang = "es"
++++
+```
 
 ### Section Types
 

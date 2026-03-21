@@ -70,7 +70,7 @@ impl TemplateEngine {
         ctx.insert("title", &content.frontmatter.title);
         ctx.insert(
             "page",
-            &FrontmatterContext::new(&content.frontmatter, config),
+            &PageMetaContext::new(&content.frontmatter, config, &content.lang),
         );
         ctx.insert("content", html_body);
         ctx.insert("anchors", anchors);
@@ -96,7 +96,7 @@ impl TemplateEngine {
         ctx.insert("title", &content.frontmatter.title);
         ctx.insert(
             "page",
-            &FrontmatterContext::new(&content.frontmatter, config),
+            &PageMetaContext::new(&content.frontmatter, config, &content.lang),
         );
         ctx.insert("content", html_body);
         ctx.insert("anchors", anchors);
@@ -111,7 +111,7 @@ impl TemplateEngine {
         &self,
         section: &Content,
         section_type: &str,
-        items: &[ContentContext],
+        items: &[ContentListItemContext],
         page_path: &str,
         config: &SiteConfig,
         nav: &[NavItem],
@@ -127,7 +127,7 @@ impl TemplateEngine {
         ctx.insert("title", &section.frontmatter.title);
         ctx.insert(
             "section",
-            &FrontmatterContext::new(&section.frontmatter, config),
+            &PageMetaContext::new(&section.frontmatter, config, &section.lang),
         );
         ctx.insert("items", items);
         self.render(&template, &ctx)
@@ -139,7 +139,7 @@ impl TemplateEngine {
     pub fn render_tag_page(
         &self,
         tag: &str,
-        items: &[ContentContext],
+        items: &[ContentListItemContext],
         page_path: &str,
         config: &SiteConfig,
         nav: &[NavItem],
@@ -225,26 +225,47 @@ impl From<&SiteConfig> for ConfigContext {
     }
 }
 
-/// Frontmatter context for templates.
+/// Template-facing metadata for a single rendered Markdown document.
+///
+/// This context is inserted into Tera as `page` for standalone pages and as
+/// `section` for section index pages. It contains the metadata templates need
+/// to render a document, including normalized values such as config-aware
+/// defaults and resolved language information.
+///
+/// Unlike the parsing-layer `Frontmatter` type, this struct is not limited to
+/// fields explicitly written in TOML. It may also contain metadata derived
+/// during compilation, such as a language resolved from `frontmatter.lang` or
+/// detected from the Markdown body.
+///
+/// Why this exists:
+/// - Keeps template data independent from raw frontmatter parsing
+/// - Exposes final document metadata in a shape templates can use directly
+/// - Ensures pages and section indexes share the same metadata contract
 #[derive(Serialize)]
-pub struct FrontmatterContext {
+pub struct PageMetaContext {
     pub title: String,
     pub description: Option<String>,
     pub date: Option<String>,
     pub tags: Vec<String>,
     pub weight: Option<i64>,
     pub link_to: Option<String>,
-    /// Enable table of contents (anchor nav in sidebar)
+    /// Enable table of contents (anchor FrontmatterContextnav in sidebar)
     pub toc: bool,
     /// Whether this content is a draft
     pub draft: bool,
     /// Alternative URL paths
     pub aliases: Vec<String>,
+    /// User defined language
+    pub lang: Option<crate::content::Lang>,
 }
 
-impl FrontmatterContext {
-    /// Create context from frontmatter with config fallback for toc.
-    pub fn new(fm: &crate::content::Frontmatter, config: &SiteConfig) -> Self {
+impl PageMetaContext {
+    /// Build template metadata for a rendered Markdown document.
+    pub fn new(
+        fm: &crate::content::Frontmatter,
+        config: &SiteConfig,
+        resolved_lang: &Option<crate::content::Lang>,
+    ) -> Self {
         Self {
             title: fm.title.clone(),
             description: fm.description.clone(),
@@ -255,23 +276,39 @@ impl FrontmatterContext {
             toc: fm.toc.unwrap_or(config.nav.toc),
             draft: fm.draft,
             aliases: fm.aliases.clone(),
+            lang: resolved_lang.to_owned(),
         }
     }
 }
 
-/// Content item context for section listings.
+/// Template-facing representation of a content item used in listings.
+///
+/// This context is used for arrays such as `items` in section and tag
+/// templates. It exposes the subset of document data needed to render cards,
+/// lists, and indexes, including metadata, path information, and any resolved
+/// fields that should be available to templates.
+///
+/// Unlike `PageMetaContext`, this struct does not represent the current page
+/// being rendered. It represents another Markdown document as an entry within
+/// a collection.
+///
+/// Why this exists:
+/// - Gives listing templates a stable, purpose-built item shape
+/// - Avoids coupling templates to the internal `Content` compiler model
+/// - Makes resolved values such as computed paths or detected language
+///   available in section and tag listings
 #[derive(Serialize)]
-pub struct ContentContext {
-    pub frontmatter: FrontmatterContext,
+pub struct ContentListItemContext {
+    pub frontmatter: PageMetaContext,
     pub body: String,
     pub slug: String,
     pub path: String,
 }
 
-impl ContentContext {
+impl ContentListItemContext {
     pub fn from_content(content: &Content, config: &SiteConfig) -> Self {
         Self {
-            frontmatter: FrontmatterContext::new(&content.frontmatter, config),
+            frontmatter: PageMetaContext::new(&content.frontmatter, config, &content.lang),
             body: content.body.clone(),
             slug: content.slug.clone(),
             path: format!("/{}", content.output_path.display()),
@@ -411,6 +448,7 @@ mod tests {
             toc: Some(true),
             draft: false,
             aliases: vec![],
+            lang: None,
         };
 
         // Frontmatter with explicit toc: false
@@ -427,6 +465,7 @@ mod tests {
             toc: Some(false),
             draft: false,
             aliases: vec![],
+            lang: None,
         };
 
         // Frontmatter with no toc specified (None)
@@ -443,28 +482,29 @@ mod tests {
             toc: None,
             draft: false,
             aliases: vec![],
+            lang: None,
         };
 
         // Explicit true overrides config false
-        let ctx = FrontmatterContext::new(&fm_explicit_true, &config_toc_false);
+        let ctx = PageMetaContext::new(&fm_explicit_true, &config_toc_false, &None);
         assert!(
             ctx.toc,
             "explicit toc: true should override config toc: false"
         );
 
         // Explicit false overrides config true
-        let ctx = FrontmatterContext::new(&fm_explicit_false, &config_toc_true);
+        let ctx = PageMetaContext::new(&fm_explicit_false, &config_toc_true, &None);
         assert!(
             !ctx.toc,
             "explicit toc: false should override config toc: true"
         );
 
         // None falls back to config true
-        let ctx = FrontmatterContext::new(&fm_none, &config_toc_true);
+        let ctx = PageMetaContext::new(&fm_none, &config_toc_true, &None);
         assert!(ctx.toc, "toc: None should fall back to config toc: true");
 
         // None falls back to config false
-        let ctx = FrontmatterContext::new(&fm_none, &config_toc_false);
+        let ctx = PageMetaContext::new(&fm_none, &config_toc_false, &None);
         assert!(!ctx.toc, "toc: None should fall back to config toc: false");
     }
 }

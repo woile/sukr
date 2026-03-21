@@ -17,7 +17,7 @@ mod template_engine;
 
 use crate::content::{Content, NavItem, OUTPUT_INDEX};
 use crate::error::{CompileError, CompileResult, ParseError, Result};
-use crate::template_engine::{ContentContext, TemplateEngine};
+use crate::template_engine::{ContentListItemContext, TemplateEngine};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -145,7 +145,7 @@ fn run(config_path: &Path) -> Result<()> {
         let page_path = format!("/{}/index.html", section.name);
         let item_contexts: Vec<_> = items
             .iter()
-            .map(|c| ContentContext::from_content(c, &config))
+            .map(|c| ContentListItemContext::from_content(c, &config))
             .collect();
         let html = engine.render_section(
             &section.index,
@@ -335,8 +335,8 @@ fn collect_tags(
     sections: &[content::Section],
     pages: &[Content],
     config: &config::SiteConfig,
-) -> BTreeMap<String, Vec<ContentContext>> {
-    let mut tags: BTreeMap<String, Vec<ContentContext>> = BTreeMap::new();
+) -> BTreeMap<String, Vec<ContentListItemContext>> {
+    let mut tags: BTreeMap<String, Vec<ContentListItemContext>> = BTreeMap::new();
 
     // Collect from section items
     for section in sections {
@@ -344,7 +344,7 @@ fn collect_tags(
             for tag in &item.frontmatter.tags {
                 tags.entry(tag.to_string())
                     .or_default()
-                    .push(ContentContext::from_content(item, config));
+                    .push(ContentListItemContext::from_content(item, config));
             }
         }
     }
@@ -354,7 +354,7 @@ fn collect_tags(
         for tag in &page.frontmatter.tags {
             tags.entry(tag.to_string())
                 .or_default()
-                .push(ContentContext::from_content(page, config));
+                .push(ContentListItemContext::from_content(page, config));
         }
     }
 
@@ -364,7 +364,7 @@ fn collect_tags(
 /// Write tag listing pages from pre-collected tag data.
 fn write_tag_pages(
     output_dir: &Path,
-    tags: &BTreeMap<String, Vec<ContentContext>>,
+    tags: &BTreeMap<String, Vec<ContentListItemContext>>,
     config: &config::SiteConfig,
     nav: &[NavItem],
     engine: &TemplateEngine,
