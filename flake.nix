@@ -33,7 +33,7 @@
           # rustChannel = "stable";
           toolchain = fenix.fromToolchainFile {
             file = ./rust-toolchain.toml;
-            sha256 = "sha256-qqF33vNuAdU5vua96VKVIwuc43j4EFeEXbjQ6+l4mO4=";
+            sha256 = "sha256-zC8E38iDVJ1oPIzCqTk/Ujo9+9kx9dXq7wAwPMpkpg0=";
           };
           rustplatform = pkgs.makeRustPlatform {
             cargo = toolchain;
