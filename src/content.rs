@@ -539,8 +539,8 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
                         footnote_counter
                     });
                 prose_buf.push_str(&format!(
-                    "<sup class=\"footnote-ref\" id=\"fn-ref-{}\"><a href=\"#fn-{}\" role=\"doc-noteref\">{}</a></sup>",
-                    num, num, num
+                    "<sup class=\"footnote-ref\" id=\"fn-ref-{}\"><a href=\"#fn-{}\" data-footnote=\"{}\" aria-label=\"Footnote {}\"></a></sup>",
+                    num, num, num, num
                 ));
             },
             Event::TaskListMarker(checked) => {
@@ -566,18 +566,18 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
             .collect();
         sorted_fns.sort_by_key(|(num, _, _)| *num);
 
-        let mut fn_html = String::from("<section class=\"footnotes\" role=\"doc-endnotes\">\n");
+        let mut fn_html = String::from("<aside class=\"footnotes\">\n");
         for (num, _label, content) in &sorted_fns {
             fn_html.push_str(&format!(
-                "<div class=\"footnote\" id=\"fn-{}\" role=\"doc-endnote\"><span class=\"footnote-num\">[{}]</span> {}",
+                "<div class=\"footnote\" id=\"fn-{}\"><span class=\"footnote-num\">[{}]</span> {}",
                 num, num, content
             ));
             fn_html.push_str(&format!(
-                " <a href=\"#fn-ref-{}\" class=\"footnote-backref\" role=\"doc-backlink\" title=\"Back to text\">↩</a></div>\n",
+                " <a href=\"#fn-ref-{}\" class=\"footnote-backref\" title=\"Back to text\">↩</a></div>\n",
                 num
             ));
         }
-        fn_html.push_str("</section>\n");
+        fn_html.push_str("</aside>\n");
         blocks.push(ContentBlock::Prose(fn_html));
     }
     (blocks, links)
