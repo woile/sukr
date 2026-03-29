@@ -68,6 +68,7 @@ Each nav item has:
 | `page.description` | Page description                                                |
 | `page.lang`        | Resolved document language from frontmatter or auto-detection   |
 | `page.toc`         | Whether TOC is enabled for this page                            |
+| `page.extra`       | Custom metadata table from frontmatter                          |
 | `content`          | Rendered HTML content                                           |
 | `anchors`          | Array of heading anchors for TOC                                |
 
@@ -94,6 +95,7 @@ Each anchor in `anchors` has:
 | `section.title`       | Section title                                                 |
 | `section.description` | Section description                                           |
 | `section.lang`        | Resolved language for the section index document              |
+| `section.extra`       | Custom metadata table from frontmatter                        |
 | `items`               | Array of content items in section                             |
 
 ### Content Item Fields (in `items`)
@@ -108,6 +110,7 @@ Items expose path and slug directly, and document metadata under `item.frontmatt
 | `item.frontmatter.description` | Content description                                     |
 | `item.frontmatter.date`      | Publication date                                          |
 | `item.frontmatter.lang`      | Resolved item language from frontmatter or auto-detection |
+| `item.frontmatter.extra`     | Custom metadata table from frontmatter                    |
 
 If you want listing cards to expose language, use `item.frontmatter.lang`. You do not need a separate `item.lang` unless you want a flatter API surface for convenience.
 

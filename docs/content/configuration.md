@@ -87,6 +87,10 @@ tags = ["rust", "tutorial"]    # Tags for categorization
 draft = true                   # Exclude from output
 aliases = ["/old/path"]        # Redirect old URLs here
 lang = "en"                    # Optional explicit document language
+
+[extra]                        # Custom metadata for templates
+author = "Alice"
+featured = true
 +++
 ```
 
@@ -107,6 +111,28 @@ lang = "en"                    # Optional explicit document language
 | `draft`        | boolean | `false`        | Exclude content from output                        |
 | `aliases`      | list    | `[]`           | Old URL paths that redirect here                   |
 | `lang`         | string  | auto-detected  | Explicit document language; overrides detection    |
+| `extra`        | table   | `{}`           | Custom metadata available in templates             |
+
+### Custom Metadata ([extra])
+
+The `[extra]` table allows you to define arbitrary metadata that is passed directly to your templates. This is useful for extending sukr without modifying the compiler.
+
+You can use any valid TOML structure, including nested tables and arrays:
+
+```toml
++++
+title = "Deep Dive"
+
+[extra]
+metadata = { version = "1.0", author = { name = "Alice", role = "Admin" } }
+[[extra.items]]
+name = "First"
+[[extra.items]]
+name = "Second"
++++
+```
+
+These variables are available in templates via `page.extra` (for pages) or `section.extra` (for section indexes). For example: `{{ page.extra.author }}` or `{{ page.extra.items.0.name }}`.
 
 ### Language Resolution
 

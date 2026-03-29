@@ -1,6 +1,6 @@
 //! Tera-based template engine for runtime HTML generation.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 
 use serde::Serialize;
@@ -257,6 +257,8 @@ pub struct PageMetaContext {
     pub aliases: Vec<String>,
     /// User defined language
     pub lang: Option<crate::content::Lang>,
+    /// Extra variables from frontmatter
+    pub extra: BTreeMap<String, toml::Value>,
 }
 
 impl PageMetaContext {
@@ -277,6 +279,7 @@ impl PageMetaContext {
             draft: fm.draft,
             aliases: fm.aliases.clone(),
             lang: resolved_lang.to_owned(),
+            extra: fm.extra.clone(),
         }
     }
 }
@@ -449,6 +452,7 @@ mod tests {
             draft: false,
             aliases: vec![],
             lang: None,
+            extra: std::collections::BTreeMap::new(),
         };
 
         // Frontmatter with explicit toc: false
@@ -466,6 +470,7 @@ mod tests {
             draft: false,
             aliases: vec![],
             lang: None,
+            extra: std::collections::BTreeMap::new(),
         };
 
         // Frontmatter with no toc specified (None)
@@ -483,6 +488,7 @@ mod tests {
             draft: false,
             aliases: vec![],
             lang: None,
+            extra: std::collections::BTreeMap::new(),
         };
 
         // Explicit true overrides config false

@@ -8,9 +8,11 @@ use crate::error::{ParseError, ParseResult, Result};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
+use toml::Value;
 use whatlang;
 
 /// Conventional filename for section index pages.
@@ -688,6 +690,9 @@ pub struct Frontmatter {
     /// Language set by user
     #[serde(default)]
     pub lang: Option<Lang>,
+    /// Extra variables defined in frontmatter
+    #[serde(default)]
+    pub extra: BTreeMap<String, Value>,
 }
 
 /// A content item ready for rendering.
@@ -1721,6 +1726,7 @@ mod tests {
             draft: false,
             aliases: vec![],
             lang: None,
+            extra: BTreeMap::new(),
         };
 
         let key = SortKey::for_content(&SectionType::Blog, &fm);
@@ -1746,6 +1752,7 @@ mod tests {
             draft: false,
             aliases: vec![],
             lang: None,
+            extra: BTreeMap::new(),
         };
 
         let key = SortKey::for_content(&SectionType::Blog, &fm);
@@ -1768,6 +1775,7 @@ mod tests {
             draft: false,
             aliases: vec![],
             lang: None,
+            extra: BTreeMap::new(),
         };
 
         // Projects always use WeightTitle, even if dated
@@ -2013,6 +2021,75 @@ mod tests {
         assert_eq!(links.len(), 1);
         assert!(links[0].is_internal);
         assert_eq!(links[0].url, "/img/photo.png");
+    }
+
+    #[test]
+    fn test_parse_frontmatter_with_extra_variables() {
+        let toml_str = r#"
+title = "Extra Test"
+[extra]
+author = "John Doe"
+priority = 1
+enabled = true
+"#;
+        let fm = parse_frontmatter(Path::new("test.md"), toml_str).unwrap();
+        assert_eq!(fm.title, "Extra Test");
+        assert_eq!(
+            fm.extra.get("author").unwrap().as_str().unwrap(),
+            "John Doe"
+        );
+        assert_eq!(fm.extra.get("priority").unwrap().as_integer().unwrap(), 1);
+        assert_eq!(fm.extra.get("enabled").unwrap().as_bool().unwrap(), true);
+    }
+
+    #[test]
+    fn test_parse_frontmatter_with_complex_nested_extra() {
+        let toml_str = r#"
+title = "Complex Extra"
+[extra]
+metadata = { version = "1.0", author = { name = "Alice", role = "Admin" } }
+[[extra.items]]
+# item 0
+[[extra.items]]
+# item 1
+[[extra.items]]
+# item 2
+[[extra.items]]
+# item 3
+name = "Deep Item"
+"#;
+        let fm = parse_frontmatter(Path::new("test.md"), toml_str).unwrap();
+
+        // Check nested maps
+        let metadata = fm.extra.get("metadata").unwrap().as_table().unwrap();
+        assert_eq!(metadata.get("version").unwrap().as_str().unwrap(), "1.0");
+
+        let author = metadata.get("author").unwrap().as_table().unwrap();
+        assert_eq!(author.get("name").unwrap().as_str().unwrap(), "Alice");
+        assert_eq!(author.get("role").unwrap().as_str().unwrap(), "Admin");
+
+        // Check deep array of maps (item index 3)
+        let items = fm.extra.get("items").unwrap().as_array().unwrap();
+        assert_eq!(items.len(), 4);
+        let item3 = items[3].as_table().unwrap();
+        assert_eq!(item3.get("name").unwrap().as_str().unwrap(), "Deep Item");
+    }
+
+    #[test]
+    fn test_parse_frontmatter_with_dot_separated_extra_keys() {
+        let toml_str = r#"
+title = "Dot Keys"
+[extra.site.metadata.social]
+twitter = "@user"
+github = "user"
+"#;
+        let fm = parse_frontmatter(Path::new("test.md"), toml_str).unwrap();
+
+        let site = fm.extra.get("site").unwrap().as_table().unwrap();
+        let metadata = site.get("metadata").unwrap().as_table().unwrap();
+        let social = metadata.get("social").unwrap().as_table().unwrap();
+        assert_eq!(social.get("twitter").unwrap().as_str().unwrap(), "@user");
+        assert_eq!(social.get("github").unwrap().as_str().unwrap(), "user");
     }
 
     // =========================================================================
