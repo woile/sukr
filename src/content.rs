@@ -343,18 +343,36 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
             // Intercepted: Math
             // =================================================================
             Event::InlineMath(latex) => {
-                flush_prose(&mut prose_buf, &mut blocks);
-                blocks.push(ContentBlock::Math {
-                    source: latex.to_string(),
-                    display: false,
-                });
+                if footnote_name.is_some() {
+                    // We are accumulating a footnote. Render eagerly and push to prose_buf.
+                    // This avoids breaking the footnote content model which expects HTML.
+                    match crate::math::render_math(&latex, false) {
+                        Ok(mathml) => prose_buf.push_str(&mathml),
+                        Err(e) => prose_buf
+                            .push_str(&format!("<span class=\"error\">Math error: {}</span>", e)),
+                    }
+                } else {
+                    flush_prose(&mut prose_buf, &mut blocks);
+                    blocks.push(ContentBlock::Math {
+                        source: latex.to_string(),
+                        display: false,
+                    });
+                }
             },
             Event::DisplayMath(latex) => {
-                flush_prose(&mut prose_buf, &mut blocks);
-                blocks.push(ContentBlock::Math {
-                    source: latex.to_string(),
-                    display: true,
-                });
+                if footnote_name.is_some() {
+                    match crate::math::render_math(&latex, true) {
+                        Ok(mathml) => prose_buf.push_str(&mathml),
+                        Err(e) => prose_buf
+                            .push_str(&format!("<span class=\"error\">Math error: {}</span>", e)),
+                    }
+                } else {
+                    flush_prose(&mut prose_buf, &mut blocks);
+                    blocks.push(ContentBlock::Math {
+                        source: latex.to_string(),
+                        display: true,
+                    });
+                }
             },
 
             // =================================================================
