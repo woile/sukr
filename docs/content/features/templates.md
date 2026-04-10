@@ -128,8 +128,8 @@ Set `template` in frontmatter to use a custom template:
 ```toml
 +++
 title = "Special Page"
-template = "special"
+template = "special.html"
 +++
 ```
 
-This uses `templates/content/special.html` instead of the default.
+This uses `templates/special.html` instead of the default.
