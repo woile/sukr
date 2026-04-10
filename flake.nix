@@ -76,7 +76,7 @@
                 taplo
                 pkg-config
                 nixfmt
-                nodePackages.prettier
+                prettier
                 miniserve # Dev server for testing
               ]
               ++ lib.optionals stdenv.isDarwin [
