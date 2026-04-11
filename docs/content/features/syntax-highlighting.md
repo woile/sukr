@@ -36,6 +36,7 @@ fn main() {
 | CSS        | `css`                 |
 | Markdown   | `markdown`, `md`      |
 | C          | `c`                   |
+| Slint      | `slint`               |
 
 ## Examples
 

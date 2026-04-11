@@ -33,4 +33,5 @@ Each language has its own subdirectory containing:
 - Rust
 - TOML
 - TypeScript
+- Slint
 - YAML

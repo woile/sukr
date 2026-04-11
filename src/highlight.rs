@@ -30,6 +30,7 @@ pub enum Language {
     Nix,
     Python,
     Rust,
+    Slint,
     Toml,
     TypeScript,
     Yaml,
@@ -50,6 +51,7 @@ impl Language {
             "nix" => Some(Language::Nix),
             "python" | "py" => Some(Language::Python),
             "rust" | "rs" => Some(Language::Rust),
+            "slint" => Some(Language::Slint),
             "toml" => Some(Language::Toml),
             "typescript" | "ts" | "tsx" => Some(Language::TypeScript),
             "yaml" | "yml" => Some(Language::Yaml),
@@ -76,9 +78,10 @@ impl Language {
             8 => Some(Language::Nix),
             9 => Some(Language::Python),
             10 => Some(Language::Rust),
-            11 => Some(Language::Toml),
-            12 => Some(Language::TypeScript),
-            13 => Some(Language::Yaml),
+            11 => Some(Language::Slint),
+            12 => Some(Language::Toml),
+            13 => Some(Language::TypeScript),
+            14 => Some(Language::Yaml),
             _ => None,
         }
     }
@@ -324,6 +327,7 @@ impl SukrLoader {
             (vec!["nix"], Language::Nix),
             (vec!["python", "py"], Language::Python),
             (vec!["rust", "rs"], Language::Rust),
+            (vec!["slint"], Language::Slint),
             (vec!["toml"], Language::Toml),
             (vec!["typescript", "ts", "tsx"], Language::TypeScript),
             (vec!["yaml", "yml"], Language::Yaml),
@@ -527,6 +531,18 @@ impl SukrLoader {
             configs.insert(Language::Yaml, config);
         }
 
+        if let Ok(grammar) = Grammar::try_from(tree_sitter_slint::LANGUAGE)
+            && let Some(config) = make_config(
+                grammar,
+                include_str!("../queries/slint/highlights.scm"),
+                include_str!("../queries/slint/injections.scm"),
+                include_str!("../queries/slint/locals.scm"),
+            )
+        {
+            config.configure(resolve_scope);
+            configs.insert(Language::Slint, config);
+        }
+
         Self {
             configs,
             name_to_lang,
@@ -633,6 +649,7 @@ mod tests {
     fn test_language_from_fence() {
         assert_eq!(Language::from_fence("rust"), Some(Language::Rust));
         assert_eq!(Language::from_fence("rs"), Some(Language::Rust));
+        assert_eq!(Language::from_fence("slint"), Some(Language::Slint));
         assert_eq!(Language::from_fence("bash"), Some(Language::Bash));
         assert_eq!(Language::from_fence("sh"), Some(Language::Bash));
         assert_eq!(Language::from_fence("json"), Some(Language::Json));
