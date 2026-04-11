@@ -486,19 +486,23 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
             Event::End(TagEnd::Strong) => prose_buf.push_str("</strong>"),
             Event::Start(Tag::Strikethrough) => prose_buf.push_str("<del>"),
             Event::End(TagEnd::Strikethrough) => prose_buf.push_str("</del>"),
+            Event::Start(Tag::Superscript) => prose_buf.push_str("<sup>"),
+            Event::End(TagEnd::Superscript) => prose_buf.push_str("</sup>"),
+            Event::Start(Tag::Subscript) => prose_buf.push_str("<sub>"),
+            Event::End(TagEnd::Subscript) => prose_buf.push_str("</sub>"),
             Event::Start(Tag::FootnoteDefinition(name)) => {
-                // Flush any pending prose before switching to footnote buffer
+                // Flush any pending prose before switching to footnote buffer.
                 flush_prose(&mut prose_buf, &mut blocks);
-                // Swap: prose_buf becomes the footnote accumulator
+                // Swap: prose_buf becomes the footnote accumulator.
                 std::mem::swap(&mut prose_buf, &mut footnote_buf);
                 prose_buf.clear();
                 footnote_name = Some(name.to_string());
             },
             Event::End(TagEnd::FootnoteDefinition) => {
                 if let Some(name) = footnote_name.take() {
-                    // prose_buf currently holds the footnote content
+                    // Prose buffer currently holds the footnote content.
                     let content = std::mem::take(&mut prose_buf);
-                    // Swap back: restore the real prose_buf
+                    // Swap back: restore the real prose_buf.
                     std::mem::swap(&mut prose_buf, &mut footnote_buf);
                     footnote_defs.push((name, content));
                 }
