@@ -317,3 +317,16 @@
 .hl-diff-delta {
   color: var(--hl-gold);
 }
+
+/* Diff */
+.hl-diff-plus {
+  color: var(--hl-green);
+}
+
+.hl-diff-minus {
+  color: var(--hl-red);
+}
+
+.hl-diff-delta {
+  color: var(--hl-purple);
+}

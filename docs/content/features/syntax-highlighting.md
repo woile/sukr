@@ -36,6 +36,9 @@ fn main() {
 | CSS        | `css`                 |
 | Markdown   | `markdown`, `md`      |
 | C          | `c`                   |
+| Just       | `just`                |
+| Make       | `make`, `makefile`    |
+| Diff       | `diff`                |
 | Slint      | `slint`               |
 
 ## Examples
@@ -272,7 +275,7 @@ stdenv.mkDerivation {
 
 Markdown also supports injection—code blocks inside markdown fences are highlighted with their respective languages.
 
-Languages with injection support: Bash, C, CSS, Go, HTML, JavaScript, Markdown, Nix, Python, Rust, TOML, TypeScript, YAML.
+Languages with injection support: Bash, C, CSS, Go, HTML, JavaScript, Just, Make, Markdown, Nix, Python, Rust, TOML, TypeScript, YAML.
 
 ## Fallback
 

@@ -22,10 +22,13 @@ pub enum Language {
     Bash,
     C,
     Css,
+    Diff,
     Go,
     Html,
     JavaScript,
     Json,
+    Just,
+    Make,
     Markdown,
     Nix,
     Python,
@@ -43,10 +46,13 @@ impl Language {
             "bash" | "sh" | "shell" | "zsh" => Some(Language::Bash),
             "c" => Some(Language::C),
             "css" => Some(Language::Css),
+            "diff" => Some(Language::Diff),
             "go" | "golang" => Some(Language::Go),
             "html" => Some(Language::Html),
             "javascript" | "js" => Some(Language::JavaScript),
             "json" => Some(Language::Json),
+            "just" | "justfile" => Some(Language::Just),
+            "make" | "makefile" => Some(Language::Make),
             "markdown" | "md" => Some(Language::Markdown),
             "nix" => Some(Language::Nix),
             "python" | "py" => Some(Language::Python),
@@ -70,18 +76,21 @@ impl Language {
             0 => Some(Language::Bash),
             1 => Some(Language::C),
             2 => Some(Language::Css),
-            3 => Some(Language::Go),
-            4 => Some(Language::Html),
-            5 => Some(Language::JavaScript),
-            6 => Some(Language::Json),
-            7 => Some(Language::Markdown),
-            8 => Some(Language::Nix),
-            9 => Some(Language::Python),
-            10 => Some(Language::Rust),
-            11 => Some(Language::Slint),
-            12 => Some(Language::Toml),
-            13 => Some(Language::TypeScript),
-            14 => Some(Language::Yaml),
+            3 => Some(Language::Diff),
+            4 => Some(Language::Go),
+            5 => Some(Language::Html),
+            6 => Some(Language::JavaScript),
+            7 => Some(Language::Json),
+            8 => Some(Language::Just),
+            9 => Some(Language::Make),
+            10 => Some(Language::Markdown),
+            11 => Some(Language::Nix),
+            12 => Some(Language::Python),
+            13 => Some(Language::Rust),
+            14 => Some(Language::Slint),
+            15 => Some(Language::Toml),
+            16 => Some(Language::TypeScript),
+            17 => Some(Language::Yaml),
             _ => None,
         }
     }
@@ -153,6 +162,8 @@ fn build_scope_map() -> HashMap<&'static str, Highlight> {
         "variable.builtin",
         "variable.parameter",
         "variable.other",
+
+        "variable.other",
         "variable.other.member",
         // Comments
         "comment",
@@ -177,6 +188,10 @@ fn build_scope_map() -> HashMap<&'static str, Highlight> {
         "tag",
         "tag.attribute",
         "tag.delimiter",
+        // Diff
+        "diff.plus",
+        "diff.minus",
+        "diff.delta",
         // Markup
         "markup.bold",
         "markup.italic",
@@ -247,6 +262,8 @@ static SCOPE_CLASSES: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
         "hl-variable-builtin",
         "hl-variable-parameter",
         "hl-variable-other",
+
+        "hl-variable-other",
         "hl-variable-other-member",
         "hl-comment",
         "hl-comment-line",
@@ -267,6 +284,9 @@ static SCOPE_CLASSES: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
         "hl-tag",
         "hl-tag-attribute",
         "hl-tag-delimiter",
+        "hl-diff-plus",
+        "hl-diff-minus",
+        "hl-diff-delta",
         "hl-markup-bold",
         "hl-markup-italic",
         "hl-markup-strikethrough",
@@ -319,10 +339,13 @@ impl SukrLoader {
             (vec!["bash", "sh", "shell", "zsh"], Language::Bash),
             (vec!["c"], Language::C),
             (vec!["css"], Language::Css),
+            (vec!["diff"], Language::Diff),
             (vec!["go", "golang"], Language::Go),
             (vec!["html"], Language::Html),
             (vec!["javascript", "js"], Language::JavaScript),
             (vec!["json"], Language::Json),
+            (vec!["just", "justfile"], Language::Just),
+            (vec!["make", "makefile"], Language::Make),
             (vec!["markdown", "md"], Language::Markdown),
             (vec!["nix"], Language::Nix),
             (vec!["python", "py"], Language::Python),
@@ -373,6 +396,18 @@ impl SukrLoader {
         {
             config.configure(resolve_scope);
             configs.insert(Language::Css, config);
+        }
+
+        if let Ok(grammar) = Grammar::try_from(tree_sitter_diff::LANGUAGE)
+            && let Some(config) = make_config(
+                grammar,
+                include_str!("../queries/diff/highlights.scm"),
+                "",
+                "",
+            )
+        {
+            config.configure(resolve_scope);
+            configs.insert(Language::Diff, config);
         }
 
         if let Ok(grammar) = Grammar::try_from(tree_sitter_go::LANGUAGE)
@@ -433,6 +468,30 @@ impl SukrLoader {
         {
             config.configure(resolve_scope);
             configs.insert(Language::Json, config);
+        }
+
+        if let Ok(grammar) = Grammar::try_from(tree_sitter_just::LANGUAGE)
+            && let Some(config) = make_config(
+                grammar,
+                include_str!("../queries/just/highlights.scm"),
+                include_str!("../queries/just/injections.scm"),
+                include_str!("../queries/just/locals.scm"),
+            )
+        {
+            config.configure(resolve_scope);
+            configs.insert(Language::Just, config);
+        }
+
+        if let Ok(grammar) = Grammar::try_from(tree_sitter_make::LANGUAGE)
+            && let Some(config) = make_config(
+                grammar,
+                include_str!("../queries/make/highlights.scm"),
+                include_str!("../queries/make/injections.scm"),
+                "",
+            )
+        {
+            config.configure(resolve_scope);
+            configs.insert(Language::Make, config);
         }
 
         if let Ok(grammar) = Grammar::try_from(tree_sitter_md::LANGUAGE)
@@ -601,6 +660,7 @@ fn render_html<'a>(source: &str, mut highlighter: Highlighter<'a, 'a, SukrLoader
     let mut html = String::with_capacity(source.len() * 2);
     let mut pos = 0u32;
     let source_len = source.len() as u32;
+    let mut open_spans = 0;
 
     loop {
         let next_pos = highlighter.next_event_offset().min(source_len);
@@ -660,6 +720,11 @@ mod tests {
         assert_eq!(Language::from_fence("rust"), Some(Language::Rust));
         assert_eq!(Language::from_fence("rs"), Some(Language::Rust));
         assert_eq!(Language::from_fence("slint"), Some(Language::Slint));
+        assert_eq!(Language::from_fence("just"), Some(Language::Just));
+        assert_eq!(Language::from_fence("justfile"), Some(Language::Just));
+        assert_eq!(Language::from_fence("make"), Some(Language::Make));
+        assert_eq!(Language::from_fence("makefile"), Some(Language::Make));
+        assert_eq!(Language::from_fence("diff"), Some(Language::Diff));
         assert_eq!(Language::from_fence("bash"), Some(Language::Bash));
         assert_eq!(Language::from_fence("sh"), Some(Language::Bash));
         assert_eq!(Language::from_fence("json"), Some(Language::Json));
@@ -702,6 +767,23 @@ mod tests {
         let escaped = code_escape("<script>alert('xss')</script>");
         assert!(!escaped.contains('<'));
         assert!(escaped.contains("&lt;"));
+    }
+
+    #[test]
+    fn test_highlight_just_code() {
+        let code = "hello:\n    @echo 'world'";
+        let html = highlight_code(Language::Just, code);
+
+        assert!(html.contains("hello"));
+    }
+
+    #[test]
+    fn test_highlight_diff_code() {
+        let code = "+ addition\n- deletion";
+        let html = highlight_code(Language::Diff, code);
+
+        assert!(html.contains("hl-diff-plus"));
+        assert!(html.contains("hl-diff-minus"));
     }
 
     #[test]
