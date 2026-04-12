@@ -625,17 +625,27 @@ fn render_html<'a>(source: &str, mut highlighter: Highlighter<'a, 'a, SukrLoader
         // Handle highlight events
         match event {
             HighlightEvent::Refresh | HighlightEvent::Push => {
-                // Open spans for active highlights (use the most specific one)
-                if highlights.len() > 0
-                    && let Some(highlight) = highlights.into_iter().next_back()
-                {
+                // Close all currently open spans
+                for _ in 0..open_spans {
+                    html.push_str("</span>");
+                }
+                open_spans = 0;
+
+                // Open new spans for the current highlight stack
+                for highlight in highlights {
                     let class = scope_to_class(highlight);
                     html.push_str("<span class=\"");
                     html.push_str(class);
                     html.push_str("\">");
+                    open_spans += 1;
                 }
             },
         }
+    }
+
+    // Close any remaining spans
+    for _ in 0..open_spans {
+        html.push_str("</span>");
     }
 
     html

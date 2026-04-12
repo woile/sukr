@@ -27,6 +27,8 @@ Each language has its own subdirectory containing:
 - HTML
 - JavaScript
 - JSON
+- Just
+- Make
 - Markdown
 - Nix
 - Python
@@ -35,3 +37,4 @@ Each language has its own subdirectory containing:
 - TypeScript
 - Slint
 - YAML
+- Diff
