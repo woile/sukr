@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Install sukr and build your first site" />
+  <title>Getting Started | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;getting-started.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" class="active" >Getting Started</a>
+      
+      <div class="nav-anchors">
+        
+        <a href="#installation" class="anchor-link level-2">Installation</a>
+        
+        <a href="#from-source-recommended" class="anchor-link level-3">From source</a>
+        
+        <a href="#with-nix" class="anchor-link level-3">With Nix</a>
+        
+        <a href="#create-your-first-site" class="anchor-link level-2">Create Your First Site</a>
+        
+        <a href="#1-create-directory-structure" class="anchor-link level-3">1. Create directory structure</a>
+        
+        <a href="#2-create-configuration" class="anchor-link level-3">2. Create configuration</a>
+        
+        <a href="#3-create-homepage" class="anchor-link level-3">3. Create homepage</a>
+        
+        <a href="#4-create-templates" class="anchor-link level-3">4. Create templates</a>
+        
+        <a href="#5-build" class="anchor-link level-3">5. Build</a>
+        
+        <a href="#6-view-your-site" class="anchor-link level-3">6. View your site</a>
+        
+        <a href="#next-steps" class="anchor-link level-2">Next Steps</a>
+        
+      </div>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>Getting Started</h1>
+  
+  <p class="lead">Install sukr and build your first site</p>
+  
+  <section class="content"><p>This guide walks you through installing sukr and creating your first static site.</p>
+<h2 id="installation">Installation<a class="heading-anchor" href="#installation">¶</a></h2>
+<h3 id="from-source-recommended">From source (recommended)<a class="heading-anchor" href="#from-source-recommended">¶</a></h3>
+<pre><code class="language-bash"><span class="hl-function">git</span> <span class="hl-variable-parameter">clone</span> <span class="hl-variable-parameter">https://github.com/nrdxp/sukr</span>
+<span class="hl-function-builtin">cd</span> <span class="hl-variable-parameter">sukr</span>
+<span class="hl-function">cargo</span> <span class="hl-variable-parameter">install</span> <span class="hl-variable-parameter">--path</span> <span class="hl-variable-parameter">.</span>
+</code></pre>
+<h3 id="with-nix">With Nix<a class="heading-anchor" href="#with-nix">¶</a></h3>
+<p>Run directly:</p>
+<pre><code class="language-bash"><span class="hl-function">nix</span> <span class="hl-variable-parameter">run</span> <span class="hl-variable-parameter">github:woile/sukr</span> <span class="hl-variable-parameter">--</span> <span class="hl-variable-parameter">--help</span>
+</code></pre>
+<p>Or install with Nix:</p>
+<pre><code class="language-bash"><span class="hl-function">nix</span> <span class="hl-variable-parameter">profile</span> <span class="hl-variable-parameter">install</span> <span class="hl-variable-parameter">github:woile/sukr</span>
+</code></pre>
+<h2 id="create-your-first-site">Create Your First Site<a class="heading-anchor" href="#create-your-first-site">¶</a></h2>
+<h3 id="1-create-directory-structure">1. Create directory structure<a class="heading-anchor" href="#1-create-directory-structure">¶</a></h3>
+<pre><code class="language-bash"><span class="hl-function">mkdir</span> <span class="hl-variable-parameter">my-site</span> <span class="hl-operator">&amp;&amp;</span> <span class="hl-function-builtin">cd</span> <span class="hl-variable-parameter">my-site</span>
+<span class="hl-function">mkdir</span> <span class="hl-variable-parameter">-p</span> <span class="hl-variable-parameter">content</span> <span class="hl-variable-parameter">templates</span> <span class="hl-variable-parameter">static</span>
+</code></pre>
+<h3 id="2-create-configuration">2. Create configuration<a class="heading-anchor" href="#2-create-configuration">¶</a></h3>
+<p>Create <code>site.toml</code>:</p>
+<pre><code class="language-toml"><span class="hl-variable-other-member">title</span>    <span class="hl-operator">=</span> <span class="hl-string">"My Site"</span>
+<span class="hl-variable-other-member">author</span>   <span class="hl-operator">=</span> <span class="hl-string">"Your Name"</span>
+<span class="hl-variable-other-member">base_url</span> <span class="hl-operator">=</span> <span class="hl-string">"https://example.com"</span>
+</code></pre>
+<h3 id="3-create-homepage">3. Create homepage<a class="heading-anchor" href="#3-create-homepage">¶</a></h3>
+<p>Create <code>content/_index.md</code>:</p>
+<pre><code class="language-markdown">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Welcome"</span>
+<span class="hl-variable-other-member">description</span> <span class="hl-operator">=</span> <span class="hl-string">"My awesome site"</span>
++++
+
+<span class="hl-markup-heading"><span class="hl-markup-heading">#</span></span><span class="hl-markup-heading"> Hello, World!
+</span>
+This is my site built with sukr.
+</code></pre>
+<h3 id="4-create-templates">4. Create templates<a class="heading-anchor" href="#4-create-templates">¶</a></h3>
+<p>Create <code>templates/base.html</code>:</p>
+<pre><code class="language-html"><span class="hl-constant"><span class="hl-punctuation-bracket">&lt;!</span></span><span class="hl-constant">doctype html</span><span class="hl-punctuation-bracket">&gt;</span>
+<span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">html</span> <span class="hl-attribute">lang</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"en"</span><span class="hl-punctuation-bracket">&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">head</span><span class="hl-punctuation-bracket">&gt;</span>
+    <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">meta</span> <span class="hl-attribute">charset</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"utf-8"</span> <span class="hl-punctuation-bracket">/&gt;</span>
+    <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">meta</span> <span class="hl-attribute">name</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"viewport"</span> <span class="hl-attribute">content</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"width=device-width, initial-scale=1"</span> <span class="hl-punctuation-bracket">/&gt;</span>
+    <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">title</span><span class="hl-punctuation-bracket">&gt;</span>{{ title }} | {{ config.title }}<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">title</span><span class="hl-punctuation-bracket">&gt;</span>
+    <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">link</span> <span class="hl-attribute">rel</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"stylesheet"</span> <span class="hl-attribute">href</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"</span><span class="hl-markup-link-url">{{ prefix }}/style.css</span><span class="hl-string">"</span> <span class="hl-punctuation-bracket">/&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">head</span><span class="hl-punctuation-bracket">&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">body</span><span class="hl-punctuation-bracket">&gt;</span>
+    <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">main</span><span class="hl-punctuation-bracket">&gt;</span>{% block content %}{% endblock content %}<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">main</span><span class="hl-punctuation-bracket">&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">body</span><span class="hl-punctuation-bracket">&gt;</span>
+<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">html</span><span class="hl-punctuation-bracket">&gt;</span>
+</code></pre>
+<p>Create <code>templates/page.html</code>:</p>
+<pre><code class="language-html">{% extends "base.html" %} {% block content %}
+<span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">article</span><span class="hl-punctuation-bracket">&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">h1</span><span class="hl-punctuation-bracket">&gt;</span>{{ page.title }}<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">h1</span><span class="hl-punctuation-bracket">&gt;</span>
+  {{ content | safe }}
+<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">article</span><span class="hl-punctuation-bracket">&gt;</span>
+{% endblock content %}
+</code></pre>
+<p>Create <code>templates/content/default.html</code>:</p>
+<pre><code class="language-html">{% extends "base.html" %} {% block content %}
+<span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">article</span><span class="hl-punctuation-bracket">&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">h1</span><span class="hl-punctuation-bracket">&gt;</span>{{ page.title }}<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">h1</span><span class="hl-punctuation-bracket">&gt;</span>
+  {{ content | safe }}
+<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">article</span><span class="hl-punctuation-bracket">&gt;</span>
+{% endblock content %}
+</code></pre>
+<p>Your templates directory should look like this:</p>
+<pre><code class="language-text">templates/
+├── base.html
+├── page.html
+└── content/
+    └── default.html
+</code></pre>
+<h3 id="5-build">5. Build<a class="heading-anchor" href="#5-build">¶</a></h3>
+<pre><code class="language-bash"><span class="hl-function">sukr</span>
+</code></pre>
+<h3 id="6-view-your-site">6. View your site<a class="heading-anchor" href="#6-view-your-site">¶</a></h3>
+<p>Open <code>public/index.html</code> in your browser. You should see your &quot;Hello, World!&quot; page rendered with the template you created.</p>
+<h2 id="next-steps">Next Steps<a class="heading-anchor" href="#next-steps">¶</a></h2>
+<ul>
+<li><a href="deployment.html">Deployment</a> — put your site on the web</li>
+<li><a href="configuration.html">Configuration</a> — customize <code>site.toml</code> options (paths, navigation, base URL)</li>
+<li><a href="content-organization.html">Content Organization</a> — learn how directories map to site sections</li>
+<li><a href="features/index.html">Features</a> — syntax highlighting, math, diagrams, and more</li>
+</ul>
+</section>
+</article>
+</main>
+</body>
+
+</html>

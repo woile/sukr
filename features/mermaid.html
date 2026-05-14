@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Build-time diagram rendering with Mermaid" />
+  <title>Mermaid Diagrams | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;features&#x2F;mermaid.html" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="../index.html" class="logo">
+        <img src="../logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href="..&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children expanded">
+        
+        <a href="..&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;mermaid.html" class="active" >Mermaid Diagrams</a>
+        
+        <div class="nav-anchors">
+          
+          <a href="#usage" class="anchor-link level-2">Usage</a>
+          
+          <a href="#supported-diagram-types" class="anchor-link level-2">Supported Diagram Types</a>
+          
+          <a href="#how-it-works" class="anchor-link level-2">How It Works</a>
+          
+          <a href="#example" class="anchor-link level-2">Example</a>
+          
+          <a href="#styling" class="anchor-link level-2">Styling</a>
+          
+          <a href="#fallback" class="anchor-link level-2">Fallback</a>
+          
+        </div>
+        
+        
+        <a href="..&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href="..&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="doc-page">
+  <h1>Mermaid Diagrams</h1>
+  
+  <p class="lead">Build-time diagram rendering with Mermaid</p>
+  
+  <section class="content"><p>sukr renders Mermaid diagrams at build time, producing inline SVG. No client-side JavaScript required.</p>
+<h2 id="usage">Usage<a class="heading-anchor" href="#usage">¶</a></h2>
+<p>Use fenced code blocks with <code>mermaid</code> language:</p>
+<pre><code class="language-markdown"><span class="hl-markup-raw"><span class="hl-punctuation-bracket">```</span></span><span class="hl-markup-raw"><span class="hl-label">mermaid</span></span><span class="hl-markup-raw">
+graph LR
+    A[Input] --&gt; B[Process]
+    B --&gt; C[Output]
+</span><span class="hl-punctuation-bracket">```</span><span class="hl-markup-raw">
+</span></code></pre>
+<h2 id="supported-diagram-types">Supported Diagram Types<a class="heading-anchor" href="#supported-diagram-types">¶</a></h2>
+<table>
+<thead>
+<tr>
+<td>Type</td>
+<td>Status</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td>Flowchart</td>
+<td>✅ Full support</td>
+<td>Flow diagrams with nodes and edges</td>
+</tr>
+<tr>
+<td>Graph</td>
+<td>✅ Full support</td>
+<td>Directed/undirected graphs</td>
+</tr>
+<tr>
+<td>Sequence</td>
+<td>⚠️ Partial</td>
+<td>Sequence diagrams (some layouts may vary)</td>
+</tr>
+<tr>
+<td>State</td>
+<td>⚠️ Partial</td>
+<td>State machine diagrams</td>
+</tr>
+<tr>
+<td>Class</td>
+<td>⚠️ Partial</td>
+<td>UML class diagrams</td>
+</tr>
+</table>
+<blockquote>
+<p><strong>Note:</strong> Some complex diagram types may have layout differences compared to the JavaScript renderer. Flowcharts and basic graphs work reliably.</p>
+</blockquote>
+<h2 id="how-it-works">How It Works<a class="heading-anchor" href="#how-it-works">¶</a></h2>
+<ol start="1">
+<li>During Markdown parsing, <code>mermaid</code> code blocks are intercepted</li>
+<li>The Mermaid definition is parsed and rendered to SVG</li>
+<li>The SVG is inlined directly in the HTML output</li>
+<li>No JavaScript or external resources needed</li>
+</ol>
+<h2 id="example">Example<a class="heading-anchor" href="#example">¶</a></h2>
+<div class="mermaid-diagram">
+<svg xmlns="http://www.w3.org/2000/svg" width="578.95996" height="311" viewBox="0 0 578.95996 311"><rect x="0" y="0" width="578.95996" height="311" fill="#FFFFFF"/><defs><marker id="arrow-0" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A8AA6"/></marker><marker id="arrow-start-0" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" fill="#7A8AA6"/></marker></defs><path d="M 246.880,62.000C246.880,70.308,246.880,82.769,246.880,86.923C246.880,91.077,246.880,82.769,246.880,86.923C246.880,91.077,246.880,103.538,246.880,111.846" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 231.053,183.327C231.053,194.273,259.491,210.691,231.053,216.164C202.615,221.636,88.862,210.691,60.424,216.164C31.986,221.636,60.424,238.055,60.424,249.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 246.880,199.154C246.880,207.462,246.880,219.923,246.880,224.077C246.880,228.231,246.880,219.923,246.880,224.077C246.880,228.231,246.880,240.692,246.880,249.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 262.707,183.327C262.707,194.273,227.169,210.691,262.707,216.164C298.245,221.636,440.398,210.691,475.936,216.164C511.474,221.636,475.936,238.055,475.936,249.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="177.54" y="8.00" width="138.69" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="246.88" y="38.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="246.88" dy="0.00">Markdown</tspan></text><polygon points="246.88,111.85 290.53,155.50 246.88,199.15 203.23,155.50" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="246.88" y="158.75" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="246.88" dy="0.00">sukr</tspan></text><rect x="8.00" y="249.00" width="104.85" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="60.42" y="279.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="60.42" dy="0.00">HTML</tspan></text><rect x="162.85" y="249.00" width="168.06" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="246.88" y="279.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="246.88" dy="0.00">SVG Diagrams</tspan></text><rect x="380.91" y="249.00" width="190.05" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="475.94" y="279.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="475.94" dy="0.00">Highlighted Code</tspan></text></svg>
+</div>
+<h2 id="styling">Styling<a class="heading-anchor" href="#styling">¶</a></h2>
+<p>Mermaid SVGs inherit your CSS variables. Customize the look by targeting SVG elements:</p>
+<pre><code class="language-css"><span class="hl-punctuation">.</span><span class="hl-label">mermaid</span> <span class="hl-tag">svg</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable-other-member">max-width</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-constant-numeric-integer">100</span><span class="hl-keyword">%</span><span class="hl-punctuation-delimiter">;</span>
+  <span class="hl-variable-other-member">height</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-constant">auto</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+
+<span class="hl-punctuation">.</span><span class="hl-label">mermaid</span> <span class="hl-punctuation">.</span><span class="hl-label">node</span> <span class="hl-tag">rect</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable-other-member">fill</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-function">var</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable">--bg-sidebar</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+  <span class="hl-variable-other-member">stroke</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-function">var</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable">--accent</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h2 id="fallback">Fallback<a class="heading-anchor" href="#fallback">¶</a></h2>
+<p>If a diagram fails to render (complex diagrams, syntax errors), the original code block is preserved with an error comment.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

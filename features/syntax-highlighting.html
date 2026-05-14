@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Build-time code highlighting with Tree-sitter and tree-house" />
+  <title>Syntax Highlighting | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;features&#x2F;syntax-highlighting.html" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="../index.html" class="logo">
+        <img src="../logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href="..&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children expanded">
+        
+        <a href="..&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;syntax-highlighting.html" class="active" >Syntax Highlighting</a>
+        
+        <div class="nav-anchors">
+          
+          <a href="#usage" class="anchor-link level-2">Usage</a>
+          
+          <a href="#supported-languages" class="anchor-link level-2">Supported Languages</a>
+          
+          <a href="#examples" class="anchor-link level-2">Examples</a>
+          
+          <a href="#rust" class="anchor-link level-3">Rust</a>
+          
+          <a href="#python" class="anchor-link level-3">Python</a>
+          
+          <a href="#javascript" class="anchor-link level-3">JavaScript</a>
+          
+          <a href="#typescript" class="anchor-link level-3">TypeScript</a>
+          
+          <a href="#go" class="anchor-link level-3">Go</a>
+          
+          <a href="#bash" class="anchor-link level-3">Bash</a>
+          
+          <a href="#nix" class="anchor-link level-3">Nix</a>
+          
+          <a href="#toml" class="anchor-link level-3">TOML</a>
+          
+          <a href="#yaml" class="anchor-link level-3">YAML</a>
+          
+          <a href="#json" class="anchor-link level-3">JSON</a>
+          
+          <a href="#html" class="anchor-link level-3">HTML</a>
+          
+          <a href="#css" class="anchor-link level-3">CSS</a>
+          
+          <a href="#c" class="anchor-link level-3">C</a>
+          
+          <a href="#how-it-works" class="anchor-link level-2">How It Works</a>
+          
+          <a href="#theme-system" class="anchor-link level-2">Theme System</a>
+          
+          <a href="#hierarchical-scopes" class="anchor-link level-3">Hierarchical Scopes</a>
+          
+          <a href="#using-a-theme" class="anchor-link level-3">Using a Theme</a>
+          
+          <a href="#available-themes" class="anchor-link level-3">Available Themes</a>
+          
+          <a href="#core-variables" class="anchor-link level-3">Core Variables</a>
+          
+          <a href="#customizing-a-theme" class="anchor-link level-3">Customizing a Theme</a>
+          
+          <a href="#theme-structure" class="anchor-link level-3">Theme Structure</a>
+          
+          <a href="#injection-support" class="anchor-link level-2">Injection Support</a>
+          
+          <a href="#fallback" class="anchor-link level-2">Fallback</a>
+          
+        </div>
+        
+        
+        <a href="..&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href="..&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="doc-page">
+  <h1>Syntax Highlighting</h1>
+  
+  <p class="lead">Build-time code highlighting with Tree-sitter and tree-house</p>
+  
+  <section class="content"><p>sukr highlights code blocks at build time using <a href="https://github.com/helix-editor/tree-house">tree-house</a> (Helix editor&#39;s Tree-sitter integration). No client-side JavaScript required.</p>
+<h2 id="usage">Usage<a class="heading-anchor" href="#usage">¶</a></h2>
+<p>Use fenced code blocks with a language identifier:</p>
+<pre><code class="language-md"><span class="hl-markup-raw"><span class="hl-punctuation-bracket">```</span></span><span class="hl-markup-raw"><span class="hl-label">rust</span></span><span class="hl-markup-raw">
+</span><span class="hl-keyword-function">fn</span><span class="hl-markup-raw"> </span><span class="hl-function">main</span><span class="hl-markup-raw"><span class="hl-punctuation-bracket">(</span></span><span class="hl-markup-raw"><span class="hl-punctuation-bracket">)</span></span><span class="hl-markup-raw"> </span><span class="hl-punctuation-bracket">{</span><span class="hl-markup-raw">
+    </span><span class="hl-function-macro">println</span><span class="hl-markup-raw"><span class="hl-function-macro">!</span></span><span class="hl-markup-raw"><span class="hl-punctuation-bracket">(</span></span><span class="hl-markup-raw"><span class="hl-string">"Hello, world!"</span></span><span class="hl-markup-raw"><span class="hl-punctuation-bracket">)</span></span><span class="hl-markup-raw"><span class="hl-punctuation-delimiter">;</span></span><span class="hl-markup-raw">
+</span><span class="hl-punctuation-bracket">}</span><span class="hl-markup-raw">
+</span><span class="hl-markup-raw"><span class="hl-punctuation-bracket">```</span></span><span class="hl-markup-raw">
+</span></code></pre>
+<h2 id="supported-languages">Supported Languages<a class="heading-anchor" href="#supported-languages">¶</a></h2>
+<table>
+<thead>
+<tr>
+<td>Language</td>
+<td>Identifier</td>
+</tr>
+</thead>
+<tr>
+<td>Rust</td>
+<td><code>rust</code>, <code>rs</code></td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>python</code>, <code>py</code></td>
+</tr>
+<tr>
+<td>JavaScript</td>
+<td><code>javascript</code>, <code>js</code></td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td><code>typescript</code>, <code>ts</code></td>
+</tr>
+<tr>
+<td>Go</td>
+<td><code>go</code>, <code>golang</code></td>
+</tr>
+<tr>
+<td>Bash</td>
+<td><code>bash</code>, <code>sh</code>, <code>shell</code></td>
+</tr>
+<tr>
+<td>Nix</td>
+<td><code>nix</code></td>
+</tr>
+<tr>
+<td>TOML</td>
+<td><code>toml</code></td>
+</tr>
+<tr>
+<td>YAML</td>
+<td><code>yaml</code>, <code>yml</code></td>
+</tr>
+<tr>
+<td>JSON</td>
+<td><code>json</code></td>
+</tr>
+<tr>
+<td>HTML</td>
+<td><code>html</code></td>
+</tr>
+<tr>
+<td>CSS</td>
+<td><code>css</code></td>
+</tr>
+<tr>
+<td>Markdown</td>
+<td><code>markdown</code>, <code>md</code></td>
+</tr>
+<tr>
+<td>C</td>
+<td><code>c</code></td>
+</tr>
+<tr>
+<td>Just</td>
+<td><code>just</code></td>
+</tr>
+<tr>
+<td>Make</td>
+<td><code>make</code>, <code>makefile</code></td>
+</tr>
+<tr>
+<td>Diff</td>
+<td><code>diff</code></td>
+</tr>
+<tr>
+<td>Slint</td>
+<td><code>slint</code></td>
+</tr>
+</table>
+<h2 id="examples">Examples<a class="heading-anchor" href="#examples">¶</a></h2>
+<h3 id="rust">Rust<a class="heading-anchor" href="#rust">¶</a></h3>
+<pre><code class="language-rust"><span class="hl-keyword-function">fn</span> <span class="hl-function">main</span><span class="hl-punctuation-bracket">(</span><span class="hl-punctuation-bracket">)</span> <span class="hl-punctuation-bracket">{</span>
+    <span class="hl-function-macro">println</span><span class="hl-function-macro">!</span><span class="hl-punctuation-bracket">(</span><span class="hl-string">"Hello, world!"</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h3 id="python">Python<a class="heading-anchor" href="#python">¶</a></h3>
+<pre><code class="language-python"><span class="hl-keyword-function">def</span> <span class="hl-function">greet</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable-parameter">name</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-type-builtin">str</span><span class="hl-punctuation-bracket">)</span> <span class="hl-operator">-&gt;</span> <span class="hl-type-builtin">str</span><span class="hl-punctuation-delimiter">:</span>
+    <span class="hl-keyword-control-return">return</span> <span class="hl-string">f"Hello, </span><span class="hl-punctuation-special">{</span><span class="hl-string"><span class="hl-variable-parameter">name</span></span><span class="hl-string"><span class="hl-punctuation-special">}</span></span><span class="hl-string">!"</span>
+</code></pre>
+<h3 id="javascript">JavaScript<a class="heading-anchor" href="#javascript">¶</a></h3>
+<pre><code class="language-javascript"><span class="hl-keyword-storage-modifier">const</span> <span class="hl-function">greet</span> <span class="hl-operator">=</span> <span class="hl-punctuation-bracket">(</span><span class="hl-variable-parameter">name</span><span class="hl-punctuation-bracket">)</span> <span class="hl-operator">=&gt;</span> <span class="hl-string">`Hello, </span><span class="hl-punctuation-special">${</span><span class="hl-string"><span class="hl-variable-parameter">name</span></span><span class="hl-string"><span class="hl-punctuation-special">}</span></span><span class="hl-string">!`</span><span class="hl-punctuation-delimiter">;</span>
+</code></pre>
+<h3 id="typescript">TypeScript<a class="heading-anchor" href="#typescript">¶</a></h3>
+<pre><code class="language-typescript"><span class="hl-keyword-function">function</span> <span class="hl-function">greet</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable-parameter">name</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-type-builtin">string</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-type-builtin">string</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-keyword-control-return">return</span> <span class="hl-string">`Hello, </span><span class="hl-punctuation-special">${</span><span class="hl-string"><span class="hl-variable-parameter">name</span></span><span class="hl-string"><span class="hl-punctuation-special">}</span></span><span class="hl-string">!`</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h3 id="go">Go<a class="heading-anchor" href="#go">¶</a></h3>
+<pre><code class="language-go"><span class="hl-keyword-function">func</span> <span class="hl-function">main</span><span class="hl-punctuation-bracket">(</span><span class="hl-punctuation-bracket">)</span> <span class="hl-punctuation-bracket">{</span>
+    <span class="hl-variable">fmt</span><span class="hl-punctuation-delimiter">.</span><span class="hl-function-method">Println</span><span class="hl-punctuation-bracket">(</span><span class="hl-string">"Hello, world!"</span><span class="hl-punctuation-bracket">)</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h3 id="bash">Bash<a class="heading-anchor" href="#bash">¶</a></h3>
+<pre><code class="language-bash"><span class="hl-comment">#!/bin/bash</span>
+<span class="hl-function-builtin">echo</span> <span class="hl-string">"Hello, </span><span class="hl-punctuation-special">$</span><span class="hl-string"><span class="hl-constant">USER</span></span><span class="hl-string">!"</span>
+</code></pre>
+<h3 id="nix">Nix<a class="heading-anchor" href="#nix">¶</a></h3>
+<pre><code class="language-nix"><span class="hl-punctuation-bracket">{</span> <span class="hl-variable-parameter">pkgs</span> <span class="hl-punctuation-bracket">}</span><span class="hl-punctuation-delimiter">:</span>
+<span class="hl-variable">pkgs</span><span class="hl-punctuation-delimiter">.</span><span class="hl-function">mkShell</span> <span class="hl-punctuation-bracket">{</span> <span class="hl-variable-other-member">buildInputs</span> <span class="hl-punctuation-delimiter">=</span> <span class="hl-punctuation-bracket">[</span> <span class="hl-variable">pkgs</span><span class="hl-punctuation-delimiter">.</span><span class="hl-variable-other-member">hello</span> <span class="hl-punctuation-bracket">]</span><span class="hl-punctuation-delimiter">;</span> <span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h3 id="toml">TOML<a class="heading-anchor" href="#toml">¶</a></h3>
+<pre><code class="language-toml"><span class="hl-punctuation-bracket">[</span><span class="hl-type">package</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">name</span> <span class="hl-operator">=</span> <span class="hl-string">"sukr"</span>
+<span class="hl-variable-other-member">version</span> <span class="hl-operator">=</span> <span class="hl-string">"0.1.0"</span>
+</code></pre>
+<h3 id="yaml">YAML<a class="heading-anchor" href="#yaml">¶</a></h3>
+<pre><code class="language-yaml"><span class="hl-variable-other-member">name</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">Build</span>
+<span class="hl-variable-other-member">on</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-punctuation-bracket">[</span><span class="hl-string">push</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">jobs</span><span class="hl-punctuation-delimiter">:</span>
+  <span class="hl-variable-other-member">build</span><span class="hl-punctuation-delimiter">:</span>
+    <span class="hl-variable-other-member">runs-on</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">ubuntu-latest</span>
+</code></pre>
+<h3 id="json">JSON<a class="heading-anchor" href="#json">¶</a></h3>
+<pre><code class="language-json"><span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable-other-member">"name"</span>: <span class="hl-string">"sukr"</span><span class="hl-punctuation-delimiter">,</span>
+  <span class="hl-variable-other-member">"version"</span>: <span class="hl-string">"0.1.0"</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h3 id="html">HTML<a class="heading-anchor" href="#html">¶</a></h3>
+<pre><code class="language-html"><span class="hl-constant"><span class="hl-punctuation-bracket">&lt;!</span></span><span class="hl-constant">DOCTYPE html</span><span class="hl-punctuation-bracket">&gt;</span>
+<span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">html</span><span class="hl-punctuation-bracket">&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">body</span><span class="hl-punctuation-bracket">&gt;</span>
+    Hello!
+  <span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">body</span><span class="hl-punctuation-bracket">&gt;</span>
+<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">html</span><span class="hl-punctuation-bracket">&gt;</span>
+</code></pre>
+<h3 id="css">CSS<a class="heading-anchor" href="#css">¶</a></h3>
+<pre><code class="language-css"><span class="hl-punctuation">.</span><span class="hl-label">container</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable-other-member">display</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-constant">flex</span><span class="hl-punctuation-delimiter">;</span>
+  <span class="hl-variable-other-member">color</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string-special"><span class="hl-string-special">#</span></span><span class="hl-string-special">ff79c6</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h3 id="c">C<a class="heading-anchor" href="#c">¶</a></h3>
+<pre><code class="language-c"><span class="hl-keyword-directive">#include</span> <span class="hl-string">&lt;stdio.h&gt;</span>
+<span class="hl-type-builtin">int</span> <span class="hl-function">main</span><span class="hl-punctuation-bracket">(</span><span class="hl-punctuation-bracket">)</span> <span class="hl-punctuation-bracket">{</span>
+    <span class="hl-function">printf</span><span class="hl-punctuation-bracket">(</span><span class="hl-string">"Hello!</span><span class="hl-constant-character-escape">\n</span><span class="hl-string">"</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+    <span class="hl-keyword-control-return">return</span> <span class="hl-constant-numeric">0</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<h2 id="how-it-works">How It Works<a class="heading-anchor" href="#how-it-works">¶</a></h2>
+<ol start="1">
+<li>During Markdown parsing, code blocks are intercepted</li>
+<li>tree-house parses the code and generates a syntax tree</li>
+<li>Spans are generated with <strong>hierarchical CSS classes</strong> (e.g., <code>.hl-keyword-control-return</code>)</li>
+<li>All work happens at build time—zero JavaScript in the browser</li>
+</ol>
+<h2 id="theme-system">Theme System<a class="heading-anchor" href="#theme-system">¶</a></h2>
+<p>sukr uses a <strong>decoupled theme system</strong> with CSS custom properties. Themes are separate CSS files that define colors for syntax highlighting classes.</p>
+<h3 id="hierarchical-scopes">Hierarchical Scopes<a class="heading-anchor" href="#hierarchical-scopes">¶</a></h3>
+<p>Highlighting uses fine-grained scope classes with hierarchical fallback:</p>
+<table>
+<thead>
+<tr>
+<td>Scope Class</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>.hl-keyword</code></td>
+<td>Generic keywords</td>
+</tr>
+<tr>
+<td><code>.hl-keyword-control</code></td>
+<td>Control flow</td>
+</tr>
+<tr>
+<td><code>.hl-keyword-control-return</code></td>
+<td>return/break/continue</td>
+</tr>
+<tr>
+<td><code>.hl-function</code></td>
+<td>Function names</td>
+</tr>
+<tr>
+<td><code>.hl-function-builtin</code></td>
+<td>Built-in functions</td>
+</tr>
+<tr>
+<td><code>.hl-type</code></td>
+<td>Type names</td>
+</tr>
+<tr>
+<td><code>.hl-variable</code></td>
+<td>Variables</td>
+</tr>
+<tr>
+<td><code>.hl-variable-parameter</code></td>
+<td>Function parameters</td>
+</tr>
+<tr>
+<td><code>.hl-string</code></td>
+<td>String literals</td>
+</tr>
+<tr>
+<td><code>.hl-comment</code></td>
+<td>Comments</td>
+</tr>
+<tr>
+<td><code>.hl-comment-block-documentation</code></td>
+<td>Doc comments</td>
+</tr>
+</table>
+<p>If a theme only defines <code>.hl-keyword</code>, it will apply to all keyword subtypes.</p>
+<h3 id="using-a-theme">Using a Theme<a class="heading-anchor" href="#using-a-theme">¶</a></h3>
+<p>Themes are CSS files that define the color palette. Import a theme at the top of your stylesheet:</p>
+<pre><code class="language-css"><span class="hl-keyword">@import</span> <span class="hl-string">"path/to/theme.css"</span><span class="hl-punctuation-delimiter">;</span>
+</code></pre>
+<p>sukr uses <a href="https://lightningcss.dev/">lightningcss</a> which inlines <code>@import</code> rules at build time, producing a single bundled CSS file.</p>
+<h3 id="available-themes">Available Themes<a class="heading-anchor" href="#available-themes">¶</a></h3>
+<p>sukr includes several themes in the <code>themes/</code> directory:</p>
+<ul>
+<li><strong>dracula.css</strong> — Classic Dracula colors</li>
+<li><strong>gruvbox.css</strong> — Warm retro palette</li>
+<li><strong>nord.css</strong> — Cool arctic colors</li>
+<li><strong>github_dark.css</strong> — GitHub&#39;s dark mode</li>
+<li><strong>github_light.css</strong> — GitHub&#39;s light mode</li>
+<li><strong>snazzy.css</strong> — Vibrant modern colors</li>
+<li><strong>catppuccin_mocha.css</strong> — Warm pastel dark theme</li>
+<li><strong>tokyonight.css</strong> — Japanese-inspired dark theme</li>
+<li><strong>rose_pine.css</strong> — Elegant soho-inspired theme</li>
+<li><strong>onedark.css</strong> — Classic Atom editor theme</li>
+</ul>
+<p>Copy the theme files to your project and import as shown above.</p>
+<h3 id="core-variables">Core Variables<a class="heading-anchor" href="#core-variables">¶</a></h3>
+<p>All themes define these CSS custom properties in <code>:root</code>:</p>
+<table>
+<thead>
+<tr>
+<td>Variable</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>--hl-keyword</code></td>
+<td>Keywords, control flow</td>
+</tr>
+<tr>
+<td><code>--hl-string</code></td>
+<td>String literals</td>
+</tr>
+<tr>
+<td><code>--hl-function</code></td>
+<td>Function names</td>
+</tr>
+<tr>
+<td><code>--hl-comment</code></td>
+<td>Comments</td>
+</tr>
+<tr>
+<td><code>--hl-type</code></td>
+<td>Type names</td>
+</tr>
+<tr>
+<td><code>--hl-number</code></td>
+<td>Numeric literals</td>
+</tr>
+<tr>
+<td><code>--hl-variable</code></td>
+<td>Variables</td>
+</tr>
+<tr>
+<td><code>--hl-operator</code></td>
+<td>Operators</td>
+</tr>
+</table>
+<h3 id="customizing-a-theme">Customizing a Theme<a class="heading-anchor" href="#customizing-a-theme">¶</a></h3>
+<p>Import a theme, then override specific variables in your own CSS:</p>
+<pre><code class="language-css"><span class="hl-keyword">@import</span> <span class="hl-string">"themes/dracula.css"</span><span class="hl-punctuation-delimiter">;</span>
+
+<span class="hl-comment">/* Override just the keyword color */</span>
+<span class="hl-punctuation-delimiter">:</span><span class="hl-attribute">root</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable">--hl-keyword</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string-special"><span class="hl-string-special">#</span></span><span class="hl-string-special">e879f9</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<p>Changing a variable updates every scope that references it.</p>
+<h3 id="theme-structure">Theme Structure<a class="heading-anchor" href="#theme-structure">¶</a></h3>
+<p>Themes use CSS custom properties for easy customization:</p>
+<pre><code class="language-css"><span class="hl-punctuation-delimiter">:</span><span class="hl-attribute">root</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable">--hl-keyword</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string-special"><span class="hl-string-special">#</span></span><span class="hl-string-special">ff79c6</span><span class="hl-punctuation-delimiter">;</span>
+  <span class="hl-variable">--hl-string</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string-special"><span class="hl-string-special">#</span></span><span class="hl-string-special">f1fa8c</span><span class="hl-punctuation-delimiter">;</span>
+  <span class="hl-variable">--hl-function</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string-special"><span class="hl-string-special">#</span></span><span class="hl-string-special">50fa7b</span><span class="hl-punctuation-delimiter">;</span>
+  <span class="hl-variable">--hl-comment</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string-special"><span class="hl-string-special">#</span></span><span class="hl-string-special">6272a4</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+
+<span class="hl-punctuation">.</span><span class="hl-label">hl-keyword</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable-other-member">color</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-function">var</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable">--hl-keyword</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+<span class="hl-punctuation">.</span><span class="hl-label">hl-string</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable-other-member">color</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-function">var</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable">--hl-string</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+<span class="hl-comment">/* ... */</span>
+</code></pre>
+<h2 id="injection-support">Injection Support<a class="heading-anchor" href="#injection-support">¶</a></h2>
+<p>Some languages support <strong>injection</strong>—highlighting embedded languages. For example, bash inside Nix strings:</p>
+<pre><code class="language-nix"><span class="hl-variable">stdenv</span><span class="hl-punctuation-delimiter">.</span><span class="hl-function">mkDerivation</span> <span class="hl-punctuation-bracket">{</span>
+  <span class="hl-variable-other-member">buildPhase</span> <span class="hl-punctuation-delimiter">=</span> <span class="hl-string">''</span>
+    <span class="hl-function-builtin">echo</span><span class="hl-string"> </span><span class="hl-string">"Building..."</span><span class="hl-string">
+    </span><span class="hl-function">make</span><span class="hl-string"> </span><span class="hl-variable-parameter">-j</span><span class="hl-string"><span class="hl-punctuation-special">$</span></span><span class="hl-string"><span class="hl-constant">NIX_BUILD_CORES</span></span><span class="hl-string">
+  </span><span class="hl-string">''</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<p>Markdown also supports injection—code blocks inside markdown fences are highlighted with their respective languages.</p>
+<p>Languages with injection support: Bash, C, CSS, Go, HTML, JavaScript, Just, Make, Markdown, Nix, Python, Rust, TOML, TypeScript, YAML.</p>
+<h2 id="fallback">Fallback<a class="heading-anchor" href="#fallback">¶</a></h2>
+<p>Unknown languages fall back to plain <code>&lt;code&gt;</code> blocks without highlighting.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

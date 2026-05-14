@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Build-time feed generation for blog posts" />
+  <title>Atom Feeds | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;features&#x2F;feeds.html" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="../index.html" class="logo">
+        <img src="../logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href="..&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children expanded">
+        
+        <a href="..&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;feeds.html" class="active" >Atom Feeds</a>
+        
+        <div class="nav-anchors">
+          
+          <a href="#output" class="anchor-link level-2">Output</a>
+          
+          <a href="#feed-contents" class="anchor-link level-2">Feed Contents</a>
+          
+          <a href="#auto-generation" class="anchor-link level-2">Auto-generation</a>
+          
+          <a href="#disabling-feeds" class="anchor-link level-2">Disabling Feeds</a>
+          
+          <a href="#linking-to-the-feed" class="anchor-link level-2">Linking to the Feed</a>
+          
+          <a href="#date-format" class="anchor-link level-2">Date Format</a>
+          
+          <a href="#validation" class="anchor-link level-2">Validation</a>
+          
+        </div>
+        
+        
+        <a href="..&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href="..&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="doc-page">
+  <h1>Atom Feeds</h1>
+  
+  <p class="lead">Build-time feed generation for blog posts</p>
+  
+  <section class="content"><p>sukr generates an Atom 1.0 feed for blog posts at build time.</p>
+<h2 id="output">Output<a class="heading-anchor" href="#output">¶</a></h2>
+<p>After building, you&#39;ll find <code>feed.xml</code> in your output directory:</p>
+<pre><code class="language-text">public/
+├── index.html
+├── feed.xml  ← Atom feed
+└── blog/
+    └── ...
+</code></pre>
+<h2 id="feed-contents">Feed Contents<a class="heading-anchor" href="#feed-contents">¶</a></h2>
+<p>The feed includes:</p>
+<ul>
+<li>Site title and author from <code>site.toml</code></li>
+<li>Self-referencing links (required by Atom spec)</li>
+<li>Entry for each content item in <code>blog/</code> section</li>
+<li>Post title, URL, date, and description</li>
+</ul>
+<h2 id="auto-generation">Auto-generation<a class="heading-anchor" href="#auto-generation">¶</a></h2>
+<p>Feed generation happens automatically when any content exists in a section with <code>section_type = &quot;blog&quot;</code>. No configuration required.</p>
+<p>Posts are sorted by date (newest first), matching the blog section ordering.</p>
+<h2 id="disabling-feeds">Disabling Feeds<a class="heading-anchor" href="#disabling-feeds">¶</a></h2>
+<p>To suppress feed generation entirely, add to <code>site.toml</code>:</p>
+<pre><code class="language-toml"><span class="hl-punctuation-bracket">[</span><span class="hl-type">feed</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">enabled</span> <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">false</span>
+</code></pre>
+<p>Feeds are enabled by default.</p>
+<h2 id="linking-to-the-feed">Linking to the Feed<a class="heading-anchor" href="#linking-to-the-feed">¶</a></h2>
+<p>Add a link in your <code>base.html</code> template:</p>
+<pre><code class="language-html"><span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">link</span>
+  <span class="hl-attribute">rel</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"alternate"</span>
+  <span class="hl-attribute">type</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"application/atom+xml"</span>
+  <span class="hl-attribute">title</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"{{ config.title }} Feed"</span>
+  <span class="hl-attribute">href</span><span class="hl-punctuation-delimiter">=</span><span class="hl-string">"</span><span class="hl-markup-link-url">{{ prefix }}/feed.xml</span><span class="hl-string">"</span>
+<span class="hl-punctuation-bracket">/&gt;</span>
+</code></pre>
+<h2 id="date-format">Date Format<a class="heading-anchor" href="#date-format">¶</a></h2>
+<p>Post dates in frontmatter should use <code>YYYY-MM-DD</code> format:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"My Post"</span>
+<span class="hl-variable-other-member">date</span> <span class="hl-operator">=</span> <span class="hl-string-special">2024-01-15</span>
++++
+</code></pre>
+<p>The feed converts this to RFC 3339 format required by Atom.</p>
+<h2 id="validation">Validation<a class="heading-anchor" href="#validation">¶</a></h2>
+<p>Test your feed with the <a href="https://validator.w3.org/feed/">W3C Feed Validator</a>.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

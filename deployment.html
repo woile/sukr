@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Deploy your sukr site to any static hosting platform" />
+  <title>Deployment | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;deployment.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" class="active" >Deployment</a>
+      
+      <div class="nav-anchors">
+        
+        <a href="#local-preview" class="anchor-link level-2">Local Preview</a>
+        
+        <a href="#github-pages" class="anchor-link level-2">GitHub Pages</a>
+        
+        <a href="#netlify" class="anchor-link level-2">Netlify</a>
+        
+        <a href="#cloudflare-pages" class="anchor-link level-2">Cloudflare Pages</a>
+        
+        <a href="#any-static-host" class="anchor-link level-2">Any Static Host</a>
+        
+        <a href="#security-headers" class="anchor-link level-2">Security Headers</a>
+        
+      </div>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>Deployment</h1>
+  
+  <p class="lead">Deploy your sukr site to any static hosting platform</p>
+  
+  <section class="content"><p>sukr builds your site to <code>public/</code>. This directory contains self-contained static HTML, CSS, and assets — no server-side runtime needed. Upload it anywhere that serves static files. If you haven&#39;t built a site yet, start with the <a href="getting-started.html">Getting Started</a> guide.</p>
+<h2 id="local-preview">Local Preview<a class="heading-anchor" href="#local-preview">¶</a></h2>
+<p>Preview your site locally before deploying:</p>
+<pre><code class="language-bash"><span class="hl-function-builtin">cd</span> <span class="hl-variable-parameter">public</span>
+<span class="hl-function">python3</span> <span class="hl-variable-parameter">-m</span> <span class="hl-variable-parameter">http.server</span> <span class="hl-constant-numeric">8000</span>
+</code></pre>
+<p>Open <code>http://localhost:8000</code> in your browser.</p>
+<h2 id="github-pages">GitHub Pages<a class="heading-anchor" href="#github-pages">¶</a></h2>
+<ol start="1">
+<li>Push your repository to GitHub</li>
+<li>Build your site: <code>sukr</code></li>
+<li>Deploy the <code>public/</code> directory using one of:<ul>
+<li><strong>GitHub Actions</strong> — add a workflow that runs <code>sukr</code> and deploys <code>public/</code> to Pages</li>
+<li><strong>Manual</strong> — push the <code>public/</code> contents to a <code>gh-pages</code> branch</li>
+</ul>
+</li>
+</ol>
+<p>Example workflow (<code>.github/workflows/deploy.yml</code>):</p>
+<pre><code class="language-yaml"><span class="hl-variable-other-member">name</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">Deploy</span>
+<span class="hl-variable-other-member">on</span><span class="hl-punctuation-delimiter">:</span>
+  <span class="hl-variable-other-member">push</span><span class="hl-punctuation-delimiter">:</span>
+    <span class="hl-variable-other-member">branches</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-punctuation-bracket">[</span><span class="hl-string">main</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">jobs</span><span class="hl-punctuation-delimiter">:</span>
+  <span class="hl-variable-other-member">deploy</span><span class="hl-punctuation-delimiter">:</span>
+    <span class="hl-variable-other-member">runs-on</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">ubuntu-latest</span>
+    <span class="hl-variable-other-member">steps</span><span class="hl-punctuation-delimiter">:</span>
+      <span class="hl-punctuation-delimiter">-</span> <span class="hl-variable-other-member">uses</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">actions/checkout@v4</span>
+      <span class="hl-punctuation-delimiter">-</span> <span class="hl-variable-other-member">run</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string"><span class="hl-function">cargo</span></span><span class="hl-string"> </span><span class="hl-variable-parameter">install</span><span class="hl-string"> </span><span class="hl-variable-parameter">--path</span><span class="hl-string"> </span><span class="hl-variable-parameter">.</span>
+      <span class="hl-punctuation-delimiter">-</span> <span class="hl-variable-other-member">run</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-function">sukr</span>
+      <span class="hl-punctuation-delimiter">-</span> <span class="hl-variable-other-member">uses</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">peaceiris/actions-gh-pages@v4</span>
+        <span class="hl-variable-other-member">with</span><span class="hl-punctuation-delimiter">:</span>
+          <span class="hl-variable-other-member">github_token</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">${{ secrets.GITHUB_TOKEN }}</span>
+          <span class="hl-variable-other-member">publish_dir</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string">./public</span>
+</code></pre>
+<h2 id="netlify">Netlify<a class="heading-anchor" href="#netlify">¶</a></h2>
+<ol start="1">
+<li>Connect your repository in the Netlify dashboard</li>
+<li>Set build command: <code>cargo install --path . &amp;&amp; sukr</code></li>
+<li>Set publish directory: <code>public</code></li>
+</ol>
+<p>Netlify detects changes and rebuilds automatically on push.</p>
+<h2 id="cloudflare-pages">Cloudflare Pages<a class="heading-anchor" href="#cloudflare-pages">¶</a></h2>
+<ol start="1">
+<li>Connect your repository in the Cloudflare Pages dashboard</li>
+<li>Set build command: <code>cargo install --path . &amp;&amp; sukr</code></li>
+<li>Set build output directory: <code>public</code></li>
+</ol>
+<h2 id="any-static-host">Any Static Host<a class="heading-anchor" href="#any-static-host">¶</a></h2>
+<p>For any host that serves static files (S3, DigitalOcean Spaces, a VPS):</p>
+<pre><code class="language-bash"><span class="hl-function">sukr</span>
+<span class="hl-function">rsync</span> <span class="hl-variable-parameter">-avz</span> <span class="hl-variable-parameter">public/</span> <span class="hl-variable-parameter">user@server:/var/www/mysite/</span>
+</code></pre>
+<p>Or use <code>scp</code>, <code>aws s3 sync</code>, or your host&#39;s CLI tool.</p>
+<h2 id="security-headers">Security Headers<a class="heading-anchor" href="#security-headers">¶</a></h2>
+<p>sukr outputs zero JavaScript, which means you can set a strict Content Security Policy that blocks all script execution. See <a href="security.html">Security</a> for recommended CSP headers and platform-specific configuration.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="How sukr transforms markdown into zero-JS static sites" />
+  <title>Architecture | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;architecture.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" class="active" >Architecture</a>
+      
+      <div class="nav-anchors">
+        
+        <a href="#pipeline-overview" class="anchor-link level-2">Pipeline Overview</a>
+        
+        <a href="#module-responsibilities" class="anchor-link level-2">Module Responsibilities</a>
+        
+        <a href="#the-interception-pattern" class="anchor-link level-2">The Interception Pattern</a>
+        
+        <a href="#why-zero-js" class="anchor-link level-2">Why Zero-JS</a>
+        
+        <a href="#static-configuration-pattern" class="anchor-link level-2">Static Configuration Pattern</a>
+        
+        <a href="#content-discovery" class="anchor-link level-2">Content Discovery</a>
+        
+        <a href="#implementation-notes" class="anchor-link level-2">Implementation Notes</a>
+        
+      </div>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>Architecture</h1>
+  
+  <p class="lead">How sukr transforms markdown into zero-JS static sites</p>
+  
+  <section class="content"><p>sukr is a 13-module static site compiler. Every feature that would typically require client-side JavaScript is moved to build-time.</p>
+<h2 id="pipeline-overview">Pipeline Overview<a class="heading-anchor" href="#pipeline-overview">¶</a></h2>
+<p>The compiler runs in two phases:</p>
+<ol start="1">
+<li><strong>Discover</strong> — walk the filesystem, parse frontmatter and markdown, extract typed content blocks and link references, build the navigation tree</li>
+<li><strong>Render</strong> — dispatch each content block to its renderer, apply templates, write output files</li>
+</ol>
+<div class="mermaid-diagram">
+<svg xmlns="http://www.w3.org/2000/svg" width="1524.792" height="220.5024" viewBox="0 0 1524.792 220.5024"><rect x="0" y="0" width="1524.792" height="220.5024" fill="#FFFFFF"/><defs><marker id="arrow-0" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A8AA6"/></marker><marker id="arrow-start-0" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" fill="#7A8AA6"/></marker></defs><path d="M 173.824,98.626C182.085,98.626,194.477,98.626,198.608,98.626C202.739,98.626,194.477,98.626,198.608,98.626C202.739,98.626,215.131,98.626,223.392,98.626" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 412.432,98.626C420.755,98.626,433.239,98.626,437.400,98.626C441.561,98.626,433.239,98.626,437.400,98.626C441.561,98.626,454.045,98.626,462.368,98.626" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 647.456,93.226C656.069,93.226,668.989,102.930,673.296,93.226C677.603,83.521,668.989,44.704,673.296,35.000C677.603,25.296,690.523,35.000,699.136,35.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 647.456,104.026C655.752,104.026,668.196,94.321,672.344,104.026C676.492,113.730,668.196,152.547,672.344,162.251C676.492,171.955,688.936,162.251,697.232,162.251" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 872.592,162.251C886.353,162.251,906.996,162.251,913.876,162.251C920.757,162.251,906.996,162.251,913.876,162.251C920.757,162.251,941.399,162.251,955.161,162.251" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 870.688,35.000C879.277,35.000,892.160,35.000,896.454,35.000C900.748,35.000,892.160,35.000,896.454,35.000C900.748,35.000,913.631,35.000,922.220,35.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 1088.604,35.000C1096.897,35.000,1109.336,35.000,1113.482,35.000C1117.628,35.000,1109.336,35.000,1113.482,35.000C1117.628,35.000,1130.067,35.000,1138.360,35.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 1309.464,35.000C1317.725,35.000,1330.117,35.000,1334.248,35.000C1338.379,35.000,1330.117,35.000,1334.248,35.000C1338.379,35.000,1350.771,35.000,1359.032,35.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="8.00" y="71.63" width="165.82" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="90.91" y="101.88" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="90.91" dy="0.00">Walk content/</tspan></text><rect x="223.39" y="71.63" width="189.04" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="317.91" y="101.88" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="317.91" dy="0.00">Parse frontmatter</tspan></text><rect x="462.37" y="71.63" width="185.09" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="554.91" y="101.88" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="554.91" dy="0.00">Parse markdown</tspan></text><rect x="699.14" y="8.00" width="171.55" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="784.91" y="38.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="784.91" dy="0.00">Content blocks</tspan></text><rect x="697.23" y="135.25" width="175.36" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="784.91" y="165.50" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="784.91" dy="0.00">Link references</tspan></text><polygon points="1005.41,112.00 1055.66,162.25 1005.41,212.50 955.16,162.25" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="1005.41" y="165.50" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="1005.41" dy="0.00">Valid?</tspan></text><rect x="922.22" y="8.00" width="166.38" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="1005.41" y="38.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="1005.41" dy="0.00">Render blocks</tspan></text><rect x="1138.36" y="8.00" width="171.10" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="1223.91" y="38.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="1223.91" dy="0.00">Apply template</tspan></text><rect x="1359.03" y="8.00" width="157.76" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="1437.91" y="38.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="1437.91" dy="0.00">Write public/</tspan></text></svg>
+</div>
+<p>The discover phase also validates internal links — any <code>[link](../page.md)</code> pointing to a nonexistent page is reported as an error before rendering begins.</p>
+<h2 id="module-responsibilities">Module Responsibilities<a class="heading-anchor" href="#module-responsibilities">¶</a></h2>
+<table>
+<thead>
+<tr>
+<td>Module</td>
+<td>Purpose</td>
+</tr>
+</thead>
+<tr>
+<td><code>main.rs</code></td>
+<td>Pipeline orchestrator — wires discover and render phases together</td>
+</tr>
+<tr>
+<td><code>config.rs</code></td>
+<td>Loads <code>site.toml</code> configuration</td>
+</tr>
+<tr>
+<td><code>content.rs</code></td>
+<td>Content type system, section/page discovery, navigation, link validation</td>
+</tr>
+<tr>
+<td><code>render.rs</code></td>
+<td>Block-by-block rendering — dispatches each content block to its renderer</td>
+</tr>
+<tr>
+<td><code>highlight.rs</code></td>
+<td>Tree-sitter syntax highlighting (14 languages)</td>
+</tr>
+<tr>
+<td><code>math.rs</code></td>
+<td>pulldown-latex rendering to MathML</td>
+</tr>
+<tr>
+<td><code>mermaid.rs</code></td>
+<td>Mermaid diagrams to inline SVG</td>
+</tr>
+<tr>
+<td><code>css.rs</code></td>
+<td>CSS bundling and minification via lightningcss</td>
+</tr>
+<tr>
+<td><code>template_engine.rs</code></td>
+<td>Tera template loading and rendering</td>
+</tr>
+<tr>
+<td><code>feed.rs</code></td>
+<td>Atom feed generation</td>
+</tr>
+<tr>
+<td><code>sitemap.rs</code></td>
+<td>XML sitemap generation</td>
+</tr>
+<tr>
+<td><code>escape.rs</code></td>
+<td>HTML/XML text escaping utilities</td>
+</tr>
+<tr>
+<td><code>error.rs</code></td>
+<td>Phase-split error types — parse errors vs compile errors</td>
+</tr>
+</table>
+<h2 id="the-interception-pattern">The Interception Pattern<a class="heading-anchor" href="#the-interception-pattern">¶</a></h2>
+<p>The core innovation is <strong>event-based interception</strong>. Rather than parsing markdown into an AST and walking it twice, sukr streams <code>pulldown-cmark</code> events and intercepts specific patterns into typed content blocks:</p>
+<div class="mermaid-diagram">
+<svg xmlns="http://www.w3.org/2000/svg" width="1034.552" height="680" viewBox="0 0 1034.552 680"><rect x="0" y="0" width="1034.552" height="680" fill="#FFFFFF"/><defs><marker id="arrow-0" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A8AA6"/></marker><marker id="arrow-start-0" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" fill="#7A8AA6"/></marker></defs><path d="M 695.168,62.000C695.168,70.285,695.168,82.712,695.168,86.854C695.168,90.996,695.168,82.712,695.168,86.854C695.168,90.996,695.168,103.423,695.168,111.708" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 656.306,213.431C656.306,228.167,735.181,250.271,656.306,257.639C577.431,265.007,261.931,250.271,183.056,257.639C104.181,265.007,183.056,287.111,183.056,301.847" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="375.55" y="243.64" width="88.27" height="28.00" rx="2" ry="2" fill="#FFFFFF" stroke="none"/><text x="419.68" y="260.89" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="419.68" dy="0.00">CodeBlock</tspan></text><path d="M 160.005,441.102C160.005,453.252,173.302,471.476,160.005,477.551C146.708,483.626,93.521,471.476,80.224,477.551C66.927,483.626,80.224,501.850,80.224,514.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="57.97" y="463.55" width="124.29" height="28.00" rx="2" ry="2" fill="#FFFFFF" stroke="none"/><text x="120.11" y="480.80" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="120.11" dy="0.00">&quot;rust, nix, etc.&quot;</tspan></text><path d="M 206.107,441.102C206.107,453.252,192.810,471.476,206.107,477.551C219.404,483.626,272.591,471.476,285.888,477.551C299.185,483.626,285.888,501.850,285.888,514.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="209.50" y="463.55" width="72.99" height="28.00" rx="2" ry="2" fill="#FFFFFF" stroke="none"/><text x="246.00" y="480.80" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="246.00" dy="0.00">mermaid</tspan></text><path d="M 675.737,232.862C675.737,279.718,706.607,350.003,675.737,373.431C644.868,396.859,521.390,350.003,490.520,373.431C459.650,396.859,490.520,467.144,490.520,514.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="520.52" y="359.43" width="125.22" height="28.00" rx="2" ry="2" fill="#FFFFFF" stroke="none"/><text x="583.13" y="376.68" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="583.13" dy="0.00">&quot;Math ($ / $$)&quot;</tspan></text><path d="M 695.168,252.292C695.168,295.910,695.168,361.337,695.168,383.146C695.168,404.955,695.168,361.337,695.168,383.146C695.168,404.955,695.168,470.382,695.168,514.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="660.04" y="369.15" width="70.26" height="28.00" rx="2" ry="2" fill="#FFFFFF" stroke="none"/><text x="695.17" y="386.40" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="695.17" dy="0.00">Heading</tspan></text><path d="M 714.599,232.862C714.599,253.385,696.352,284.169,714.599,294.431C732.846,304.692,805.833,284.169,824.080,294.431C842.327,304.692,824.080,335.477,824.080,356.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="717.82" y="280.43" width="103.04" height="28.00" rx="2" ry="2" fill="#FFFFFF" stroke="none"/><text x="769.34" y="297.68" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="769.34" dy="0.00">Link / Image</tspan></text><path d="M 734.030,213.431C734.030,253.526,697.536,313.668,734.030,333.715C770.523,353.763,916.498,303.668,952.992,333.715C989.486,363.763,952.992,453.905,952.992,514.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="818.77" y="255.72" width="49.49" height="28.00" rx="2" ry="2" fill="#FFFFFF" stroke="none"/><text x="843.51" y="272.97" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="843.51" dy="0.00">Other</tspan></text><path d="M 80.224,568.000C80.224,576.333,23.645,588.833,80.224,593.000C136.803,597.167,363.120,588.833,419.699,593.000C476.278,597.167,419.699,609.667,419.699,618.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 285.888,568.000C285.888,576.333,257.684,588.833,285.888,593.000C314.092,597.167,426.906,588.833,455.109,593.000C483.313,597.167,455.109,609.667,455.109,618.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 490.520,568.000C490.520,576.333,490.520,588.833,490.520,593.000C490.520,597.167,490.520,588.833,490.520,593.000C490.520,597.167,490.520,609.667,490.520,618.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 695.168,568.000C695.168,576.333,723.374,588.833,695.168,593.000C666.962,597.167,554.137,588.833,525.931,593.000C497.724,597.167,525.931,609.667,525.931,618.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><path d="M 952.992,568.000C952.992,576.333,1018.267,588.833,952.992,593.000C887.717,597.167,626.616,588.833,561.341,593.000C496.066,597.167,561.341,609.667,561.341,618.000" fill="none" stroke="#7A8AA6" stroke-width="2" marker-end="url(#arrow-0)"   stroke-linecap="round" stroke-linejoin="round" /><rect x="576.70" y="8.00" width="236.94" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="695.17" y="38.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="695.17" dy="0.00">pulldown-cmark events</tspan></text><polygon points="695.17,111.71 765.46,182.00 695.17,252.29 624.88,182.00" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="695.17" y="185.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="695.17" dy="0.00">Event type?</tspan></text><polygon points="183.06,301.85 264.21,383.00 183.06,464.15 101.90,383.00" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="183.06" y="386.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="183.06" dy="0.00">Language tag?</tspan></text><rect x="8.00" y="514.00" width="144.45" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="80.22" y="544.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="80.22" dy="0.00">Code block</tspan></text><rect x="202.45" y="514.00" width="166.88" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="285.89" y="544.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="285.89" dy="0.00">Diagram block</tspan></text><rect x="419.33" y="514.00" width="142.38" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="490.52" y="544.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="490.52" dy="0.00">Math block</tspan></text><rect x="611.71" y="514.00" width="166.91" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="695.17" y="544.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="695.17" dy="0.00">Heading block</tspan></text><rect x="730.17" y="356.00" width="187.82" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="824.08" y="386.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="824.08" dy="0.00">Extract reference</tspan></text><rect x="879.43" y="514.00" width="147.12" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="952.99" y="544.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="952.99" dy="0.00">Prose block</tspan></text><rect x="372.29" y="618.00" width="236.46" height="54.00" rx="3" ry="3" fill="#F8FAFF" stroke="#C7D2E5" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><text x="490.52" y="648.25" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif" font-size="13" fill="#1C2430"><tspan x="490.52" dy="0.00">ContentBlock sequence</tspan></text></svg>
+</div>
+<p>Each content block carries its own data — language, math expression, diagram source, heading level + slug, or pre-rendered HTML prose. During the render phase, each block type is dispatched to its renderer independently.</p>
+<p>Non-intercepted content (paragraphs, lists, emphasis, inline code) is rendered to HTML during parsing and emitted as prose blocks. Link URLs are extracted as a side-channel for reference validation.</p>
+<h2 id="why-zero-js">Why Zero-JS<a class="heading-anchor" href="#why-zero-js">¶</a></h2>
+<p>Traditional SSGs ship JavaScript for:</p>
+<table>
+<thead>
+<tr>
+<td>Feature</td>
+<td>Typical Approach</td>
+<td>sukr Approach</td>
+</tr>
+</thead>
+<tr>
+<td><a href="features/syntax-highlighting.html">Syntax highlighting</a></td>
+<td>Prism.js, Highlight.js</td>
+<td>Tree-sitter at build-time → <code>&lt;span class=&quot;hl-*&quot;&gt;</code></td>
+</tr>
+<tr>
+<td><a href="features/math.html">Math rendering</a></td>
+<td>MathJax, KaTeX.js</td>
+<td>pulldown-latex at build-time → MathML (browser-native)</td>
+</tr>
+<tr>
+<td><a href="features/mermaid.html">Diagrams</a></td>
+<td>Mermaid.js</td>
+<td>mermaid-rs at build-time → inline SVG</td>
+</tr>
+<tr>
+<td>Mobile nav</td>
+<td>JavaScript toggle</td>
+<td>CSS <code>:has()</code> + checkbox hack</td>
+</tr>
+</table>
+<p>The result: <strong>zero bytes of JavaScript</strong> in the output. Pages load instantly, work without JS enabled, and avoid the complexity of client-side hydration.</p>
+<h2 id="static-configuration-pattern">Static Configuration Pattern<a class="heading-anchor" href="#static-configuration-pattern">¶</a></h2>
+<p>Tree-sitter grammars are expensive to initialize. sukr uses <a href="https://github.com/helix-editor/tree-house">tree-house</a> (Helix editor&#39;s Tree-sitter integration) with <code>LazyLock</code> to create language configurations exactly once:</p>
+<pre><code class="language-rust"><span class="hl-comment-line-documentation">//</span><span class="hl-comment-line-documentation">/</span><span class="hl-comment-line-documentation"> Create a LanguageConfig for a language with embedded queries.
+</span><span class="hl-keyword-function">fn</span> <span class="hl-function">make_config</span><span class="hl-punctuation-bracket">(</span>
+    <span class="hl-variable-parameter">grammar</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-type">Grammar</span><span class="hl-punctuation-delimiter">,</span>
+    <span class="hl-variable-parameter">highlights</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-keyword-storage-modifier-ref">&amp;</span><span class="hl-type-builtin">str</span><span class="hl-punctuation-delimiter">,</span>
+    <span class="hl-variable-parameter">injections</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-keyword-storage-modifier-ref">&amp;</span><span class="hl-type-builtin">str</span><span class="hl-punctuation-delimiter">,</span>
+    <span class="hl-variable-parameter">locals</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-keyword-storage-modifier-ref">&amp;</span><span class="hl-type-builtin">str</span><span class="hl-punctuation-delimiter">,</span>
+<span class="hl-punctuation-bracket">)</span> <span class="hl-operator">-&gt;</span> <span class="hl-type-builtin">Option</span><span class="hl-punctuation-bracket">&lt;</span><span class="hl-type">LanguageConfig</span><span class="hl-punctuation-bracket">&gt;</span> <span class="hl-punctuation-bracket">{</span>
+    <span class="hl-type">LanguageConfig</span><span class="hl-punctuation-delimiter">::</span><span class="hl-function">new</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable-parameter">grammar</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-variable-parameter">highlights</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-variable-parameter">injections</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-variable-parameter">locals</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">.</span><span class="hl-function">ok</span><span class="hl-punctuation-bracket">(</span><span class="hl-punctuation-bracket">)</span>
+<span class="hl-punctuation-bracket">}</span>
+
+<span class="hl-comment-line">// Register Rust with embedded Helix queries</span>
+<span class="hl-keyword-control-conditional">if</span> <span class="hl-keyword-storage">let</span> <span class="hl-type-enum-variant-builtin">Ok</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable">grammar</span><span class="hl-punctuation-bracket">)</span> <span class="hl-operator">=</span> <span class="hl-type">Grammar</span><span class="hl-punctuation-delimiter">::</span><span class="hl-function">try_from</span><span class="hl-punctuation-bracket">(</span><span class="hl-namespace">tree_sitter_rust</span><span class="hl-punctuation-delimiter">::</span><span class="hl-constant">LANGUAGE</span><span class="hl-punctuation-bracket">)</span>
+    <span class="hl-operator">&amp;&amp;</span> <span class="hl-keyword-storage">let</span> <span class="hl-type-enum-variant-builtin">Some</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable">config</span><span class="hl-punctuation-bracket">)</span> <span class="hl-operator">=</span> <span class="hl-function">make_config</span><span class="hl-punctuation-bracket">(</span>
+        <span class="hl-variable">grammar</span><span class="hl-punctuation-delimiter">,</span>
+        <span class="hl-function-macro">include_str</span><span class="hl-function-macro">!</span><span class="hl-punctuation-bracket">(</span><span class="hl-string">"../queries/rust/highlights.scm"</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">,</span>
+        <span class="hl-function-macro">include_str</span><span class="hl-function-macro">!</span><span class="hl-punctuation-bracket">(</span><span class="hl-string">"../queries/rust/injections.scm"</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">,</span>
+        <span class="hl-function-macro">include_str</span><span class="hl-function-macro">!</span><span class="hl-punctuation-bracket">(</span><span class="hl-string">"../queries/rust/locals.scm"</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">,</span>
+    <span class="hl-punctuation-bracket">)</span>
+<span class="hl-punctuation-bracket">{</span>
+    <span class="hl-variable">config</span><span class="hl-punctuation-delimiter">.</span><span class="hl-function">configure</span><span class="hl-punctuation-bracket">(</span><span class="hl-variable">resolve_scope</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+    <span class="hl-variable">configs</span><span class="hl-punctuation-delimiter">.</span><span class="hl-function">insert</span><span class="hl-punctuation-bracket">(</span><span class="hl-type">Language</span><span class="hl-punctuation-delimiter">::</span><span class="hl-type">Rust</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-variable">config</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-delimiter">;</span>
+<span class="hl-punctuation-bracket">}</span>
+</code></pre>
+<p>This pattern ensures O(1) lookup per language regardless of how many code blocks exist in the site.</p>
+<h2 id="content-discovery">Content Discovery<a class="heading-anchor" href="#content-discovery">¶</a></h2>
+<p>The <code>SiteManifest</code> struct aggregates all content in one filesystem traversal:</p>
+<ul>
+<li>Homepage (<code>_index.md</code> at root)</li>
+<li>Sections (directories with <code>_index.md</code>) — items sorted at discovery time</li>
+<li>Standalone pages (top-level <code>.md</code> files)</li>
+<li>Navigation tree (derived from sections and pages, ordered by weight)</li>
+<li>Internal link references (validated against known output paths)</li>
+</ul>
+<p>This avoids repeated directory scans during template rendering. Broken internal links are caught before any rendering begins.</p>
+<h2 id="implementation-notes">Implementation Notes<a class="heading-anchor" href="#implementation-notes">¶</a></h2>
+<p>sukr prioritizes <strong>output quality</strong> over minimal build-time footprint. Current dependency choices reflect this:</p>
+<table>
+<thead>
+<tr>
+<td>Feature</td>
+<td>Library</td>
+<td>Trade-off</td>
+</tr>
+</thead>
+<tr>
+<td>Math</td>
+<td>pulldown-latex</td>
+<td>Pure Rust, 95% KaTeX parity; outputs native MathML</td>
+</tr>
+<tr>
+<td>Diagrams</td>
+<td>mermaid-rs</td>
+<td>High-fidelity SVG; uses headless rendering under the hood</td>
+</tr>
+</table>
+<p>Lighter alternatives exist and may be evaluated as they mature. The goal is browser-native output with zero client-side JavaScript—build-time weight is a secondary concern.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

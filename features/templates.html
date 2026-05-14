@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Customizable templates without recompilation" />
+  <title>Tera Templates | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;features&#x2F;templates.html" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="../index.html" class="logo">
+        <img src="../logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href="..&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children expanded">
+        
+        <a href="..&#x2F;features&#x2F;templates.html" class="active" >Tera Templates</a>
+        
+        <div class="nav-anchors">
+          
+          <a href="#template-directory-structure" class="anchor-link level-2">Template Directory Structure</a>
+          
+          <a href="#template-inheritance" class="anchor-link level-2">Template Inheritance</a>
+          
+          <a href="#available-context-variables" class="anchor-link level-2">Available Context Variables</a>
+          
+          <a href="#all-templates" class="anchor-link level-3">All Templates</a>
+          
+          <a href="#page-templates" class="anchor-link level-3">Page Templates</a>
+          
+          <a href="#section-templates" class="anchor-link level-3">Section Templates</a>
+          
+          <a href="#content-item-fields-in" class="anchor-link level-3">Content Item Fields</a>
+          
+          <a href="#tag-templates" class="anchor-link level-3">Tag Templates</a>
+          
+          <a href="#template-override" class="anchor-link level-2">Template Override</a>
+          
+        </div>
+        
+        
+        <a href="..&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href="..&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="doc-page">
+  <h1>Tera Templates</h1>
+  
+  <p class="lead">Customizable templates without recompilation</p>
+  
+  <section class="content"><p>sukr uses <a href="https://keats.github.io/tera/">Tera</a>, a Jinja2-like templating engine. Templates are loaded at runtime, so you can modify them without recompiling sukr. See the <a href="https://keats.github.io/tera/docs/">Tera documentation</a> for template authoring syntax (filters, blocks, inheritance).</p>
+<h2 id="template-directory-structure">Template Directory Structure<a class="heading-anchor" href="#template-directory-structure">¶</a></h2>
+<pre><code class="language-text">templates/
+├── base.html               # Shared layout (required)
+├── page.html               # Standalone pages and homepage
+├── section/
+│   ├── default.html        # Fallback section index
+│   ├── blog.html           # Blog section index
+│   └── projects.html       # Projects section index
+├── content/
+│   ├── default.html        # Fallback content page
+│   └── post.html           # Blog post
+└── tags/
+    └── default.html        # Tag listing page
+</code></pre>
+<h2 id="template-inheritance">Template Inheritance<a class="heading-anchor" href="#template-inheritance">¶</a></h2>
+<p>All templates extend <code>base.html</code>:</p>
+<pre><code class="language-html">{% extends "base.html" %} {% block content %}
+<span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">article</span><span class="hl-punctuation-bracket">&gt;</span>
+  <span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">h1</span><span class="hl-punctuation-bracket">&gt;</span>{{ page.title }}<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">h1</span><span class="hl-punctuation-bracket">&gt;</span>
+  {{ content | safe }}
+<span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">article</span><span class="hl-punctuation-bracket">&gt;</span>
+{% endblock content %}
+</code></pre>
+<p><code>base.html</code> defines two overridable blocks: <code>{% block title %}</code> for the HTML <code>&lt;title&gt;</code> tag, and <code>{% block content %}</code> for the page body.</p>
+<h2 id="available-context-variables">Available Context Variables<a class="heading-anchor" href="#available-context-variables">¶</a></h2>
+<h3 id="all-templates">All Templates<a class="heading-anchor" href="#all-templates">¶</a></h3>
+<table>
+<thead>
+<tr>
+<td>Variable</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>config.title</code></td>
+<td>Site title</td>
+</tr>
+<tr>
+<td><code>config.author</code></td>
+<td>Site author</td>
+</tr>
+<tr>
+<td><code>config.nav.nested</code></td>
+<td>Whether hierarchical nav is enabled</td>
+</tr>
+<tr>
+<td><code>nav</code></td>
+<td>Array of navigation items</td>
+</tr>
+<tr>
+<td><code>page_path</code></td>
+<td>Current page path</td>
+</tr>
+<tr>
+<td><code>prefix</code></td>
+<td>Relative path prefix for assets</td>
+</tr>
+<tr>
+<td><code>config.base_url</code></td>
+<td>Canonical base URL</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>Current page title</td>
+</tr>
+</table>
+<p>Each nav item has:</p>
+<ul>
+<li><code>label</code> — Display text</li>
+<li><code>path</code> — URL path</li>
+<li><code>weight</code> — Sort order</li>
+<li><code>children</code> — Child nav items (when <code>config.nav.nested</code> is true)</li>
+</ul>
+<h3 id="page-templates">Page Templates<a class="heading-anchor" href="#page-templates">¶</a></h3>
+<table>
+<thead>
+<tr>
+<td>Variable</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>page.title</code></td>
+<td>Page title</td>
+</tr>
+<tr>
+<td><code>page.description</code></td>
+<td>Page description</td>
+</tr>
+<tr>
+<td><code>page.lang</code></td>
+<td>Resolved document language from frontmatter or auto-detection</td>
+</tr>
+<tr>
+<td><code>page.toc</code></td>
+<td>Whether TOC is enabled for this page</td>
+</tr>
+<tr>
+<td><code>page.extra</code></td>
+<td>Custom metadata table from frontmatter</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>Rendered HTML content</td>
+</tr>
+<tr>
+<td><code>anchors</code></td>
+<td>Array of heading anchors for TOC</td>
+</tr>
+</table>
+<p>Use <code>page.lang</code> when you want the current rendered document&#39;s language in templates. In multilingual sites, it is often better to keep a fixed site language on <code>&lt;html&gt;</code> for shared chrome and apply <code>page.lang</code> to the content container instead:</p>
+<pre><code class="language-/dev/null/example.html#L1-5">&lt;html lang="en"&gt;
+  &lt;body&gt;
+    &lt;article lang="{{ page.lang | default(value="en") }}"&gt;
+</code></pre>
+<p>This lets the layout remain in English, for example, while an individual page or post can still declare Spanish or another language.</p>
+<p>Each anchor in <code>anchors</code> has:</p>
+<ul>
+<li><code>id</code> — Heading slug (for <code>href=&quot;#id&quot;</code>)</li>
+<li><code>label</code> — Heading text</li>
+<li><code>level</code> — Heading level (2-6, h1 excluded)</li>
+</ul>
+<h3 id="section-templates">Section Templates<a class="heading-anchor" href="#section-templates">¶</a></h3>
+<table>
+<thead>
+<tr>
+<td>Variable</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>section.title</code></td>
+<td>Section title</td>
+</tr>
+<tr>
+<td><code>section.description</code></td>
+<td>Section description</td>
+</tr>
+<tr>
+<td><code>section.lang</code></td>
+<td>Resolved language for the section index document</td>
+</tr>
+<tr>
+<td><code>section.extra</code></td>
+<td>Custom metadata table from frontmatter</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Array of content items in section</td>
+</tr>
+</table>
+<h3 id="content-item-fields-in">Content Item Fields (in )<a class="heading-anchor" href="#content-item-fields-in">¶</a></h3>
+<code>items</code><p>Items expose path and slug directly, and document metadata under <code>item.frontmatter</code>.</p>
+<table>
+<thead>
+<tr>
+<td>Variable</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>item.path</code></td>
+<td>URL path</td>
+</tr>
+<tr>
+<td><code>item.slug</code></td>
+<td>URL slug</td>
+</tr>
+<tr>
+<td><code>item.frontmatter.title</code></td>
+<td>Content title</td>
+</tr>
+<tr>
+<td><code>item.frontmatter.description</code></td>
+<td>Content description</td>
+</tr>
+<tr>
+<td><code>item.frontmatter.date</code></td>
+<td>Publication date</td>
+</tr>
+<tr>
+<td><code>item.frontmatter.lang</code></td>
+<td>Resolved item language from frontmatter or auto-detection</td>
+</tr>
+<tr>
+<td><code>item.frontmatter.extra</code></td>
+<td>Custom metadata table from frontmatter</td>
+</tr>
+</table>
+<p>If you want listing cards to expose language, use <code>item.frontmatter.lang</code>. You do not need a separate <code>item.lang</code> unless you want a flatter API surface for convenience.</p>
+<h3 id="tag-templates">Tag Templates<a class="heading-anchor" href="#tag-templates">¶</a></h3>
+<table>
+<thead>
+<tr>
+<td>Variable</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>tag</code></td>
+<td>The tag name</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Array of content items with this tag</td>
+</tr>
+</table>
+<h2 id="template-override">Template Override<a class="heading-anchor" href="#template-override">¶</a></h2>
+<p>Set <code>template</code> in frontmatter to use a custom template:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Special Page"</span>
+<span class="hl-variable-other-member">template</span> <span class="hl-operator">=</span> <span class="hl-string">"special.html"</span>
++++
+</code></pre>
+<p>This uses <code>templates/special.html</code> instead of the default.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Minimal static site compiler — suckless, Rust, zero JS" />
+  <title>sukr | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;index.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>sukr</h1>
+  
+  <p class="lead">Minimal static site compiler — suckless, Rust, zero JS</p>
+  
+  <section class="content"><h1 id="sukr">sukr<a class="heading-anchor" href="#sukr">¶</a></h1>
+<p><strong>sukr</strong> transforms Markdown into high-performance static HTML. No bloated runtimes, no client-side JavaScript, just clean output.</p>
+<h2 id="why-sukr">Why sukr?<a class="heading-anchor" href="#why-sukr">¶</a></h2>
+<p>Most static site generators punt rich content to the browser. sukr doesn&#39;t.</p>
+<ul>
+<li><strong>Tree-sitter highlighting</strong> — Proper parsing, not regex. Supports language injection (Nix→Bash, HTML→JS/CSS).</li>
+<li><strong>Build-time math</strong> — LaTeX renders to native MathML. No 300KB JavaScript bundle.</li>
+<li><strong>Build-time diagrams</strong> — Mermaid compiles to inline SVG. Diagrams load instantly.</li>
+<li><strong>Flexible templates</strong> — Runtime Tera templates, no recompilation needed.</li>
+<li><strong>Monorepo-ready</strong> — Multiple sites via <code>-c</code> config flag.</li>
+</ul>
+<p>Ready to try it? Start with the <a href="getting-started.html">Getting Started</a> guide.</p>
+<h2 id="learn-more">Learn More<a class="heading-anchor" href="#learn-more">¶</a></h2>
+<ul>
+<li><a href="getting-started.html">Getting Started</a> — install sukr and build your first site</li>
+<li><a href="deployment.html">Deployment</a> — deploy your site to GitHub Pages, Netlify, or any static host</li>
+<li><a href="configuration.html">Configuration</a> — <code>site.toml</code> reference and CLI options</li>
+<li><a href="content-organization.html">Content Organization</a> — how directories map to site structure</li>
+<li><a href="architecture.html">Architecture</a> — how sukr works under the hood</li>
+</ul>
+<p>Browse the <strong>Features</strong> section in the sidebar for syntax highlighting, math, diagrams, and more.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

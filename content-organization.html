@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="How the filesystem maps to your site structure" />
+  <title>Content Organization | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;content-organization.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" class="active" >Content Organization</a>
+      
+      <div class="nav-anchors">
+        
+        <a href="#the-rule" class="anchor-link level-2">The Rule</a>
+        
+        <a href="#directory-layout" class="anchor-link level-2">Directory Layout</a>
+        
+        <a href="#what-makes-a-section" class="anchor-link level-2">What Makes a Section</a>
+        
+        <a href="#custom-404-page" class="anchor-link level-2">Custom 404 Page</a>
+        
+        <a href="#draft-mode" class="anchor-link level-2">Draft Mode</a>
+        
+        <a href="#aliases-redirects" class="anchor-link level-2">Aliases</a>
+        
+        <a href="#section-discovery" class="anchor-link level-2">Section Discovery</a>
+        
+        <a href="#navigation-generation" class="anchor-link level-2">Navigation Generation</a>
+        
+        <a href="#hierarchical-navigation" class="anchor-link level-3">Hierarchical Navigation</a>
+        
+        <a href="#url-examples" class="anchor-link level-2">URL Examples</a>
+        
+        <a href="#key-points" class="anchor-link level-2">Key Points</a>
+        
+      </div>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>Content Organization</h1>
+  
+  <p class="lead">How the filesystem maps to your site structure</p>
+  
+  <section class="content"><p>sukr builds your site structure from your <code>content/</code> directory. No routing config needed — the filesystem <em>is</em> the config.</p>
+<h2 id="the-rule">The Rule<a class="heading-anchor" href="#the-rule">¶</a></h2>
+<pre><code class="language-text">content/foo/bar.md  →  public/foo/bar.html
+content/about.md    →  public/about.html
+content/_index.md   →  public/index.html
+</code></pre>
+<p>That&#39;s it. Paths mirror exactly, with <code>.md</code> becoming <code>.html</code>.</p>
+<h2 id="directory-layout">Directory Layout<a class="heading-anchor" href="#directory-layout">¶</a></h2>
+<pre><code class="language-text">content/
+├── _index.md           # Homepage (required)
+├── _404.md             # → /404.html (custom error page, optional)
+├── about.md            # → /about.html
+├── contact.md          # → /contact.html
+├── blog/               # Section directory
+│   ├── _index.md       # → /blog/index.html (section index)
+│   ├── first-post.md   # → /blog/first-post.html
+│   └── second-post.md  # → /blog/second-post.html
+└── projects/
+    ├── _index.md       # → /projects/index.html
+    └── my-app.md       # → /projects/my-app.html
+</code></pre>
+<h2 id="what-makes-a-section">What Makes a Section<a class="heading-anchor" href="#what-makes-a-section">¶</a></h2>
+<p>A section is any directory containing <code>_index.md</code>. This file:</p>
+<ol start="1">
+<li>Provides metadata for the section (title, description)</li>
+<li>Triggers section listing behavior</li>
+<li>Appears in the navigation</li>
+</ol>
+<p>Directories without <code>_index.md</code> are ignored.</p>
+<h2 id="custom-404-page">Custom 404 Page<a class="heading-anchor" href="#custom-404-page">¶</a></h2>
+<p>To add a custom &quot;not found&quot; page, create <code>content/_404.md</code>:</p>
+<pre><code class="language-markdown">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Page Not Found"</span>
++++
+
+<span class="hl-markup-heading"><span class="hl-markup-heading">#</span></span><span class="hl-markup-heading"> Page Not Found
+</span>
+The page you're looking for doesn't exist or has been moved.
+
+[Return to the homepage](/)
+</code></pre>
+<p>sukr renders this to <code>404.html</code> in the output root. The file is <strong>optional</strong> — if you don&#39;t create <code>_404.md</code>, no 404 page is generated.</p>
+<p>Most static hosts (Cloudflare Pages, Netlify, GitHub Pages, Vercel) automatically serve <code>/404.html</code> when a visitor hits an unmatched route. No host-side configuration is needed beyond having the file present.</p>
+<h2 id="draft-mode">Draft Mode<a class="heading-anchor" href="#draft-mode">¶</a></h2>
+<p>Set <code>draft = true</code> in frontmatter to exclude content from the build:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Work in Progress"</span>
+<span class="hl-variable-other-member">draft</span> <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">true</span>
++++
+</code></pre>
+<p>Drafts are filtered from <strong>all output</strong> — page rendering, navigation, section listings, feeds, and the sitemap. The file stays in your content directory but produces no HTML. Remove the field (or set <code>draft = false</code>) to publish.</p>
+<h2 id="aliases-redirects">Aliases (Redirects)<a class="heading-anchor" href="#aliases-redirects">¶</a></h2>
+<p>Aliases let you redirect old URLs to a page&#39;s current location. Set <code>aliases</code> in frontmatter:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"New Location"</span>
+<span class="hl-variable-other-member">aliases</span> <span class="hl-operator">=</span> <span class="hl-punctuation-bracket">[</span><span class="hl-string">"/old/path"</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-string">"/another/old/path"</span><span class="hl-punctuation-bracket">]</span>
++++
+</code></pre>
+<p>For each alias, sukr generates an HTML redirect stub using <code>&lt;meta http-equiv=&quot;refresh&quot;&gt;</code>. Bare paths like <code>/old/path</code> produce <code>/old/path/index.html</code>; paths with extensions like <code>/old/page.html</code> are used as-is.</p>
+<h2 id="section-discovery">Section Discovery<a class="heading-anchor" href="#section-discovery">¶</a></h2>
+<p>sukr automatically discovers sections during the build:</p>
+<ol start="1">
+<li>Scans <code>content/</code> for directories containing <code>_index.md</code></li>
+<li>Collects all <code>.md</code> files in that directory (excluding <code>_index.md</code>)</li>
+<li>Renders the section index template with the collected items</li>
+<li>Renders individual content pages (for blog-type sections)</li>
+</ol>
+<p>The <strong>section type</strong> determines which template renders the index. It resolves in order:</p>
+<ol start="1">
+<li><strong>Frontmatter override</strong> — <code>section_type = &quot;blog&quot;</code> in the section&#39;s <code>_index.md</code></li>
+<li><strong>Directory name</strong> — <code>content/blog/</code> becomes type <code>blog</code></li>
+</ol>
+<p>For the full section type reference (built-in types, frontmatter fields, and template dispatch), see <a href="features/sections.html">Sections</a>.</p>
+<h2 id="navigation-generation">Navigation Generation<a class="heading-anchor" href="#navigation-generation">¶</a></h2>
+<p>Navigation builds automatically from:</p>
+<ul>
+<li><strong>Top-level <code>.md</code> files</strong> (except <code>_index.md</code>) → page links</li>
+<li><strong>Directories with <code>_index.md</code></strong> → section links</li>
+</ul>
+<p>Items sort by <code>weight</code> in frontmatter (lower first), then alphabetically.</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Blog"</span>
+<span class="hl-variable-other-member">weight</span> <span class="hl-operator">=</span> <span class="hl-constant-numeric-integer">10</span>  <span class="hl-comment"># Appears before items with weight &gt; 10</span>
++++
+</code></pre>
+<h3 id="hierarchical-navigation">Hierarchical Navigation<a class="heading-anchor" href="#hierarchical-navigation">¶</a></h3>
+<p>When <code>nav.nested = true</code> in your config, section children appear as nested sub-items:</p>
+<pre><code class="language-text">Features           ← Section link
+  ├─ Templates     ← Child page
+  ├─ Sections      ← Child page
+  └─ Highlighting  ← Child page
+Getting Started    ← Top-level page
+</code></pre>
+<p>Child pages inherit their parent section&#39;s position in the nav tree. Within a section, children sort by weight then alphabetically.</p>
+<p>Without nested navigation (the default), only top-level items appear in the nav.</p>
+<h2 id="url-examples">URL Examples<a class="heading-anchor" href="#url-examples">¶</a></h2>
+<table>
+<thead>
+<tr>
+<td>Source Path</td>
+<td>Output Path</td>
+<td>URL</td>
+</tr>
+</thead>
+<tr>
+<td><code>content/_index.md</code></td>
+<td><code>public/index.html</code></td>
+<td><code>/</code></td>
+</tr>
+<tr>
+<td><code>content/_404.md</code></td>
+<td><code>public/404.html</code></td>
+<td><code>/404.html</code></td>
+</tr>
+<tr>
+<td><code>content/about.md</code></td>
+<td><code>public/about.html</code></td>
+<td><code>/about.html</code></td>
+</tr>
+<tr>
+<td><code>content/blog/_index.md</code></td>
+<td><code>public/blog/index.html</code></td>
+<td><code>/blog/</code></td>
+</tr>
+<tr>
+<td><code>content/blog/hello.md</code></td>
+<td><code>public/blog/hello.html</code></td>
+<td><code>/blog/hello.html</code></td>
+</tr>
+</table>
+<h2 id="key-points">Key Points<a class="heading-anchor" href="#key-points">¶</a></h2>
+<ul>
+<li>No config files for routing</li>
+<li>Directory names become URL segments</li>
+<li><code>_index.md</code> = section index, not a regular page</li>
+<li><code>_404.md</code> = custom error page, rendered to <code>404.html</code> at output root</li>
+<li>Flat output structure (no nested <code>index.html</code> per page)</li>
+</ul>
+</section>
+</article>
+</main>
+</body>
+
+</html>

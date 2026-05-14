@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Automatic CSS optimization at build time" />
+  <title>CSS Minification | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;features&#x2F;css.html" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="../index.html" class="logo">
+        <img src="../logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href="..&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children expanded">
+        
+        <a href="..&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;css.html" class="active" >CSS Minification</a>
+        
+        <div class="nav-anchors">
+          
+          <a href="#how-it-works" class="anchor-link level-2">How It Works</a>
+          
+          <a href="#build-output" class="anchor-link level-2">Build Output</a>
+          
+          <a href="#no-configuration" class="anchor-link level-2">No Configuration</a>
+          
+          <a href="#error-handling" class="anchor-link level-2">Error Handling</a>
+          
+          <a href="#what-gets-minified" class="anchor-link level-2">What Gets Minified</a>
+          
+          <a href="#what-doesn-t-change" class="anchor-link level-2">What Doesn&#x27;t Change</a>
+          
+        </div>
+        
+        
+        <a href="..&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href="..&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="doc-page">
+  <h1>CSS Minification</h1>
+  
+  <p class="lead">Automatic CSS optimization at build time</p>
+  
+  <section class="content"><p>sukr automatically minifies CSS files in your static directory during the build.</p>
+<h2 id="how-it-works">How It Works<a class="heading-anchor" href="#how-it-works">¶</a></h2>
+<p>When copying files from <code>static/</code> to your output directory:</p>
+<ol start="1">
+<li>CSS files (<code>.css</code> extension) are processed with lightningcss</li>
+<li>Whitespace, comments, and redundant rules are removed</li>
+<li>Identical selectors are merged</li>
+<li>Other static files are copied unchanged</li>
+</ol>
+<h2 id="build-output">Build Output<a class="heading-anchor" href="#build-output">¶</a></h2>
+<p>You&#39;ll see minification progress during builds:</p>
+<pre><code class="language-text">minifying: static/style.css → public/style.css (2048 → 1234 bytes)
+copying: static/logo.svg → public/logo.svg
+</code></pre>
+<h2 id="no-configuration">No Configuration<a class="heading-anchor" href="#no-configuration">¶</a></h2>
+<p>Minification is always on. There&#39;s no setting to disable it, so if you need the original CSS, check your source files.</p>
+<h2 id="error-handling">Error Handling<a class="heading-anchor" href="#error-handling">¶</a></h2>
+<p>If CSS parsing fails (malformed input), sukr preserves the original file content instead of failing the build. Check your terminal for warnings.</p>
+<h2 id="what-gets-minified">What Gets Minified<a class="heading-anchor" href="#what-gets-minified">¶</a></h2>
+<ul>
+<li>Whitespace and newlines removed</li>
+<li>Comments stripped</li>
+<li>Selector merging (<code>.a { color: red } .b { color: red }</code> → <code>.a, .b { color: red }</code>)</li>
+<li>Vendor prefix optimization</li>
+</ul>
+<h2 id="what-doesn-t-change">What Doesn&#39;t Change<a class="heading-anchor" href="#what-doesn-t-change">¶</a></h2>
+<ul>
+<li>CSS variable names</li>
+<li>Class and ID selectors</li>
+<li>Relative paths (images, fonts)</li>
+</ul>
+</section>
+</article>
+</main>
+</body>
+
+</html>

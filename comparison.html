@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="How sukr compares to other static site generators" />
+  <title>Comparison | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;comparison.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" class="active" >Comparison</a>
+      
+      <div class="nav-anchors">
+        
+        <a href="#feature-matrix" class="anchor-link level-2">Feature Matrix</a>
+        
+        <a href="#syntax-highlighting" class="anchor-link level-2">Syntax Highlighting</a>
+        
+        <a href="#math-rendering" class="anchor-link level-2">Math Rendering</a>
+        
+        <a href="#diagram-rendering" class="anchor-link level-2">Diagram Rendering</a>
+        
+        <a href="#when-to-choose-sukr" class="anchor-link level-2">When to Choose sukr</a>
+        
+        <a href="#when-to-choose-something-else" class="anchor-link level-2">When to Choose Something Else</a>
+        
+      </div>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>Comparison</h1>
+  
+  <p class="lead">How sukr compares to other static site generators</p>
+  
+  <section class="content"><p>This page provides a factual comparison of sukr with other popular static site generators.</p>
+<h2 id="feature-matrix">Feature Matrix<a class="heading-anchor" href="#feature-matrix">¶</a></h2>
+<table>
+<thead>
+<tr>
+<td>Feature</td>
+<td>sukr</td>
+<td>Zola</td>
+<td>Hugo</td>
+<td>Eleventy</td>
+</tr>
+</thead>
+<tr>
+<td><strong>Language</strong></td>
+<td>Rust</td>
+<td>Rust</td>
+<td>Go</td>
+<td>Node.js</td>
+</tr>
+<tr>
+<td><strong>Single Binary</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Syntax Highlighting</strong></td>
+<td>Tree-sitter</td>
+<td>syntect</td>
+<td>Chroma</td>
+<td>Plugin-based</td>
+</tr>
+<tr>
+<td><strong>Build-time Math</strong></td>
+<td>✅ MathML</td>
+<td>❌</td>
+<td>❌</td>
+<td>Plugin required</td>
+</tr>
+<tr>
+<td><strong>Build-time Diagrams</strong></td>
+<td>✅ Mermaid/D2 →SVG</td>
+<td>❌</td>
+<td>❌</td>
+<td>Plugin required</td>
+</tr>
+<tr>
+<td><strong>JS-Free Rich Content</strong>¹</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>Configurable</td>
+</tr>
+<tr>
+<td><strong>Template Engine</strong></td>
+<td>Tera</td>
+<td>Tera</td>
+<td>Go templates</td>
+<td>Multiple</td>
+</tr>
+</table>
+<p>¹ <em>All generators can produce JS-free HTML for basic content. This row refers to built-in math and diagram rendering without client-side JavaScript. Zola and Hugo require external JS libraries (MathJax, Mermaid.js) for these features.</em></p>
+<h2 id="syntax-highlighting">Syntax Highlighting<a class="heading-anchor" href="#syntax-highlighting">¶</a></h2>
+<p><strong>sukr</strong> uses <a href="https://tree-sitter.github.io/">Tree-sitter</a>, the same parsing technology used by GitHub, Neovim, and Helix. Tree-sitter builds actual syntax trees rather than matching regex patterns, which enables:</p>
+<ul>
+<li>Accurate highlighting of edge cases</li>
+<li>Language injection (e.g., bash inside Nix <code>buildPhase</code>, JS inside HTML)</li>
+<li>Consistent results across all supported languages</li>
+</ul>
+<p><strong>Zola</strong> uses syntect, which is regex-based (Sublime Text grammars). It works well for common cases but can struggle with nested languages or unusual syntax.</p>
+<p><strong>Hugo</strong> uses Chroma, a Go port of Pygments. Similar trade-offs to syntect.</p>
+<h2 id="math-rendering">Math Rendering<a class="heading-anchor" href="#math-rendering">¶</a></h2>
+<p><strong>sukr</strong> renders LaTeX math to MathML at build time using pulldown-latex. The output is browser-native — no JavaScript required in the browser. Modern browsers render MathML directly.</p>
+<p><strong>Zola, Hugo, Eleventy</strong> typically require client-side JavaScript (MathJax or KaTeX.js) to render math, or external tooling pipelines.</p>
+<h2 id="diagram-rendering">Diagram Rendering<a class="heading-anchor" href="#diagram-rendering">¶</a></h2>
+<p><strong>sukr</strong> converts Mermaid or D2 diagram definitions to inline SVG at build time. The diagrams are embedded directly in the HTML — no JavaScript library loads in the browser.</p>
+<p><strong>Other generators</strong> typically include the Mermaid.js library and render diagrams client-side, adding ~1MB to page weight and requiring JavaScript.</p>
+<h2 id="when-to-choose-sukr">When to Choose sukr<a class="heading-anchor" href="#when-to-choose-sukr">¶</a></h2>
+<p>Consider sukr if you:</p>
+<ul>
+<li>Want zero JavaScript in your output</li>
+<li>Need accurate syntax highlighting with language injection</li>
+<li>Prefer a single Rust binary with no runtime dependencies</li>
+<li>Value build-time rendering over client-side hydration</li>
+</ul>
+<h2 id="when-to-choose-something-else">When to Choose Something Else<a class="heading-anchor" href="#when-to-choose-something-else">¶</a></h2>
+<p>Consider Zola, Hugo, or Eleventy if you:</p>
+<ul>
+<li>Need a larger plugin ecosystem</li>
+<li>Require features sukr doesn&#39;t have (taxonomies, i18n, etc.)</li>
+<li>Prefer a more established community with extensive themes</li>
+<li>Don&#39;t care about client-side JavaScript</li>
+</ul>
+<p>sukr is intentionally minimal. It does a few things well rather than trying to cover every use case.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

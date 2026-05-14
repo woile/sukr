@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Content trust model and deployment security guidance" />
+  <title>Security | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;security.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" class="active" >Security</a>
+      
+      <div class="nav-anchors">
+        
+        <a href="#trust-model" class="anchor-link level-2">Trust Model</a>
+        
+        <a href="#content-processing" class="anchor-link level-2">Content Processing</a>
+        
+        <a href="#html-passthrough" class="anchor-link level-3">HTML Passthrough</a>
+        
+        <a href="#url-escaping" class="anchor-link level-3">URL Escaping</a>
+        
+        <a href="#template-auto-escaping" class="anchor-link level-3">Template Auto-Escaping</a>
+        
+        <a href="#deployment-security" class="anchor-link level-2">Deployment Security</a>
+        
+        <a href="#content-security-policy" class="anchor-link level-3">Content Security Policy</a>
+        
+        <a href="#platform-specific-headers" class="anchor-link level-3">Platform-Specific Headers</a>
+        
+        <a href="#reporting-issues" class="anchor-link level-2">Reporting Issues</a>
+        
+      </div>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>Security</h1>
+  
+  <p class="lead">Content trust model and deployment security guidance</p>
+  
+  <section class="content"><h1 id="security">Security<a class="heading-anchor" href="#security">¶</a></h1>
+<p>sukr is a <strong>build-time only</strong> compiler with no runtime attack surface. Security considerations focus on content processing and deployment.</p>
+<h2 id="trust-model">Trust Model<a class="heading-anchor" href="#trust-model">¶</a></h2>
+<table>
+<thead>
+<tr>
+<td>Source</td>
+<td>Trust Level</td>
+<td>Rationale</td>
+</tr>
+</thead>
+<tr>
+<td>Markdown content</td>
+<td><strong>Untrusted</strong></td>
+<td>May come from contributors, CMS, or external sources</td>
+</tr>
+<tr>
+<td>TOML frontmatter</td>
+<td><strong>Untrusted</strong></td>
+<td>Parsed from content files</td>
+</tr>
+<tr>
+<td>Templates</td>
+<td><strong>Semi-trusted</strong></td>
+<td>User-controlled but typically from known sources</td>
+</tr>
+<tr>
+<td>sukr binary</td>
+<td><strong>Trusted</strong></td>
+<td>Compiled from audited Rust code</td>
+</tr>
+<tr>
+<td>Tree-sitter grammars</td>
+<td><strong>Trusted</strong></td>
+<td>Compiled into the binary</td>
+</tr>
+</table>
+<h2 id="content-processing">Content Processing<a class="heading-anchor" href="#content-processing">¶</a></h2>
+<h3 id="html-passthrough">HTML Passthrough<a class="heading-anchor" href="#html-passthrough">¶</a></h3>
+<p>Per the CommonMark specification, raw HTML in Markdown is passed through to output:</p>
+<pre><code class="language-markdown"><span class="hl-punctuation-bracket">&lt;</span><span class="hl-tag">script</span><span class="hl-punctuation-bracket">&gt;</span><span class="hl-function-builtin">alert</span><span class="hl-punctuation-bracket">(</span><span class="hl-string">'hello'</span><span class="hl-punctuation-bracket">)</span><span class="hl-punctuation-bracket">&lt;/</span><span class="hl-tag">script</span><span class="hl-punctuation-bracket">&gt;</span>
+</code></pre>
+<p><strong>If your content comes from untrusted sources</strong>, review it before building. sukr does not sanitize HTML — this is intentional to preserve legitimate use cases.</p>
+<h3 id="url-escaping">URL Escaping<a class="heading-anchor" href="#url-escaping">¶</a></h3>
+<p>Link and image URLs are escaped to prevent attribute injection attacks:</p>
+<pre><code class="language-markdown"><span class="hl-comment">&lt;!-- This is safe — quotes are escaped --&gt;</span>
+
+[click me](&lt;"%3E%3Cscript%3Ealert(1)%3C/script%3E&gt;)
+</code></pre>
+<p>Produces escaped output, not executable script.</p>
+<h3 id="template-auto-escaping">Template Auto-Escaping<a class="heading-anchor" href="#template-auto-escaping">¶</a></h3>
+<p>Tera templates auto-escape variables by default:</p>
+<ul>
+<li><code>{{ title }}</code> — escaped (safe)</li>
+<li><code>{{ page.description }}</code> — escaped (safe)</li>
+<li><code>{{ content | safe }}</code> — intentionally unescaped (pre-rendered HTML)</li>
+</ul>
+<h2 id="deployment-security">Deployment Security<a class="heading-anchor" href="#deployment-security">¶</a></h2>
+<h3 id="content-security-policy">Content Security Policy<a class="heading-anchor" href="#content-security-policy">¶</a></h3>
+<p>For maximum protection when serving sukr-generated sites, configure CSP headers on your web server or CDN.</p>
+<p><strong>Recommended policy for sukr sites:</strong></p>
+<pre><code>Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'none'; frame-ancestors 'none'
+</code></pre>
+<p>This policy:</p>
+<ul>
+<li>✅ Allows styles (including inline for syntax highlighting)</li>
+<li>✅ Allows images and data URIs (for Mermaid SVGs)</li>
+<li>✅ Blocks all JavaScript execution</li>
+<li>✅ Prevents clickjacking</li>
+</ul>
+<h3 id="platform-specific-headers">Platform-Specific Headers<a class="heading-anchor" href="#platform-specific-headers">¶</a></h3>
+<p><strong>Cloudflare Pages</strong> (<code>public/_headers</code>):</p>
+<pre><code>/*
+  Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+</code></pre>
+<p><strong>Netlify</strong> (<code>public/_headers</code>):</p>
+<pre><code>/*
+  Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'none'
+  X-Content-Type-Options: nosniff
+</code></pre>
+<p><strong>Nginx</strong>:</p>
+<pre><code class="language-nginx">add_header Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'none'";
+add_header X-Content-Type-Options nosniff;
+add_header X-Frame-Options DENY;
+</code></pre>
+<h2 id="reporting-issues">Reporting Issues<a class="heading-anchor" href="#reporting-issues">¶</a></h2>
+<p>Report security issues via <a href="mailto:security@sukr.io">security@sukr.io</a> or GitHub Security Advisories.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Complete reference for site.toml configuration" />
+  <title>Configuration | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;configuration.html" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="./index.html" class="logo">
+        <img src="./logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href=".&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;configuration.html" class="active" >Configuration</a>
+      
+      <div class="nav-anchors">
+        
+        <a href="#basic-configuration" class="anchor-link level-2">Basic Configuration</a>
+        
+        <a href="#path-configuration" class="anchor-link level-2">Path Configuration</a>
+        
+        <a href="#navigation-configuration" class="anchor-link level-2">Navigation Configuration</a>
+        
+        <a href="#cli-options" class="anchor-link level-2">CLI Options</a>
+        
+        <a href="#frontmatter" class="anchor-link level-2">Frontmatter</a>
+        
+        <a href="#frontmatter-fields" class="anchor-link level-3">Frontmatter Fields</a>
+        
+        <a href="#custom-metadata-extra" class="anchor-link level-3">Custom Metadata</a>
+        
+        <a href="#language-resolution" class="anchor-link level-3">Language Resolution</a>
+        
+        <a href="#section-types" class="anchor-link level-3">Section Types</a>
+        
+        <a href="#see-also" class="anchor-link level-2">See Also</a>
+        
+      </div>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children">
+        
+        <a href=".&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href=".&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href=".&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href=".&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="page" lang="eng">
+  <h1>Configuration</h1>
+  
+  <p class="lead">Complete reference for site.toml configuration</p>
+  
+  <section class="content"><p>sukr is configured via <code>site.toml</code>. All settings have sensible defaults.</p>
+<h2 id="basic-configuration">Basic Configuration<a class="heading-anchor" href="#basic-configuration">¶</a></h2>
+<pre><code class="language-toml"><span class="hl-variable-other-member">title</span>    <span class="hl-operator">=</span> <span class="hl-string">"My Site"</span>
+<span class="hl-variable-other-member">author</span>   <span class="hl-operator">=</span> <span class="hl-string">"Your Name"</span>
+<span class="hl-variable-other-member">base_url</span> <span class="hl-operator">=</span> <span class="hl-string">"https://example.com"</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<td>Field</td>
+<td>Required</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>title</code></td>
+<td>Yes</td>
+<td>Site title (used in page titles)</td>
+</tr>
+<tr>
+<td><code>author</code></td>
+<td>Yes</td>
+<td>Author name (used in feeds)</td>
+</tr>
+<tr>
+<td><code>base_url</code></td>
+<td>Yes</td>
+<td>Canonical URL for the site</td>
+</tr>
+</table>
+<h2 id="path-configuration">Path Configuration<a class="heading-anchor" href="#path-configuration">¶</a></h2>
+<p>All paths are optional. Default values shown:</p>
+<pre><code class="language-toml"><span class="hl-punctuation-bracket">[</span><span class="hl-type">paths</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">content</span>   <span class="hl-operator">=</span> <span class="hl-string">"content"</span>    <span class="hl-comment"># Markdown source files</span>
+<span class="hl-variable-other-member">output</span>    <span class="hl-operator">=</span> <span class="hl-string">"public"</span>     <span class="hl-comment"># Generated HTML output</span>
+<span class="hl-variable-other-member">static</span>    <span class="hl-operator">=</span> <span class="hl-string">"static"</span>     <span class="hl-comment"># Static assets (copied as-is)</span>
+<span class="hl-variable-other-member">templates</span> <span class="hl-operator">=</span> <span class="hl-string">"templates"</span>  <span class="hl-comment"># Tera template files</span>
+</code></pre>
+<p>Paths are resolved <strong>relative to the config file location</strong>. This enables monorepo setups:</p>
+<pre><code class="language-bash"><span class="hl-comment"># Build site from subdirectory</span>
+<span class="hl-function">sukr</span> <span class="hl-variable-parameter">-c</span> <span class="hl-variable-parameter">sites/blog/site.toml</span>
+<span class="hl-comment"># Paths resolve relative to sites/blog/</span>
+</code></pre>
+<h2 id="navigation-configuration">Navigation Configuration<a class="heading-anchor" href="#navigation-configuration">¶</a></h2>
+<p>Control how navigation menus are generated:</p>
+<pre><code class="language-toml"><span class="hl-punctuation-bracket">[</span><span class="hl-type">nav</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">nested</span> <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">false</span>  <span class="hl-comment"># Show child pages under sections</span>
+<span class="hl-variable-other-member">toc</span>    <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">false</span>  <span class="hl-comment"># Enable table of contents globally</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<td>Field</td>
+<td>Default</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>nested</code></td>
+<td><code>false</code></td>
+<td>Display section children as nested sub-menus</td>
+</tr>
+<tr>
+<td><code>toc</code></td>
+<td><code>false</code></td>
+<td>Show heading anchors in sidebar (table of contents)</td>
+</tr>
+</table>
+<p>When <code>nested = true</code>, section pages appear as indented sub-items under their parent section. When <code>toc = true</code>, h2-h6 headings are extracted and displayed as anchor links in the sidebar.</p>
+<p>Both settings can be overridden per-page via frontmatter.</p>
+<h2 id="cli-options">CLI Options<a class="heading-anchor" href="#cli-options">¶</a></h2>
+<pre><code class="language-bash"><span class="hl-function">sukr</span>                           <span class="hl-comment"># Use ./site.toml</span>
+<span class="hl-function">sukr</span> <span class="hl-variable-parameter">-c</span> <span class="hl-variable-parameter">path/to/site.toml</span>      <span class="hl-comment"># Custom config</span>
+<span class="hl-function">sukr</span> <span class="hl-variable-parameter">--config</span> <span class="hl-variable-parameter">path/to/site.toml</span>
+<span class="hl-function">sukr</span> <span class="hl-variable-parameter">-h,</span> <span class="hl-variable-parameter">--help</span>                <span class="hl-comment"># Show help</span>
+</code></pre>
+<h2 id="frontmatter">Frontmatter<a class="heading-anchor" href="#frontmatter">¶</a></h2>
+<p>Each Markdown file can have TOML frontmatter:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Page Title"</span>
+<span class="hl-variable-other-member">description</span> <span class="hl-operator">=</span> <span class="hl-string">"Optional description"</span>
+<span class="hl-variable-other-member">date</span> <span class="hl-operator">=</span> <span class="hl-string-special">2024-01-15</span>              <span class="hl-comment"># For blog posts (native TOML date)</span>
+<span class="hl-variable-other-member">weight</span> <span class="hl-operator">=</span> <span class="hl-constant-numeric-integer">10</span>                    <span class="hl-comment"># Sort order (lower = first)</span>
+<span class="hl-variable-other-member">nav_label</span> <span class="hl-operator">=</span> <span class="hl-string">"Short Name"</span>       <span class="hl-comment"># Override nav display</span>
+<span class="hl-variable-other-member">section_type</span> <span class="hl-operator">=</span> <span class="hl-string">"blog"</span>          <span class="hl-comment"># Override section template</span>
+<span class="hl-variable-other-member">template</span> <span class="hl-operator">=</span> <span class="hl-string">"custom"</span>            <span class="hl-comment"># Override page template</span>
+<span class="hl-variable-other-member">toc</span> <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">true</span>                     <span class="hl-comment"># Override global TOC setting</span>
+<span class="hl-variable-other-member">link_to</span> <span class="hl-operator">=</span> <span class="hl-string">"https://..."</span>        <span class="hl-comment"># External link (for project cards)</span>
+<span class="hl-variable-other-member">tags</span> <span class="hl-operator">=</span> <span class="hl-punctuation-bracket">[</span><span class="hl-string">"rust"</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-string">"tutorial"</span><span class="hl-punctuation-bracket">]</span>    <span class="hl-comment"># Tags for categorization</span>
+<span class="hl-variable-other-member">draft</span> <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">true</span>                   <span class="hl-comment"># Exclude from output</span>
+<span class="hl-variable-other-member">aliases</span> <span class="hl-operator">=</span> <span class="hl-punctuation-bracket">[</span><span class="hl-string">"/old/path"</span><span class="hl-punctuation-bracket">]</span>        <span class="hl-comment"># Redirect old URLs here</span>
+<span class="hl-variable-other-member">lang</span> <span class="hl-operator">=</span> <span class="hl-string">"en"</span>                    <span class="hl-comment"># Optional explicit document language</span>
+
+<span class="hl-punctuation-bracket">[</span><span class="hl-type">extra</span><span class="hl-punctuation-bracket">]</span>                        <span class="hl-comment"># Custom metadata for templates</span>
+<span class="hl-variable-other-member">author</span> <span class="hl-operator">=</span> <span class="hl-string">"Alice"</span>
+<span class="hl-variable-other-member">featured</span> <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">true</span>
++++
+</code></pre>
+<h3 id="frontmatter-fields">Frontmatter Fields<a class="heading-anchor" href="#frontmatter-fields">¶</a></h3>
+<table>
+<thead>
+<tr>
+<td>Field</td>
+<td>Type</td>
+<td>Default</td>
+<td>Description</td>
+</tr>
+</thead>
+<tr>
+<td><code>title</code></td>
+<td>string</td>
+<td><em>(required)</em></td>
+<td>Page title</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td><em>(none)</em></td>
+<td>Meta description</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>date</td>
+<td><em>(none)</em></td>
+<td>Publication date (YYYY-MM-DD, native TOML date)</td>
+</tr>
+<tr>
+<td><code>weight</code></td>
+<td>integer</td>
+<td><code>50</code></td>
+<td>Sort order (lower = first)</td>
+</tr>
+<tr>
+<td><code>nav_label</code></td>
+<td>string</td>
+<td>title</td>
+<td>Override navigation label</td>
+</tr>
+<tr>
+<td><code>section_type</code></td>
+<td>string</td>
+<td>directory name</td>
+<td>Template dispatch (e.g., &quot;blog&quot;, &quot;projects&quot;)</td>
+</tr>
+<tr>
+<td><code>template</code></td>
+<td>string</td>
+<td><em>(none)</em></td>
+<td>Custom template name</td>
+</tr>
+<tr>
+<td><code>toc</code></td>
+<td>boolean</td>
+<td>global setting</td>
+<td>Enable/disable table of contents for this page</td>
+</tr>
+<tr>
+<td><code>link_to</code></td>
+<td>string</td>
+<td><em>(none)</em></td>
+<td>External URL (renders as link instead of page)</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Tags for categorization</td>
+</tr>
+<tr>
+<td><code>draft</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Exclude content from output</td>
+</tr>
+<tr>
+<td><code>aliases</code></td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Old URL paths that redirect here</td>
+</tr>
+<tr>
+<td><code>lang</code></td>
+<td>string</td>
+<td>auto-detected</td>
+<td>Explicit document language; overrides detection</td>
+</tr>
+<tr>
+<td><code>extra</code></td>
+<td>table</td>
+<td><code>{}</code></td>
+<td>Custom metadata available in templates</td>
+</tr>
+</table>
+<h3 id="custom-metadata-extra">Custom Metadata ([extra])<a class="heading-anchor" href="#custom-metadata-extra">¶</a></h3>
+<p>The <code>[extra]</code> table allows you to define arbitrary metadata that is passed directly to your templates. This is useful for extending sukr without modifying the compiler.</p>
+<p>You can use any valid TOML structure, including nested tables and arrays:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Deep Dive"</span>
+
+<span class="hl-punctuation-bracket">[</span><span class="hl-type">extra</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">metadata</span> <span class="hl-operator">=</span> <span class="hl-punctuation-bracket">{</span> <span class="hl-variable-other-member">version</span> <span class="hl-operator">=</span> <span class="hl-string">"1.0"</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-variable-other-member">author</span> <span class="hl-operator">=</span> <span class="hl-punctuation-bracket">{</span> <span class="hl-variable-other-member">name</span> <span class="hl-operator">=</span> <span class="hl-string">"Alice"</span><span class="hl-punctuation-delimiter">,</span> <span class="hl-variable-other-member">role</span> <span class="hl-operator">=</span> <span class="hl-string">"Admin"</span> <span class="hl-punctuation-bracket">}</span> <span class="hl-punctuation-bracket">}</span>
+<span class="hl-punctuation-bracket">[[</span><span class="hl-type">extra</span><span class="hl-punctuation-delimiter">.</span><span class="hl-type">items</span><span class="hl-punctuation-bracket">]]</span>
+<span class="hl-variable-other-member">name</span> <span class="hl-operator">=</span> <span class="hl-string">"First"</span>
+<span class="hl-punctuation-bracket">[[</span><span class="hl-type">extra</span><span class="hl-punctuation-delimiter">.</span><span class="hl-type">items</span><span class="hl-punctuation-bracket">]]</span>
+<span class="hl-variable-other-member">name</span> <span class="hl-operator">=</span> <span class="hl-string">"Second"</span>
++++
+</code></pre>
+<p>These variables are available in templates via <code>page.extra</code> (for pages) or <code>section.extra</code> (for section indexes). For example: <code>{{ page.extra.author }}</code> or <code>{{ page.extra.items.0.name }}</code>.</p>
+<h3 id="language-resolution">Language Resolution<a class="heading-anchor" href="#language-resolution">¶</a></h3>
+<p><code>sukr</code> resolves a document language in this order:</p>
+<ol start="1">
+<li>If frontmatter sets <code>lang</code>, that value is used as-is.</li>
+<li>Otherwise, <code>sukr</code> attempts to detect the language from the Markdown body.</li>
+<li>If detection is not reliable, no language is exposed.</li>
+</ol>
+<p>This resolved value is available in templates:</p>
+<ul>
+<li><code>page.lang</code> for the current page or content document</li>
+<li><code>section.lang</code> for the current section index document</li>
+<li><code>item.frontmatter.lang</code> for items in section and tag listings</li>
+</ul>
+<p><code>sukr</code> does not apply the resolved document language to <code>&lt;html lang&gt;</code> automatically. This lets you keep a site-level template language such as English while still marking individual documents or content regions with <code>page.lang</code> when needed.</p>
+<p>Use <code>lang</code> when you want to set document metadata explicitly, for example:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"Hola"</span>
+<span class="hl-variable-other-member">lang</span> <span class="hl-operator">=</span> <span class="hl-string">"es"</span>
++++
+</code></pre>
+<h3 id="section-types">Section Types<a class="heading-anchor" href="#section-types">¶</a></h3>
+<p>The <code>section_type</code> field determines which template is used for section indexes:</p>
+<ul>
+<li><code>blog</code> → <code>templates/section/blog.html</code></li>
+<li><code>projects</code> → <code>templates/section/projects.html</code></li>
+<li><em>(any other)</em> → <code>templates/section/default.html</code></li>
+</ul>
+<p>If not specified, sukr uses the directory name as the section type.</p>
+<h2 id="see-also">See Also<a class="heading-anchor" href="#see-also">¶</a></h2>
+<ul>
+<li><a href="getting-started.html">Getting Started</a> — install sukr and build your first site</li>
+<li><a href="content-organization.html">Content Organization</a> — how directories map to site structure</li>
+<li><a href="features/templates.html">Templates</a> — template directory structure and customization</li>
+</ul>
+</section>
+</article>
+</main>
+</body>
+
+</html>

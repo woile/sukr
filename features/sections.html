@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Section types, frontmatter, and template dispatch reference" />
+  <title>Sections | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;features&#x2F;sections.html" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="../index.html" class="logo">
+        <img src="../logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href="..&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children expanded">
+        
+        <a href="..&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sections.html" class="active" >Sections</a>
+        
+        <div class="nav-anchors">
+          
+          <a href="#section-types" class="anchor-link level-2">Section Types</a>
+          
+          <a href="#built-in-section-types" class="anchor-link level-3">Built-in Section Types</a>
+          
+          <a href="#section-frontmatter" class="anchor-link level-2">Section Frontmatter</a>
+          
+          <a href="#adding-a-new-section" class="anchor-link level-2">Adding a New Section</a>
+          
+        </div>
+        
+        
+        <a href="..&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sitemap.html" >Sitemap</a>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href="..&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="doc-page">
+  <h1>Sections</h1>
+  
+  <p class="lead">Section types, frontmatter, and template dispatch reference</p>
+  
+  <section class="content"><p>sukr discovers sections from your content directory structure. For an explanation of how sections work and how directories map to site structure, see <a href="../content-organization.html">Content Organization</a>.</p>
+<h2 id="section-types">Section Types<a class="heading-anchor" href="#section-types">¶</a></h2>
+<p>The section type determines which template is used. It resolves in order:</p>
+<ol start="1">
+<li><strong>Frontmatter override</strong>: <code>section_type = &quot;blog&quot;</code> in <code>_index.md</code></li>
+<li><strong>Directory name</strong>: <code>content/blog/</code> → type <code>blog</code></li>
+</ol>
+<h3 id="built-in-section-types">Built-in Section Types<a class="heading-anchor" href="#built-in-section-types">¶</a></h3>
+<table>
+<thead>
+<tr>
+<td>Type</td>
+<td>Behavior</td>
+</tr>
+</thead>
+<tr>
+<td><code>blog</code></td>
+<td>Sorts by date (newest first), renders individual posts</td>
+</tr>
+<tr>
+<td><code>projects</code></td>
+<td>Sorts by weight, card-style listing</td>
+</tr>
+<tr>
+<td><em>(other)</em></td>
+<td>Sorts by weight, uses default template</td>
+</tr>
+</table>
+<h2 id="section-frontmatter">Section Frontmatter<a class="heading-anchor" href="#section-frontmatter">¶</a></h2>
+<p>In <code>_index.md</code>:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"My Blog"</span>
+<span class="hl-variable-other-member">description</span> <span class="hl-operator">=</span> <span class="hl-string">"Thoughts and tutorials"</span>
+<span class="hl-variable-other-member">section_type</span> <span class="hl-operator">=</span> <span class="hl-string">"blog"</span>  <span class="hl-comment"># Optional, defaults to directory name</span>
+<span class="hl-variable-other-member">weight</span> <span class="hl-operator">=</span> <span class="hl-constant-numeric-integer">1</span>             <span class="hl-comment"># Nav order</span>
++++
+</code></pre>
+<h2 id="adding-a-new-section">Adding a New Section<a class="heading-anchor" href="#adding-a-new-section">¶</a></h2>
+<ol start="1">
+<li>Create directory: <code>content/recipes/</code></li>
+<li>Create index: <code>content/recipes/_index.md</code></li>
+<li>Add content: <code>content/recipes/pasta.md</code></li>
+<li>Optionally create template: <code>templates/section/recipes.html</code></li>
+</ol>
+<p>If no <code>section/recipes.html</code> template exists, sukr falls back to <code>section/default.html</code>. A custom template is only needed when you want a different layout for that section.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>

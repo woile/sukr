@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <meta name="description" content="Automatic XML sitemap generation for SEO" />
+  <title>Sitemap | sukr documentation</title>
+  <link rel="canonical" href="https:&#x2F;&#x2F;woile.github.io&#x2F;sukr&#x2F;features&#x2F;sitemap.html" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../logo.png" />
+</head>
+
+<body>
+  <aside class="sidebar">
+    <header>
+      <a href="../index.html" class="logo">
+        <img src="../logo.png" alt="" class="logo-img" />
+        sukr
+      </a>
+      <span class="tagline">suckless static sites</span>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+      <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+    </header>
+    <nav>
+      
+      
+      
+      <a href="..&#x2F;getting-started.html" >Getting Started</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;deployment.html" >Deployment</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;content-organization.html" >Content Organization</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;configuration.html" >Configuration</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;features&#x2F;index.html" >Features</a>
+      
+      
+      <div class="nav-children expanded">
+        
+        <a href="..&#x2F;features&#x2F;templates.html" >Tera Templates</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sections.html" >Sections</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;syntax-highlighting.html" >Syntax Highlighting</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;d2-diagrams.html" >D2 Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;mermaid.html" >Mermaid Diagrams</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;math.html" >Math Rendering</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;feeds.html" >Atom Feeds</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;css.html" >CSS Minification</a>
+        
+        
+        <a href="..&#x2F;features&#x2F;sitemap.html" class="active" >Sitemap</a>
+        
+        <div class="nav-anchors">
+          
+          <a href="#output" class="anchor-link level-2">Output</a>
+          
+          <a href="#sitemap-contents" class="anchor-link level-2">Sitemap Contents</a>
+          
+          <a href="#auto-generation" class="anchor-link level-2">Auto-generation</a>
+          
+          <a href="#disabling-the-sitemap" class="anchor-link level-2">Disabling the Sitemap</a>
+          
+          <a href="#last-modified-dates" class="anchor-link level-2">Last Modified Dates</a>
+          
+          <a href="#linking-to-the-sitemap" class="anchor-link level-2">Linking to the Sitemap</a>
+          
+          <a href="#validation" class="anchor-link level-2">Validation</a>
+          
+        </div>
+        
+        
+      </div>
+      
+      
+      
+      
+      <a href="..&#x2F;architecture.html" >Architecture</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;comparison.html" >Comparison</a>
+      
+      
+      
+      
+      
+      <a href="..&#x2F;security.html" >Security</a>
+      
+      
+      
+    </nav>
+    <footer class="sidebar-footer">
+      <a href="https://github.com/nrdxp/sukr">GitHub</a>
+      <span>© 2026 nrdxp — MIT</span>
+    </footer>
+  </aside>
+  <main>
+<article class="doc-page">
+  <h1>Sitemap</h1>
+  
+  <p class="lead">Automatic XML sitemap generation for SEO</p>
+  
+  <section class="content"><p>sukr generates an XML sitemap at build time for search engine optimization.</p>
+<h2 id="output">Output<a class="heading-anchor" href="#output">¶</a></h2>
+<p>After building, you&#39;ll find <code>sitemap.xml</code> in your output directory:</p>
+<pre><code class="language-text">public/
+├── index.html
+├── feed.xml
+├── sitemap.xml  ← XML sitemap
+└── blog/
+    └── ...
+</code></pre>
+<h2 id="sitemap-contents">Sitemap Contents<a class="heading-anchor" href="#sitemap-contents">¶</a></h2>
+<p>The sitemap includes URLs for:</p>
+<ul>
+<li>Homepage (<code>/index.html</code>)</li>
+<li>Section index pages (<code>/blog/index.html</code>, etc.)</li>
+<li>All content items within sections</li>
+<li>Standalone pages (top-level <code>.md</code> files)</li>
+<li>Tag listing pages (<code>/tags/&lt;tag&gt;.html</code>), if any tags exist</li>
+</ul>
+<h2 id="auto-generation">Auto-generation<a class="heading-anchor" href="#auto-generation">¶</a></h2>
+<p>Sitemap generation happens automatically during every build. No configuration required.</p>
+<p>URLs use the <code>base_url</code> from <code>site.toml</code> to construct absolute URLs as required by the sitemap protocol.</p>
+<h2 id="disabling-the-sitemap">Disabling the Sitemap<a class="heading-anchor" href="#disabling-the-sitemap">¶</a></h2>
+<p>To suppress sitemap generation, add to <code>site.toml</code>:</p>
+<pre><code class="language-toml"><span class="hl-punctuation-bracket">[</span><span class="hl-type">sitemap</span><span class="hl-punctuation-bracket">]</span>
+<span class="hl-variable-other-member">enabled</span> <span class="hl-operator">=</span> <span class="hl-constant-builtin-boolean">false</span>
+</code></pre>
+<p>The sitemap is enabled by default.</p>
+<h2 id="last-modified-dates">Last Modified Dates<a class="heading-anchor" href="#last-modified-dates">¶</a></h2>
+<p>If content has a <code>date</code> field in frontmatter, it&#39;s included as <code>&lt;lastmod&gt;</code>:</p>
+<pre><code class="language-toml">+++
+<span class="hl-variable-other-member">title</span> <span class="hl-operator">=</span> <span class="hl-string">"My Post"</span>
+<span class="hl-variable-other-member">date</span> <span class="hl-operator">=</span> <span class="hl-string-special">2024-01-15</span>
++++
+</code></pre>
+<p>Content without dates omits the <code>&lt;lastmod&gt;</code> element.</p>
+<h2 id="linking-to-the-sitemap">Linking to the Sitemap<a class="heading-anchor" href="#linking-to-the-sitemap">¶</a></h2>
+<p>Add a link in your <code>base.html</code> template or <code>robots.txt</code>:</p>
+<pre><code class="language-text">Sitemap: https://example.com/sitemap.xml
+</code></pre>
+<h2 id="validation">Validation<a class="heading-anchor" href="#validation">¶</a></h2>
+<p>Test your sitemap with <a href="https://search.google.com/test/rich-results">Google&#39;s Rich Results Test</a> or the <a href="https://www.xml-sitemaps.com/validate-xml-sitemap.html">XML Sitemap Validator</a>.</p>
+</section>
+</article>
+</main>
+</body>
+
+</html>
