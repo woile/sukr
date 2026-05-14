@@ -5,6 +5,7 @@
 mod config;
 mod content;
 mod css;
+mod d2;
 mod error;
 mod escape;
 mod feed;

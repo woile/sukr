@@ -21,13 +21,13 @@ cargo install --path .
 Run directly:
 
 ```bash
-nix run github:nrdxp/sukr -- --help
+nix run github:woile/sukr -- --help
 ```
 
 Or install with Nix:
 
 ```bash
-nix profile install github:nrdxp/sukr
+nix profile install github:woile/sukr
 ```
 
 ## Create Your First Site

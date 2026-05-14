@@ -58,6 +58,9 @@ pub enum ContentBlock {
     Math { source: String, display: bool },
     /// Diagram source (Mermaid).
     Diagram { source: String },
+
+    /// Diagram source (D2)
+    D2Diagram { source: String },
     /// Heading with computed slug for anchor navigation.
     Heading { level: u8, text: String, id: String },
     /// Standard-rendered HTML content (identity in the Render catamorphism).
@@ -309,6 +312,10 @@ pub fn parse_blocks(markdown: &str) -> (Vec<ContentBlock>, Vec<LinkTarget>) {
             Event::End(TagEnd::CodeBlock) => {
                 let block = if code_lang.as_deref() == Some("mermaid") {
                     ContentBlock::Diagram {
+                        source: std::mem::take(&mut code_buf),
+                    }
+                } else if code_lang.as_deref() == Some("d2") {
+                    ContentBlock::D2Diagram {
                         source: std::mem::take(&mut code_buf),
                     }
                 } else {
@@ -1900,6 +1907,19 @@ mod tests {
         assert!(
             blocks.iter().any(
                 |b| matches!(b, ContentBlock::Diagram { source } if source.contains("graph TD"))
+            ),
+            "expected Diagram block, got: {:?}",
+            blocks
+        );
+    }
+
+    #[test]
+    fn test_parse_blocks_d2_diagram() {
+        let md = "```d2\nA -> B\n```\n";
+        let (blocks, _links) = parse_blocks(md);
+        assert!(
+            blocks.iter().any(
+                |b| matches!(b, ContentBlock::D2Diagram { source } if source.contains("A -> B"))
             ),
             "expected Diagram block, got: {:?}",
             blocks

@@ -72,6 +72,21 @@ pub fn render_blocks(
                 },
             },
 
+            // --- Intercepted: Diagram (D2 → SVG) ---
+            ContentBlock::D2Diagram { source } => match crate::d2::render_diagram(source) {
+                Ok(svg) => {
+                    html_output.push_str("<div class=\"d2-diagram\">\n");
+                    html_output.push_str(&svg);
+                    html_output.push_str("\n</div>\n");
+                },
+                Err(e) => {
+                    eprintln!("d2 render error: {e}");
+                    html_output.push_str("<pre class=\"d2-error\"><code>");
+                    html_output.push_str(&html_escape(source));
+                    html_output.push_str("</code></pre>\n");
+                },
+            },
+
             // --- Intercepted: Math (LaTeX → MathML) ---
             ContentBlock::Math { source, display } => {
                 let rendered = crate::math::render_math(source, *display)
