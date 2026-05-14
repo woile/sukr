@@ -1,6 +1,6 @@
 [package]
 name = "sukr"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Minimal static site compiler — suckless, Rust, zero JS"
 license = "MIT"
@@ -68,11 +68,11 @@ lightningcss = "1.0.0-alpha.71"
 # serde/toml: Configuration parsing. Standard choices, no lighter alternatives.
 # ─────────────────────────────────────────────────────────────────────────────
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
+d2-little = "0.7.2"
 serde = { version = "1", features = ["derive"] }
 tera = "1"
 toml = "1"
 whatlang = "0.18"
-d2-little = "0.7.2"
 
 [dev-dependencies]
 tempfile = "3.24.0"  # Test fixtures only

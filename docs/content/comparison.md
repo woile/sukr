@@ -8,15 +8,15 @@ This page provides a factual comparison of sukr with other popular static site g
 
 ## Feature Matrix
 
-| Feature                   |      sukr      |  Zola   |     Hugo     |    Eleventy     |
-| :------------------------ | :------------: | :-----: | :----------: | :-------------: |
-| **Language**              |      Rust      |  Rust   |      Go      |     Node.js     |
-| **Single Binary**         |       ✅       |   ✅    |      ✅      |       ❌        |
-| **Syntax Highlighting**   |  Tree-sitter   | syntect |    Chroma    |  Plugin-based   |
-| **Build-time Math**       |   ✅ MathML    |   ❌    |      ❌      | Plugin required |
-| **Build-time Diagrams**   | ✅ Mermaid→SVG |   ❌    |      ❌      | Plugin required |
-| **JS-Free Rich Content**¹ |       ✅       |   ❌    |      ❌      |  Configurable   |
-| **Template Engine**       |      Tera      |  Tera   | Go templates |    Multiple     |
+| Feature                   |        sukr        |  Zola   |     Hugo     |    Eleventy     |
+| :------------------------ | :----------------: | :-----: | :----------: | :-------------: |
+| **Language**              |        Rust        |  Rust   |      Go      |     Node.js     |
+| **Single Binary**         |         ✅         |   ✅    |      ✅      |       ❌        |
+| **Syntax Highlighting**   |    Tree-sitter     | syntect |    Chroma    |  Plugin-based   |
+| **Build-time Math**       |     ✅ MathML      |   ❌    |      ❌      | Plugin required |
+| **Build-time Diagrams**   | ✅ Mermaid/D2 →SVG |   ❌    |      ❌      | Plugin required |
+| **JS-Free Rich Content**¹ |         ✅         |   ❌    |      ❌      |  Configurable   |
+| **Template Engine**       |        Tera        |  Tera   | Go templates |    Multiple     |
 
 ¹ _All generators can produce JS-free HTML for basic content. This row refers to built-in math and diagram rendering without client-side JavaScript. Zola and Hugo require external JS libraries (MathJax, Mermaid.js) for these features._
 
@@ -40,7 +40,7 @@ This page provides a factual comparison of sukr with other popular static site g
 
 ## Diagram Rendering
 
-**sukr** converts Mermaid diagram definitions to inline SVG at build time. The diagrams are embedded directly in the HTML — no JavaScript library loads in the browser.
+**sukr** converts Mermaid or D2 diagram definitions to inline SVG at build time. The diagrams are embedded directly in the HTML — no JavaScript library loads in the browser.
 
 **Other generators** typically include the Mermaid.js library and render diagrams client-side, adding ~1MB to page weight and requiring JavaScript.
 

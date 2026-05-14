@@ -26,9 +26,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install nix
-        uses: DeterminateSystems/nix-installer-action@main
-      - name: Cache build artifacts
-        uses: DeterminateSystems/flakehub-cache-action@main
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
       - uses: cachix/cachix-action@v16
         with:
           name: ${{ env.CACHE_NAME }}

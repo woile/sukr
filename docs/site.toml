@@ -1,13 +1,13 @@
-author   = "Sukr Contributors"
-base_url = "https://sukr.io"
-title    = "sukr documentation"
+author = "Sukr Contributors"
+base_url = "https://woile.github.io/sukr"
+title = "sukr documentation"
 
 [paths]
-content   = "content"
-output    = "public"
-static    = "static"
+content = "content"
+output = "public"
+static = "static"
 templates = "templates"
 
 [nav]
 nested = true
-toc    = true
+toc = true

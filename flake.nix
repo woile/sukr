@@ -41,9 +41,28 @@
           };
         in
         {
+          packages.site = pkgs.stdenv.mkDerivation {
+            name = "site";
+            src = pkgs.nix-gitignore.gitignoreSource [
+              "src"
+              "queries"
+              "patches"
+            ] ./.;
+            #
+            nativeBuildInputs = [
+              self'.packages.sukr
+            ];
+            buildPhase = ''
+              sukr -c docs/site.toml
+            '';
+            installPhase = ''
+              mkdir -p $out
+              cp -R docs/public/* $out
+            '';
+          };
           packages.sukr = rustplatform.buildRustPackage {
             pname = "sukr";
-            version = "0.1.0";
+            version = "0.2.0";
             src = ./.;
             cargoLock = {
               lockFile = ./Cargo.lock;

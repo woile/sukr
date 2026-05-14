@@ -14,7 +14,7 @@ Most static site generators punt rich content to the browser. sukr doesn't.
 
 - **Tree-sitter syntax highlighting** — Proper parsing, not regex. Supports language injection (Nix shells, HTML scripts).
 - **Build-time math** — LaTeX renders to native MathML. No 300KB JavaScript bundle.
-- **Build-time diagrams** — Mermaid compiles to inline SVG. Diagrams load instantly.
+- **Build-time diagrams** — Mermaid and D2 compiles to inline SVG. Diagrams load instantly.
 - **Tera templates** — Customize layouts without recompiling.
 - **Monorepo support** — Multiple sites via `-c` flag.
 
