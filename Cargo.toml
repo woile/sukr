@@ -52,6 +52,7 @@ tree-sitter-yaml = "0.7"
 # These crates compile rich content to static HTML/SVG at build time, avoiding
 # the 300KB+ JavaScript bundles typical of client-side rendering.
 # ─────────────────────────────────────────────────────────────────────────────
+d2-little = "0.7.2"
 mermaid-rs-renderer = { version = "0.1", default-features = false }  # Diagrams → SVG
 pulldown-latex = "0.7"  # LaTeX math → MathML
 
@@ -62,13 +63,12 @@ pulldown-latex = "0.7"  # LaTeX math → MathML
 # ─────────────────────────────────────────────────────────────────────────────
 lightningcss = "1.0.0-alpha.71"
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────d2-little = "0.7.2"─────────────────────────────────
 # Templating & Configuration
 # tera: Jinja2-style templates, runtime-loaded (no recompilation needed).
 # serde/toml: Configuration parsing. Standard choices, no lighter alternatives.
 # ─────────────────────────────────────────────────────────────────────────────
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
-d2-little = "0.7.2"
 serde = { version = "1", features = ["derive"] }
 tera = "1"
 toml = "1"

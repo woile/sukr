@@ -17,7 +17,7 @@ use tree_house::{
 use tree_house_bindings::Grammar;
 
 /// Supported languages for syntax highlighting.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Language {
     Bash,
     C,
@@ -33,6 +33,7 @@ pub enum Language {
     Nix,
     Python,
     Rust,
+    ShellConsole { prompt: Option<String> },
     Slint,
     Toml,
     TypeScript,
@@ -42,7 +43,13 @@ pub enum Language {
 impl Language {
     /// Parse a language identifier from a code fence.
     pub fn from_fence(lang: &str) -> Option<Self> {
-        match lang.to_lowercase().as_str() {
+        let parts: Vec<&str> = lang.split_whitespace().collect();
+        if parts.is_empty() {
+            return None;
+        }
+
+        let lang_id = parts[0].to_lowercase();
+        match lang_id.as_str() {
             "bash" | "sh" | "shell" | "zsh" => Some(Language::Bash),
             "c" => Some(Language::C),
             "css" => Some(Language::Css),
@@ -57,6 +64,18 @@ impl Language {
             "nix" => Some(Language::Nix),
             "python" | "py" => Some(Language::Python),
             "rust" | "rs" => Some(Language::Rust),
+            "console" | "shell-console" | "bash-console" => {
+                let mut custom_prompt = None;
+                for part in &parts[1..] {
+                    if let Some(p) = part.strip_prefix("prompt=") {
+                        // Remove quotes if present
+                        custom_prompt = Some(p.trim_matches(|c| c == '"' || c == '\'').to_string());
+                    }
+                }
+                Some(Language::ShellConsole {
+                    prompt: custom_prompt,
+                })
+            },
             "slint" => Some(Language::Slint),
             "toml" => Some(Language::Toml),
             "typescript" | "ts" | "tsx" => Some(Language::TypeScript),
@@ -66,8 +85,29 @@ impl Language {
     }
 
     /// Convert to tree-house Language index.
-    fn to_th_language(self) -> THLanguage {
-        THLanguage::new(self as u32)
+    fn to_th_language(&self) -> THLanguage {
+        let idx = match self {
+            Language::Bash => 0,
+            Language::C => 1,
+            Language::Css => 2,
+            Language::Diff => 3,
+            Language::Go => 4,
+            Language::Html => 5,
+            Language::JavaScript => 6,
+            Language::Json => 7,
+            Language::Just => 8,
+            Language::Make => 9,
+            Language::Markdown => 10,
+            Language::Nix => 11,
+            Language::Python => 12,
+            Language::Rust => 13,
+            Language::ShellConsole { .. } => 14,
+            Language::Slint => 15,
+            Language::Toml => 16,
+            Language::TypeScript => 17,
+            Language::Yaml => 18,
+        };
+        THLanguage::new(idx)
     }
 
     /// Convert from tree-house Language index.
@@ -87,10 +127,11 @@ impl Language {
             11 => Some(Language::Nix),
             12 => Some(Language::Python),
             13 => Some(Language::Rust),
-            14 => Some(Language::Slint),
-            15 => Some(Language::Toml),
-            16 => Some(Language::TypeScript),
-            17 => Some(Language::Yaml),
+            14 => Some(Language::ShellConsole { prompt: None }),
+            15 => Some(Language::Slint),
+            16 => Some(Language::Toml),
+            17 => Some(Language::TypeScript),
+            18 => Some(Language::Yaml),
             _ => None,
         }
     }
@@ -356,7 +397,7 @@ impl SukrLoader {
             (vec!["yaml", "yml"], Language::Yaml),
         ] {
             for name in names {
-                name_to_lang.insert(name.to_string(), lang);
+                name_to_lang.insert(name.to_string(), lang.clone());
             }
         }
 
@@ -631,13 +672,89 @@ impl LanguageLoader for SukrLoader {
 /// Global loader instance.
 static LOADER: LazyLock<SukrLoader> = LazyLock::new(SukrLoader::new);
 
+/// Custom highigher for shell console sessions
+fn highlight_shell_console(source: &str, custom_prompt: Option<&str>) -> String {
+    let mut html = String::with_capacity(source.len() * 2);
+    let mut is_continuation = false;
+
+    let mut lines = source.split('\n').peekable();
+    while let Some(line) = lines.next() {
+        let trimmed = line.trim_start();
+
+        let mut prompt_found = false;
+        let mut cmd_start = 0;
+
+        if is_continuation {
+            if trimmed.starts_with("> ") {
+                prompt_found = true;
+                cmd_start = line.len() - trimmed.len() + 2;
+            } else if trimmed.starts_with(">") {
+                prompt_found = true;
+                cmd_start = line.len() - trimmed.len() + 1;
+            } else {
+                prompt_found = false;
+                cmd_start = 0;
+            }
+        } else {
+            // Check custom prompt first if provided
+            if let Some(cp) = custom_prompt {
+                if trimmed.starts_with(cp) {
+                    prompt_found = true;
+                    cmd_start = line.len() - trimmed.len() + cp.len();
+                }
+            }
+
+            // Fallback to default prompts
+            if !prompt_found {
+                if trimmed.starts_with("$ ") {
+                    prompt_found = true;
+                    cmd_start = line.len() - trimmed.len() + 2;
+                } else if trimmed.starts_with("# ") {
+                    prompt_found = true;
+                    cmd_start = line.len() - trimmed.len() + 2;
+                } else if trimmed.starts_with(">>> ") {
+                    prompt_found = true;
+                    cmd_start = line.len() - trimmed.len() + 4;
+                }
+            }
+        }
+
+        if prompt_found || is_continuation {
+            if cmd_start > 0 {
+                let leading = &line[..cmd_start];
+                html.push_str("<span class=\"hl-operator\">");
+                code_escape_into(&mut html, leading);
+                html.push_str("</span>");
+            }
+            let cmd = &line[cmd_start..];
+            let highlighted = highlight_code(Language::Bash, cmd);
+            html.push_str(&highlighted);
+            is_continuation = cmd.ends_with('\\');
+        } else {
+            html.push_str("<span class=\"hl-comment\">");
+            code_escape_into(&mut html, line);
+            html.push_str("</span>");
+            is_continuation = false;
+        }
+
+        if lines.peek().is_some() {
+            html.push('\n');
+        }
+    }
+
+    html
+}
+
 /// Highlight source code and return HTML with span elements.
 ///
 /// Uses tree-house with injection support for embedded languages
 /// in Nix, HTML, JavaScript, and Markdown code blocks.
 pub fn highlight_code(lang: Language, source: &str) -> String {
-    let loader = &*LOADER;
+    if let Language::ShellConsole { prompt } = &lang {
+        return highlight_shell_console(source, prompt.as_deref());
+    }
 
+    let loader = &*LOADER;
     // Check if we have a config for this language
     if !loader.configs.contains_key(&lang) {
         return code_escape(source);
@@ -717,8 +834,26 @@ mod tests {
 
     #[test]
     fn test_language_from_fence() {
-        assert_eq!(Language::from_fence("rust"), Some(Language::Rust));
-        assert_eq!(Language::from_fence("rs"), Some(Language::Rust));
+        assert_eq!(
+            Language::from_fence("rust"),
+            Some(Language::Rust)
+        );
+        assert_eq!(
+            Language::from_fence("console"),
+            Some(Language::ShellConsole { prompt: None })
+        );
+        assert_eq!(
+            Language::from_fence("shell-console prompt=\"λ\""),
+            Some(Language::ShellConsole {
+                prompt: Some("λ".to_string())
+            })
+        );
+        assert_eq!(
+            Language::from_fence("bash-console prompt='#'"),
+            Some(Language::ShellConsole {
+                prompt: Some("#".to_string())
+            })
+        );
         assert_eq!(Language::from_fence("slint"), Some(Language::Slint));
         assert_eq!(Language::from_fence("just"), Some(Language::Just));
         assert_eq!(Language::from_fence("justfile"), Some(Language::Just));
@@ -985,5 +1120,35 @@ fn main() {}
         // HTML special chars should be escaped
         assert!(!html.contains("<script>"));
         assert!(html.contains("&lt;") || html.contains("script"));
+    }
+
+    #[test]
+    fn test_highlight_shell_console() {
+        let code = "$ echo \"Hello\" \\\n> \"World\"\nHello World\n# comment\nls";
+        let html = highlight_code(Language::ShellConsole { prompt: None }, code);
+        println!("HTML OUTPUT:\n{}", html);
+
+        assert!(html.contains("<span class=\"hl-operator\">$ </span>"));
+        assert!(html.contains("<span class=\"hl-operator\">&gt; </span>"));
+        assert!(html.contains("<span class=\"hl-comment\">Hello World</span>"));
+        assert!(html.contains("<span class=\"hl-operator\"># </span>"));
+        assert!(html.contains("echo"));
+        assert!(html.contains("ls"));
+    }
+
+    #[test]
+    fn test_highlight_shell_console_custom_prompt() {
+        let code = "λ echo \"Hello\"\nHello";
+        let html = highlight_code(
+            Language::ShellConsole {
+                prompt: Some("λ".to_string()),
+            },
+            code,
+        );
+        println!("HTML OUTPUT CUSTOM:\n{}", html);
+
+        assert!(html.contains("<span class=\"hl-operator\">λ</span>"));
+        assert!(html.contains("echo"));
+        assert!(html.contains("<span class=\"hl-comment\">Hello</span>"));
     }
 }

@@ -35,6 +35,7 @@ fn main() {
 | HTML       | `html`                |
 | CSS        | `css`                 |
 | Markdown   | `markdown`, `md`      |
+| Shell Console | `console`, `shell-console`, `bash-console` |
 | C          | `c`                   |
 | Just       | `just`                |
 | Make       | `make`, `makefile`    |
@@ -140,6 +141,28 @@ jobs:
   color: #ff79c6;
 }
 ```
+
+### Shell Console
+
+Highlight terminal sessions. Prompts (`$`, `#`, `>>>`) and continuation lines (`>`) are detected automatically. Commands are highlighted using Bash syntax, while output is treated as comments.
+
+````md
+```console
+$ echo "Hello" \
+> "World"
+Hello World
+```
+````
+
+You can also specify a **custom prompt** using the `prompt` parameter:
+
+````md
+```console prompt="λ"
+λ sukr build
+Building site...
+Done.
+```
+````
 
 ### C
 
