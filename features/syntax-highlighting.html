@@ -100,6 +100,8 @@
           
           <a href="#css" class="anchor-link level-3">CSS</a>
           
+          <a href="#shell-console" class="anchor-link level-3">Shell Console</a>
+          
           <a href="#c" class="anchor-link level-3">C</a>
           
           <a href="#how-it-works" class="anchor-link level-2">How It Works</a>
@@ -246,6 +248,10 @@
 <td><code>markdown</code>, <code>md</code></td>
 </tr>
 <tr>
+<td>Shell Console</td>
+<td><code>console</code>, <code>shell-console</code>, <code>bash-console</code></td>
+</tr>
+<tr>
 <td>C</td>
 <td><code>c</code></td>
 </tr>
@@ -329,6 +335,21 @@
   <span class="hl-variable-other-member">color</span><span class="hl-punctuation-delimiter">:</span> <span class="hl-string-special"><span class="hl-string-special">#</span></span><span class="hl-string-special">ff79c6</span><span class="hl-punctuation-delimiter">;</span>
 <span class="hl-punctuation-bracket">}</span>
 </code></pre>
+<h3 id="shell-console">Shell Console<a class="heading-anchor" href="#shell-console">¶</a></h3>
+<p>Highlight terminal sessions. Prompts (<code>$</code>, <code>#</code>, <code>&gt;&gt;&gt;</code>) and continuation lines (<code>&gt;</code>) are detected automatically. Commands are highlighted using Bash syntax, while output is treated as comments.</p>
+<pre><code class="language-md"><span class="hl-markup-raw"><span class="hl-punctuation-bracket">```</span></span><span class="hl-markup-raw"><span class="hl-label">console</span></span><span class="hl-markup-raw">
+$ echo "Hello" \
+&gt; "World"
+Hello World
+</span><span class="hl-punctuation-bracket">```</span><span class="hl-markup-raw">
+</span></code></pre>
+<p>You can also specify a <strong>custom prompt</strong> using the <code>prompt</code> parameter:</p>
+<pre><code class="language-md"><span class="hl-markup-raw"><span class="hl-punctuation-bracket">```</span></span><span class="hl-markup-raw"><span class="hl-label">console prompt="λ"</span></span><span class="hl-markup-raw">
+λ sukr build
+Building site...
+Done.
+</span><span class="hl-punctuation-bracket">```</span><span class="hl-markup-raw">
+</span></code></pre>
 <h3 id="c">C<a class="heading-anchor" href="#c">¶</a></h3>
 <pre><code class="language-c"><span class="hl-keyword-directive">#include</span> <span class="hl-string">&lt;stdio.h&gt;</span>
 <span class="hl-type-builtin">int</span> <span class="hl-function">main</span><span class="hl-punctuation-bracket">(</span><span class="hl-punctuation-bracket">)</span> <span class="hl-punctuation-bracket">{</span>
