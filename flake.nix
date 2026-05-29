@@ -40,6 +40,8 @@
             cargo = toolchain;
             rustc = toolchain;
           };
+          cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+
         in
         {
           packages.site = pkgs.stdenv.mkDerivation {
@@ -62,8 +64,8 @@
             '';
           };
           packages.sukr = rustplatform.buildRustPackage {
-            pname = "sukr";
-            version = "0.2.0";
+            pname = cargoToml.package.name;
+            version = cargoToml.package.version;
             src = ./.;
             cargoLock = {
               lockFile = ./Cargo.lock;
