@@ -30,11 +30,12 @@
         }:
         let
           fenix = inputs'.fenix.packages;
-          # rustChannel = "stable";
-          toolchain = fenix.fromToolchainFile {
-            file = ./rust-toolchain.toml;
-            sha256 = "sha256-gh/xTkxKHL4eiRXzWv8KP7vfjSk61Iq48x47BEDFgfk=";
-          };
+          rustChannel = "stable";
+          toolchain = (
+            fenix.combine [
+              fenix.${rustChannel}.toolchain
+            ]
+          );
           rustplatform = pkgs.makeRustPlatform {
             cargo = toolchain;
             rustc = toolchain;
