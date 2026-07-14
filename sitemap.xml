@@ -37,13 +37,13 @@
     <loc>https://woile.github.io/sukr/security.html</loc>
   </url>
   <url>
-    <loc>https://woile.github.io/sukr/architecture.html</loc>
+    <loc>https://woile.github.io/sukr/getting-started.html</loc>
+  </url>
+  <url>
+    <loc>https://woile.github.io/sukr/deployment.html</loc>
   </url>
   <url>
     <loc>https://woile.github.io/sukr/content-organization.html</loc>
-  </url>
-  <url>
-    <loc>https://woile.github.io/sukr/getting-started.html</loc>
   </url>
   <url>
     <loc>https://woile.github.io/sukr/configuration.html</loc>
@@ -52,6 +52,6 @@
     <loc>https://woile.github.io/sukr/comparison.html</loc>
   </url>
   <url>
-    <loc>https://woile.github.io/sukr/deployment.html</loc>
+    <loc>https://woile.github.io/sukr/architecture.html</loc>
   </url>
 </urlset>
