@@ -40,8 +40,7 @@
             cargo = toolchain;
             rustc = toolchain;
           };
-          cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
-
+          cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
         in
         {
           packages.site = pkgs.stdenv.mkDerivation {
