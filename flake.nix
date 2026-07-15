@@ -65,7 +65,7 @@
           packages.sukr = rustplatform.buildRustPackage {
             pname = cargoToml.package.name;
             version = cargoToml.package.version;
-            src = ./.;
+            src = pkgs.nix-gitignore.gitignoreSource [ ] ./.;
             cargoLock = {
               lockFile = ./Cargo.lock;
               allowBuiltinFetchGit = true;
