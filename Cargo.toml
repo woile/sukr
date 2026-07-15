@@ -21,10 +21,18 @@ pulldown-cmark = "0.13"
 # regex-based highlighters. tree-house provides Helix-style scope queries.
 # ─────────────────────────────────────────────────────────────────────────────
 ropey = "1.6"  # Rope data structure for efficient text handling
-tree-house = { package = "tree-house", git = "https://github.com/helix-editor/tree-house", default-features = false }
-tree-house-bindings = { package = "tree-house-bindings", git = "https://github.com/helix-editor/tree-house", features = [
-  "tree-sitter-language",
-] }
+tree-house = {
+  package = "tree-house",
+  git = "https://github.com/helix-editor/tree-house",
+  default-features = false
+}
+tree-house-bindings = {
+  package = "tree-house-bindings",
+  git = "https://github.com/helix-editor/tree-house",
+  features = [
+    "tree-sitter-language",
+  ]
+}
 tree-sitter = "0.25"
 
 # Grammar crates — one per supported language. All actively used.
@@ -53,7 +61,10 @@ tree-sitter-yaml = "0.7"
 # the 300KB+ JavaScript bundles typical of client-side rendering.
 # ─────────────────────────────────────────────────────────────────────────────
 d2-little = "0.7.2"
-mermaid-rs-renderer = { version = "0.1", default-features = false }  # Diagrams → SVG
+mermaid-rs-renderer = {
+  version = "0.1",
+  default-features = false
+}  # Diagrams → SVG
 pulldown-latex = "0.7"  # LaTeX math → MathML
 
 # ─────────────────────────────────────────────────────────────────────────────
