@@ -45,11 +45,14 @@
         {
           packages.site = pkgs.stdenv.mkDerivation {
             name = "site";
-            src = pkgs.nix-gitignore.gitignoreSource [
-              "src"
-              "queries"
-              "patches"
-            ] ./.;
+            src = builtins.path {
+              name = "site-source";
+              path = pkgs.nix-gitignore.gitignoreSource [
+                "src"
+                "queries"
+                "patches"
+              ] ./.;
+            };
             #
             nativeBuildInputs = [
               self'.packages.sukr
@@ -65,7 +68,10 @@
           packages.sukr = rustplatform.buildRustPackage {
             pname = cargoToml.package.name;
             version = cargoToml.package.version;
-            src = pkgs.nix-gitignore.gitignoreSource [ ] ./.;
+            src = builtins.path {
+              name = "sukr-source";
+              path = pkgs.nix-gitignore.gitignoreSource [ ] ./.;
+            };
             cargoLock = {
               lockFile = ./Cargo.lock;
               allowBuiltinFetchGit = true;
