@@ -26,6 +26,7 @@
           self',
           pkgs,
           inputs',
+          lib,
           ...
         }:
         let
@@ -51,7 +52,7 @@
                 "src"
                 "queries"
                 "patches"
-              ] ./.;
+              ] (lib.cleanSource ./.);
             };
             #
             nativeBuildInputs = [
@@ -68,9 +69,16 @@
           packages.sukr = rustplatform.buildRustPackage {
             pname = cargoToml.package.name;
             version = cargoToml.package.version;
-            src = builtins.path {
-              name = "sukr-source";
-              path = pkgs.nix-gitignore.gitignoreSource [ ] ./.;
+            src = lib.fileset.toSource {
+              root = ./.;
+              fileset = lib.fileset.unions [
+                ./Cargo.toml
+                ./Cargo.lock
+                ./.rustfmt.toml
+                ./src
+                ./queries
+                ./patches
+              ];
             };
             cargoLock = {
               lockFile = ./Cargo.lock;
