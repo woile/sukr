@@ -88,11 +88,18 @@
             nativeBuildInputs =
               with pkgs;
               # Left empty on purpose to easily add if needed
-              [ ]
+              [
+                removeReferencesTo
+              ]
               ++ lib.optionals stdenv.isDarwin [
                 apple-sdk
                 libiconv
               ];
+            # Scrub the fenix toolchain path out of the compiled binary,
+            # dropping it from the run-time closure so the cache requires less space.
+            postFixup = ''
+              remove-references-to -t ${toolchain} $out/bin/sukr
+            '';
           };
           packages.default = self'.packages.sukr;
 
